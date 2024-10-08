@@ -204,13 +204,20 @@ struct ErrorPlace {
 // Returns input section and corresponding source string for the given location.
 ErrorPlace getErrorPlace(Ctx &ctx, const uint8_t *loc);
 
-static inline std::string getErrorLocation(const uint8_t *loc) {
+static inline std::string getErrorLoc(Ctx &ctx, const uint8_t *loc) {
   return getErrorPlace(ctx, loc).loc;
 }
 
 void processArmCmseSymbols(Ctx &);
 
-void writePPC32GlinkSection(uint8_t *buf, size_t numEntries);
+template <class ELFT> uint32_t calcMipsEFlags(Ctx &);
+uint8_t getMipsFpAbiFlag(uint8_t oldFlag, uint8_t newFlag,
+                         llvm::StringRef fileName);
+bool isMipsN32Abi(Ctx &, const InputFile &f);
+bool isMicroMips(Ctx &);
+bool isMipsR6(Ctx &);
+
+void writePPC32GlinkSection(Ctx &, uint8_t *buf, size_t numEntries);
 
 unsigned getPPCDFormOp(unsigned secondaryOp);
 unsigned getPPCDSFormOp(unsigned secondaryOp);
@@ -227,22 +234,22 @@ unsigned getPPC64GlobalEntryToLocalEntryOffset(uint8_t stOther);
 // Write a prefixed instruction, which is a 4-byte prefix followed by a 4-byte
 // instruction (regardless of endianness). Therefore, the prefix is always in
 // lower memory than the instruction.
-void writePrefixedInstruction(uint8_t *loc, uint64_t insn);
+void writePrefixedInst(Ctx &, uint8_t *loc, uint64_t insn);
 
-void addPPC64SaveRestore();
-uint64_t getPPC64TocBase();
+void addPPC64SaveRestore(Ctx &);
+uint64_t getPPC64TocBase(Ctx &ctx);
 uint64_t getAArch64Page(uint64_t expr);
 bool isAArch64BTILandingPad(Symbol &s, int64_t a);
-template <typename ELFT> void writeARMCmseImportLib();
+template <typename ELFT> void writeARMCmseImportLib(Ctx &);
 uint64_t getLoongArchPageDelta(uint64_t dest, uint64_t pc, RelType type);
 void riscvFinalizeRelax(int passes);
 void mergeRISCVAttributesSections(Ctx &);
-void addArmInputSectionMappingSymbols();
+void addArmInputSectionMappingSymbols(Ctx &);
 void addArmSyntheticSectionMappingSymbol(Defined *);
 void sortArmMappingSymbols();
 void convertArmInstructionstoBE8(InputSection *sec, uint8_t *buf);
-void createTaggedSymbols(const SmallVector<ELFFileBase *, 0> &files);
-void initSymbolAnchors();
+void createTaggedSymbols(Ctx &);
+void initSymbolAnchors(Ctx &);
 
 TargetInfo *getTarget(Ctx &);
 
@@ -279,7 +286,7 @@ inline void checkIntUInt(uint8_t *loc, uint64_t v, int n,
 inline void checkAlignment(uint8_t *loc, uint64_t v, int n,
                            const Relocation &rel) {
   if ((v & (n - 1)) != 0)
-    error(getErrorLocation(loc) + "improper alignment for relocation " +
+    error(getErrorLoc(ctx, loc) + "improper alignment for relocation " +
           lld::toString(rel.type) + ": 0x" + llvm::utohexstr(v) +
           " is not aligned to " + Twine(n) + " bytes");
 }
