@@ -13,6 +13,10 @@ if (COMPILER_RT_HAS_SANITIZER_COMMON AND
   add_subdirectory(sanitizer_common)
 endif()
 
+if(COMPILER_RT_BUILD_BLOCKS)
+  add_subdirectory(BlocksRuntime)
+endif()
+
 if(COMPILER_RT_BUILD_BUILTINS)
   add_subdirectory(builtins)
 endif()
