@@ -9,14 +9,49 @@
 #ifndef LLVM_LIBC_TYPES_STRUCT_IN6_ADDR_H
 #define LLVM_LIBC_TYPES_STRUCT_IN6_ADDR_H
 
+#include "../llvm-libc-macros/uapi-compat-macros.h"
+
 #include "../llvm-libc-macros/stdint-macros.h"
 
+// The kernel defines this too, in <linux/in6.h>. Leaving it to the
+// kernel is right only where that header has been read and its
+// guard says the definition is the kernel's.
+#if !(defined(__UAPI_DEF_IN6_ADDR) && __UAPI_DEF_IN6_ADDR &&                   \
+      defined(_LINUX_IN6_H))
+// The three ways of looking at the same sixteen octets. They are reached
+// through macros rather than named directly, which is how every other library
+// and the kernel's own header spell them: code that has to work where one of
+// the wider two is missing tests for it with #ifndef, and a plain member
+// cannot be tested for that way.
+#ifdef __ANDROID__
+// Android's code names the members the kernel's header gives them.
+#define __LIBC_IN6_U in6_u
+#define __LIBC_U6_ADDR8 u6_addr8
+#define __LIBC_U6_ADDR16 u6_addr16
+#define __LIBC_U6_ADDR32 u6_addr32
+#else
+#define __LIBC_IN6_U __in6_u
+#define __LIBC_U6_ADDR8 __u6_addr8
+#define __LIBC_U6_ADDR16 __u6_addr16
+#define __LIBC_U6_ADDR32 __u6_addr32
+#endif
+
 struct in6_addr {
-  __extension__ union {
-    uint8_t s6_addr[16];
-    uint16_t s6_addr16[8];
-    uint32_t s6_addr32[4];
-  };
+  union {
+    uint8_t __LIBC_U6_ADDR8[16];
+    uint16_t __LIBC_U6_ADDR16[8];
+    uint32_t __LIBC_U6_ADDR32[4];
+  } __LIBC_IN6_U;
 };
+
+#define s6_addr __LIBC_IN6_U.__LIBC_U6_ADDR8
+#define s6_addr16 __LIBC_IN6_U.__LIBC_U6_ADDR16
+#define s6_addr32 __LIBC_IN6_U.__LIBC_U6_ADDR32
+
+// Say the definition here is the one, so <linux/in6.h> skips its own if it
+// is read after this.
+#undef __UAPI_DEF_IN6_ADDR
+#define __UAPI_DEF_IN6_ADDR 0
+#endif
 
 #endif // LLVM_LIBC_TYPES_STRUCT_IN6_ADDR_H

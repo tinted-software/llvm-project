@@ -2,6 +2,26 @@ add_subdirectory(CPP)
 add_subdirectory(macros)
 
 add_header_library(
+  abort_message
+  HDRS
+    abort_message.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_header_library(
+  crash_detail
+  HDRS
+    crash_detail.h
+  DEPENDS
+    libc.src.__support.OSUtil.linux.syscall_wrappers.mmap
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.threads.raw_mutex
+)
+
+add_header_library(
   libc_errno
   HDRS
     libc_errno.h
@@ -262,7 +282,6 @@ add_header_library(
     .big_int
     .common
     .ctype_utils
-    .wctype_utils
     libc.hdr.stdint_proxy
     libc.src.__support.CPP.algorithm
     libc.src.__support.CPP.limits
@@ -343,6 +362,43 @@ add_header_library(
   DEPENDS
     libc.src.__support.macros.properties.types
     libc.src.__support.macros.properties.complex_types
+)
+add_header_library(
+  complex_sqrt
+  HDRS
+    complex_sqrt.h
+  DEPENDS
+    .complex_type
+    libc.src.__support.CPP.bit
+    libc.src.__support.FPUtil.basic_operations
+    libc.src.__support.FPUtil.fp_bits
+    libc.src.__support.FPUtil.manipulation_functions
+    libc.src.__support.FPUtil.multiply_add
+    libc.src.__support.FPUtil.sqrt
+    libc.src.__support.macros.config
+)
+
+
+add_header_library(
+  complex_hyperbolic
+  HDRS
+    complex_hyperbolic.h
+  DEPENDS
+    .complex_type
+    libc.hdr.fenv_macros
+    libc.src.__support.FPUtil.basic_operations
+    libc.src.__support.FPUtil.fenv_impl
+    libc.src.__support.FPUtil.fp_bits
+    libc.src.__support.FPUtil.manipulation_functions
+    libc.src.__support.FPUtil.sqrt
+    libc.src.__support.macros.config
+    libc.src.__support.math.cos
+    libc.src.__support.math.cosh
+    libc.src.__support.math.exp
+    libc.src.__support.math.sin
+    libc.src.__support.math.sinh
+    libc.src.__support.math.tan
+    libc.src.__support.math.tanh
 )
 
 add_header_library(
@@ -539,6 +595,7 @@ add_header_library(
     libc.src.__support.macros.config
 )
 
+add_subdirectory(elf)
 add_subdirectory(FPUtil)
 add_subdirectory(OSUtil)
 add_subdirectory(StringUtil)
@@ -561,6 +618,8 @@ add_subdirectory(fixed_point)
 
 add_subdirectory(time)
 
+add_subdirectory(libintl)
+add_subdirectory(nss)
 add_subdirectory(wchar)
 add_subdirectory(wctype)
 

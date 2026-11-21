@@ -2,6 +2,10 @@ header: glob.h
 standards:
   - posix
 macros:
+  - macro_name: glob64
+    macro_header: lfs64-macros.h
+  - macro_name: globfree64
+    macro_header: lfs64-macros.h
   - macro_name: GLOB_APPEND
     macro_header: glob-macros.h
   - macro_name: GLOB_DOOFFS
@@ -20,9 +24,27 @@ macros:
     macro_header: glob-macros.h
   - macro_name: GLOB_NOMATCH
     macro_header: glob-macros.h
+  - macro_name: GLOB_BRACE
+    macro_header: glob-macros.h
+  - macro_name: GLOB_TILDE
+    macro_header: glob-macros.h
+  - macro_name: GLOB_ONLYDIR
+    macro_header: glob-macros.h
+  - macro_name: GLOB_NOMAGIC
+    macro_header: glob-macros.h
+  - macro_name: GLOB_PERIOD
+    macro_header: glob-macros.h
+  - macro_name: GLOB_MAGCHAR
+    macro_header: glob-macros.h
+  - macro_name: GLOB_ALTDIRFUNC
+    macro_header: glob-macros.h
+  - macro_name: GLOB_NOSYS
+    macro_header: glob-macros.h
   - macro_name: GLOB_NOSPACE
     macro_header: glob-macros.h
 types:
+  - type_name: struct_stat
+  - type_name: struct_dirent
   - type_name: glob_t
   - type_name: size_t
 enums: []

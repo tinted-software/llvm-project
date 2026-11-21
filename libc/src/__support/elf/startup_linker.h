@@ -1,0 +1,454 @@
+//===----------------------------------------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// The startup dynamic linker
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_LIBC_SRC___SUPPORT_ELF_STARTUP_LINKER_H
+#define LLVM_LIBC_SRC___SUPPORT_ELF_STARTUP_LINKER_H
+
+#include "hdr/elf_macros.h"
+#include "hdr/elf_proxy.h"
+#include "hdr/link_macros.h"
+#include "hdr/sys_mman_macros.h"
+#include "hdr/types/size_t.h"
+#include "hdr/types/struct_r_debug.h"
+#include "src/__support/OSUtil/io.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/mmap.h"
+#include "src/__support/elf/bind.h"
+#include "src/__support/elf/link_map_chain.h"
+#include "src/__support/elf/load_module.h"
+#include "src/__support/elf/module.h"
+#include "src/__support/elf/passive_abi.h"
+#include "src/__support/elf/run_path.h"
+#include "src/__support/elf/search.h"
+#include "src/__support/elf/startup_stack.h"
+#include "src/__support/elf/thread_pointer.h"
+#include "src/__support/elf/tls_block.h"
+#include "src/__support/macros/attributes.h"
+#include "src/__support/macros/config.h"
+
+namespace LIBC_NAMESPACE_DECL {
+namespace elf {
+
+// How many objects one process may load at startup.
+constexpr size_t MAX_STARTUP_MODULES = MAX_PROCESS_MODULES;
+
+class StartupLinker {
+public:
+  // `debug_state` is the function a debugger breaks on to learn the list of
+  // modules has changed.
+  LIBC_INLINE StartupLinker(size_t page_size, char **envp,
+                            void (*debug_state)())
+      : page_size_(page_size), library_path_(library_path_from(envp)),
+        preload_list_(preload_list_from(envp)), debug_state_(debug_state) {}
+
+  // Loads the executable's dependency graph, binds it, sets up thread local
+  // storage and runs the initialisers. Returns false with a message already
+  // written to stderr if anything failed.
+  LIBC_INLINE bool link(const StartupStack &stack,
+                        const ExecutableImage &image) {
+    // The executable is already mapped; describe it where the kernel put it.
+    const ElfW(Addr) bias = executable_bias(image);
+    modules_[count_++] =
+        Module(image.phdrs, image.phnum, bias, executable_path(stack));
+
+    // The kernel maps the executable but applies nothing. A position
+    // independent one still has relative relocations of its own, and without
+    // them even its init array bounds point at the wrong addresses.
+    modules_[0].relocations().apply_relative(bias);
+    modules_[0].relr_relocations().apply(bias);
+
+    // A program started through a link looks for its libraries beside the
+    // file it really is.
+    executable_origin_ = executable_origin(modules_[0].name(), executable_path_,
+                                           sizeof(executable_path_));
+
+    // What LD_PRELOAD names goes in before anything the program asked for.
+    // Lookup walks the modules in the order they were added, so these sit
+    // ahead of the libraries the executable names and what they define is
+    // found first, which is the whole point of asking for them.
+    if (!load_preloads())
+      return false;
+
+    // Breadth first, so a dependency named earlier is loaded earlier, which
+    // is the order symbol lookup then walks.
+    for (size_t i = 0; i < count_; ++i) {
+      bool failed = false;
+      const Module requester = modules_[i];
+      requester.for_each_needed([&](const char *name) {
+        if (failed || already_loaded(name))
+          return;
+        if (!load_dependency(requester, i == 0 ? executable_origin_ : nullptr,
+                             name))
+          failed = true;
+      });
+      if (failed)
+        return false;
+    }
+
+    // Thread local storage is laid out before binding, because a relocation
+    // against a thread local stores an offset from the thread pointer and
+    // that offset is not known until the layout is fixed. Only the layout
+    // though: what goes in the blocks is copied once binding is done.
+    if (!setup_tls())
+      return false;
+
+    SearchOrder order(modules_, count_);
+    order.set_tls_offsets(tls_offsets_);
+    for (size_t i = 0; i < count_; ++i) {
+      BindResult result = bind_module(modules_[i], i, order);
+      if (result.unresolved != 0) {
+        report("symbol not found while linking ");
+        report(modules_[i].name());
+        if (result.missing != nullptr) {
+          report(": ");
+          report(result.missing);
+        }
+        report("\n");
+        return false;
+      }
+    }
+
+    // The initialisation images are part of the modules' data, so they are
+    // only what they should be once the modules have been relocated. A
+    // thread local holding the address of anything is written by one.
+    copy_tls_images(modules_, count_, tls_block_.thread_pointer, tls_offsets_);
+
+    // Only once everything is bound may any of it run.
+    if (!install_thread_pointer())
+      return false;
+
+    // What was loaded is recorded before any of it runs, so that an
+    // initialiser which opens something else finds a module set to add to.
+    publish(order);
+
+    // Anything an initialiser may ask libc about is described before the
+    // first of them runs, not later by the program's startup code.
+    early_init(order, stack);
+
+    // A debugger reads the modules' symbols before any of their code runs.
+    publish_link_maps(order, stack);
+
+    run_initialisers();
+    return true;
+  }
+
+  LIBC_INLINE size_t module_count() const { return count_; }
+
+private:
+  // The kernel maps the executable but does not say what bias it used, so it
+  // is recovered the same way as for any other module.
+  LIBC_INLINE static ElfW(Addr) executable_bias(const ExecutableImage &image) {
+    for (ElfW(Half) i = 0; i < image.phnum; ++i)
+      if (image.phdrs[i].p_type == PT_PHDR)
+        return reinterpret_cast<ElfW(Addr)>(image.phdrs) -
+               image.phdrs[i].p_vaddr;
+    return 0;
+  }
+
+  // What the kernel was asked to run, which is where $ORIGIN points for the
+  // executable's own run path. It may be relative, in which case it is
+  // relative to the same directory the kernel resolved it against.
+  LIBC_INLINE static const char *executable_path(const StartupStack &stack) {
+    if (auto value = stack.auxval(AT_EXECFN))
+      return reinterpret_cast<const char *>(*value);
+    return "";
+  }
+
+  LIBC_INLINE bool already_loaded(const char *name) const {
+    if (is_glibc_interpreter(name))
+      return true;
+    for (size_t i = 0; i < count_; ++i) {
+      const char *soname = modules_[i].soname();
+      if (soname != nullptr && equal(soname, name))
+        return true;
+    }
+    return false;
+  }
+
+  LIBC_INLINE static bool equal(const char *a, const char *b) {
+    for (; *a == *b; ++a, ++b)
+      if (*a == '\0')
+        return true;
+    return false;
+  }
+
+  // The search order a loader is expected to use, which dlopen uses too.
+  // Loads each object named in LD_PRELOAD, separated by colons or blanks as
+  // every loader has always accepted. One that cannot be found is passed
+  // over rather than fatal: the variable is often set for a whole session and
+  // names things that only some of the programs in it have.
+  LIBC_INLINE bool load_preloads() {
+    if (preload_list_ == nullptr)
+      return true;
+    const char *p = preload_list_;
+    while (*p != '\0') {
+      while (*p == ':' || *p == ' ' || *p == '\t')
+        ++p;
+      if (*p == '\0')
+        break;
+      char name[MAX_SEARCH_PATH];
+      size_t n = 0;
+      while (*p != '\0' && *p != ':' && *p != ' ' && *p != '\t') {
+        if (n + 1 < sizeof(name))
+          name[n++] = *p;
+        ++p;
+      }
+      name[n] = '\0';
+      if (n == 0)
+        continue;
+      // Named in the loader's list of things not to preload, which is for
+      // objects made for another C library's threads.
+      PreloadIgnoreList ignored;
+      if (ignored.contains(name))
+        continue;
+      if (count_ >= MAX_STARTUP_MODULES) {
+        report("too many shared objects\n");
+        return false;
+      }
+      // The executable is what a relative run path is taken against, and it
+      // is the only module loaded at this point.
+      auto loaded = find_and_load(name, &modules_[0], executable_origin_,
+                                  library_path_, &system_paths_, page_size_);
+      if (!loaded.has_value())
+        continue;
+      const size_t first = count_;
+      remember(loaded.value());
+      // An object whose own libraries are not there, as with one built for
+      // another C library, is dropped whole rather than failing the program.
+      if (!load_preload_dependencies(first)) {
+        for (size_t i = first; i < count_; ++i)
+          unmap_module(mappings_[i]);
+        count_ = first;
+        report("ERROR: ld.so: object '");
+        report(name);
+        report("' from LD_PRELOAD cannot be preloaded (cannot open shared "
+               "object file): ignored.\n");
+        continue;
+      }
+      // The libraries it needed were loaded after it, but they belong after
+      // every object that was asked for. Otherwise a preload that needs the
+      // C library puts it ahead of the next preload, and a wrapper there that
+      // looks up the next definition with RTLD_NEXT finds nothing.
+      move_module(first, next_preload_++);
+    }
+    return true;
+  }
+
+  // Moves the module at `from` down to `to`, shifting those between up.
+  LIBC_INLINE void move_module(size_t from, size_t to) {
+    const Module module = modules_[from];
+    const MappedModule mapping = mappings_[from];
+    for (size_t i = from; i > to; --i) {
+      modules_[i] = modules_[i - 1];
+      mappings_[i] = mappings_[i - 1];
+    }
+    modules_[to] = module;
+    mappings_[to] = mapping;
+  }
+
+  // Loads what the modules from `first` on need, and what that needs in turn.
+  LIBC_INLINE bool load_preload_dependencies(size_t first) {
+    for (size_t i = first; i < count_; ++i) {
+      bool failed = false;
+      const Module requester = modules_[i];
+      requester.for_each_needed([&](const char *needed) {
+        if (failed || already_loaded(needed))
+          return;
+        if (count_ >= MAX_STARTUP_MODULES) {
+          failed = true;
+          return;
+        }
+        auto loaded = find_and_load(needed, &requester, nullptr, library_path_,
+                                    &system_paths_, page_size_);
+        if (!loaded.has_value()) {
+          failed = true;
+          return;
+        }
+        remember(loaded.value());
+      });
+      if (failed)
+        return false;
+    }
+    return true;
+  }
+
+  // `origin` is what $ORIGIN in `from`'s run path stands for, or null for the
+  // directory of its own name.
+  LIBC_INLINE bool load_dependency(const Module &from, const char *origin,
+                                   const char *name) {
+    if (count_ >= MAX_STARTUP_MODULES) {
+      report("too many shared objects\n");
+      return false;
+    }
+    auto loaded = find_and_load(name, &from, origin, library_path_,
+                                &system_paths_, page_size_);
+    if (!loaded.has_value())
+      return missing(name);
+    return remember(loaded.value());
+  }
+
+  LIBC_INLINE bool remember(const LoadedModule &loaded) {
+    mappings_[count_] = loaded.mapping;
+    modules_[count_] = loaded.module;
+    ++count_;
+    return true;
+  }
+
+  LIBC_INLINE bool missing(const char *name) {
+    report("cannot open shared object ");
+    report(name);
+    report("\n");
+    return false;
+  }
+
+  LIBC_INLINE bool setup_tls() {
+    auto block = allocate_tls_block(modules_, count_, tls_offsets_,
+                                    /*copy_images=*/false);
+    if (!block.has_value()) {
+      report("cannot allocate thread local storage\n");
+      return false;
+    }
+    tls_block_ = block.value();
+    return true;
+  }
+
+  LIBC_INLINE bool install_thread_pointer() {
+    // Nothing in the process uses thread local storage.
+    if (tls_block_.storage == nullptr)
+      return true;
+    if (!set_thread_pointer(tls_block_.thread_pointer)) {
+      report("cannot set the thread pointer\n");
+      return false;
+    }
+    return true;
+  }
+
+  // Dependencies are initialised before the objects that need them. The
+  // executable is index zero and is skipped: its own startup code runs its
+  // initialisers, and running them here as well would run them twice.
+  LIBC_INLINE void run_initialisers() {
+    size_t order[MAX_STARTUP_MODULES];
+    bool visited[MAX_STARTUP_MODULES];
+    init_order(modules_, 0, count_, order, visited);
+    for (size_t i = 0; i < count_; ++i)
+      if (order[i] != 0)
+        run_init_array(modules_[order[i]]);
+  }
+
+  LIBC_INLINE static void run_init_array(const Module &module) {
+    run_init_function(module);
+    auto array = module.dynamic().address(DT_INIT_ARRAY);
+    auto size = module.dynamic().value(DT_INIT_ARRAYSZ);
+    if (!array || !size)
+      return;
+    auto **functions = reinterpret_cast<void (**)()>(*array);
+    for (size_t i = 0; i < *size / sizeof(void *); ++i)
+      if (functions[i] != nullptr)
+        functions[i]();
+  }
+
+  LIBC_INLINE static void report(const char *message) {
+    write_to_stderr(message);
+  }
+
+  // Tells libc what an initialiser may ask about before it runs: the
+  // environment, which it is entitled to read and change, the auxiliary
+  // vector, the program's name and the thread it is on. Found by symbol
+  // lookup, the same way the module set is: the loader cannot link against
+  // the library it loads.
+  //
+  // The vector on the stack is the one the program was given, which need not
+  // be the one the kernel first passed. The program's own startup code
+  // leaves `environ` alone if it finds it already set, so what an
+  // initialiser did to the environment stands.
+  LIBC_INLINE static void early_init(const SearchOrder &order,
+                                     const StartupStack &stack) {
+    auto address = order.resolve("__llvm_libc_early_init");
+    if (!address)
+      return; // Nothing in the process wants to know.
+    reinterpret_cast<int (*)(int, char **, char **, const void *)>(*address)(
+        static_cast<int>(stack.argc()), stack.argv(), stack.envp(),
+        stack.auxv());
+  }
+
+  // Copies what was loaded into libc's storage, found by symbol lookup since
+  // the loader cannot link against the thing it loads. From here the loader
+  // is finished and anything that wants to know reads that instead.
+  LIBC_INLINE void publish(const SearchOrder &order) {
+    auto address = order.resolve(MODULE_SET_SYMBOL);
+    if (!address)
+      return; // Nothing in the process wants to know.
+    auto *set = reinterpret_cast<ModuleSet *>(*address);
+    const size_t n = count_ < set->capacity ? count_ : set->capacity;
+    for (size_t i = 0; i < n; ++i) {
+      set->modules[i] = modules_[i];
+      set->mappings[i] = mappings_[i];
+      set->tls_offsets[i] = tls_offsets_[i];
+      set->references[i] = 1;
+    }
+    set->count = n;
+    set->static_count = n;
+    set->page_size = page_size_;
+    set->linked = true;
+  }
+
+  // Describes what was loaded to a debugger, through libc's _r_debug and the
+  // executable's DT_DEBUG entry, then calls the function it breaks on. The
+  // chain goes in memory of its own, since the loader's is gone once the
+  // program starts.
+  LIBC_INLINE void publish_link_maps(const SearchOrder &order,
+                                     const StartupStack &stack) {
+    auto address = order.resolve("_r_debug");
+    if (!address)
+      return;
+    auto *debug = reinterpret_cast<struct r_debug *>(*address);
+    const size_t size = link_map_block_size(count_);
+    auto storage = linux_syscalls::mmap(nullptr, size, PROT_READ | PROT_WRITE,
+                                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (!storage)
+      return;
+    const ElfW(Addr) loader_base =
+        static_cast<ElfW(Addr)>(stack.auxval(AT_BASE).value_or(0));
+    debug->r_version = 1;
+    debug->r_map =
+        fill_link_maps(modules_, count_, loader_base,
+                       static_cast<LinkMapBlock *>(storage.value()), 0);
+    debug->r_brk = reinterpret_cast<ElfW(Addr)>(debug_state_);
+    debug->r_ldbase = loader_base;
+    debug->r_state = r_debug::RT_CONSISTENT;
+    point_dt_debug_at(modules_[0], debug);
+    debug_state_();
+  }
+
+  size_t page_size_;
+  const char *library_path_;
+  // Read the first time a dependency is not found anywhere nearer.
+  SystemPaths system_paths_;
+  // Where the executable really is, for $ORIGIN in its run path.
+  char executable_path_[MAX_EXECUTABLE_PATH];
+  const char *executable_origin_ = nullptr;
+  const char *preload_list_;
+  // Where the next object named in LD_PRELOAD goes, just after the ones
+  // before it and the executable.
+  size_t next_preload_ = 1;
+  void (*debug_state_)();
+  Module modules_[MAX_STARTUP_MODULES];
+  MappedModule mappings_[MAX_STARTUP_MODULES];
+  intptr_t tls_offsets_[MAX_STARTUP_MODULES] = {};
+  TlsBlock tls_block_;
+  size_t count_ = 0;
+};
+
+} // namespace elf
+} // namespace LIBC_NAMESPACE_DECL
+
+#endif // LLVM_LIBC_SRC___SUPPORT_ELF_STARTUP_LINKER_H

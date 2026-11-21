@@ -19,6 +19,17 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  char16_t
+  HDRS
+    char16_t.h
+  DEPENDS
+    libc.hdr.uchar_overlay
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.char16_t
+    libc.include.uchar
+)
+
+add_proxy_header_library(
   mbstate_t
   HDRS
     mbstate_t.h
@@ -105,6 +116,14 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  sigset64_t
+  HDRS
+    sigset64_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.sigset64_t
+)
+
+add_proxy_header_library(
   siginfo_t
   HDRS
     siginfo_t.h
@@ -120,6 +139,78 @@ add_proxy_header_library(
     libc.hdr.dirent_overlay
   FULL_BUILD_DEPENDS
     libc.include.llvm-libc-types.struct_dirent
+)
+
+add_proxy_header_library(
+  prop_info
+  HDRS
+    prop_info.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.prop_info
+)
+
+add_proxy_header_library(
+  __prop_foreach_callback_t
+  HDRS
+    __prop_foreach_callback_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.__prop_foreach_callback_t
+)
+
+add_proxy_header_library(
+  __prop_read_callback_t
+  HDRS
+    __prop_read_callback_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.__prop_read_callback_t
+)
+
+add_proxy_header_library(
+  FTS
+  HDRS
+    FTS.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.FTS
+)
+
+add_proxy_header_library(
+  FTSENT
+  HDRS
+    FTSENT.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.FTSENT
+)
+
+add_proxy_header_library(
+  __fts_compare_func_t
+  HDRS
+    __fts_compare_func_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.__fts_compare_func_t
+)
+
+add_proxy_header_library(
+  struct_FTW
+  HDRS
+    struct_FTW.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_FTW
+)
+
+add_proxy_header_library(
+  __ftw_func_t
+  HDRS
+    __ftw_func_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.__ftw_func_t
+)
+
+add_proxy_header_library(
+  __nftw_func_t
+  HDRS
+    __nftw_func_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.__nftw_func_t
 )
 
 add_proxy_header_library(
@@ -192,6 +283,14 @@ add_proxy_header_library(
     struct_passwd.h
   FULL_BUILD_DEPENDS
     libc.include.llvm-libc-types.struct_passwd
+)
+
+add_proxy_header_library(
+  struct_mntent
+  HDRS
+    struct_mntent.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_mntent
 )
 
 add_proxy_header_library(
@@ -453,6 +552,14 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  struct_sigaction64
+  HDRS
+    struct_sigaction64.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_sigaction64
+)
+
+add_proxy_header_library(
   struct_sigevent
   HDRS
     struct_sigevent.h
@@ -478,6 +585,30 @@ add_proxy_header_library(
     libc.hdr.dirent_overlay
   FULL_BUILD_DEPENDS
     libc.include.llvm-libc-types.DIR
+)
+
+add_proxy_header_library(
+  enum_android_fdsan_error_level
+  HDRS
+    enum_android_fdsan_error_level.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.enum_android_fdsan_error_level
+)
+
+add_proxy_header_library(
+  enum_android_fdsan_owner_type
+  HDRS
+    enum_android_fdsan_owner_type.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.enum_android_fdsan_owner_type
+)
+
+add_proxy_header_library(
+  android_dlextinfo
+  HDRS
+    android_dlextinfo.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.android_dlextinfo
 )
 
 add_proxy_header_library(
@@ -959,6 +1090,14 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  lmid_t
+  HDRS
+    lmid_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.lmid_t
+)
+
+add_proxy_header_library(
   struct_rlimit
   HDRS
     struct_rlimit.h
@@ -1407,6 +1546,14 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  wordexp_t
+  HDRS
+    wordexp_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.wordexp_t
+)
+
+add_proxy_header_library(
   regex_t
   HDRS
     regex_t.h
@@ -1496,4 +1643,238 @@ add_proxy_header_library(
   cap_user_data_t
   HDRS
     cap_user_data_t.h
+)
+
+add_proxy_header_library(
+  struct_utimbuf
+  HDRS
+    struct_utimbuf.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_utimbuf
+)
+
+add_proxy_header_library(
+  union_sigval
+  HDRS
+    union_sigval.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.union_sigval
+)
+
+add_proxy_header_library(
+  iconv_t
+  HDRS
+    iconv_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.iconv_t
+)
+
+add_proxy_header_library(
+  struct_timezone
+  HDRS
+    struct_timezone.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_timezone
+)
+
+add_proxy_header_library(
+  struct_msqid_ds
+  HDRS
+    struct_msqid_ds.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_msqid_ds
+)
+
+add_proxy_header_library(
+  struct_shminfo
+  HDRS
+    struct_shminfo.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_shminfo
+)
+
+add_proxy_header_library(
+  struct_shm_info
+  HDRS
+    struct_shm_info.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_shm_info
+)
+
+add_proxy_header_library(
+  struct_msginfo
+  HDRS
+    struct_msginfo.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_msginfo
+)
+
+add_proxy_header_library(
+  struct_signalfd_siginfo
+  HDRS
+    struct_signalfd_siginfo.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_signalfd_siginfo
+)
+
+
+add_proxy_header_library(
+  struct_sgrp
+  HDRS
+    struct_sgrp.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_sgrp
+)
+
+add_proxy_header_library(
+  struct_spwd
+  HDRS
+    struct_spwd.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_spwd
+)
+
+add_proxy_header_library(
+  struct_mount_attr
+  HDRS
+    struct_mount_attr.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_mount_attr
+)
+
+add_proxy_header_library(
+  struct_utmpx
+  HDRS
+    struct_utmpx.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_utmpx
+)
+
+add_proxy_header_library(
+  struct_utmp
+  HDRS
+    struct_utmp.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_utmp
+    libc.include.llvm-libc-macros.utmp_macros
+)
+
+add_proxy_header_library(
+  struct_timex
+  HDRS
+    struct_timex.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_timex
+)
+
+add_proxy_header_library(
+  struct_file_handle
+  HDRS
+    struct_file_handle.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_file_handle
+)
+
+add_proxy_header_library(
+  posix_spawnattr_t
+  HDRS
+    posix_spawnattr_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.posix_spawnattr_t
+)
+
+add_proxy_header_library(
+  struct___res_state
+  HDRS
+    struct___res_state.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct___res_state
+)
+
+add_proxy_header_library(
+  res_state
+  HDRS
+    res_state.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.res_state
+)
+
+add_proxy_header_library(
+  ns_msg
+  HDRS
+    ns_msg.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.ns_msg
+)
+
+add_proxy_header_library(
+  ns_rr
+  HDRS
+    ns_rr.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.ns_rr
+)
+
+add_proxy_header_library(
+  struct_hostent
+  HDRS
+    struct_hostent.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_hostent
+)
+
+add_proxy_header_library(
+  struct_netent
+  HDRS
+    struct_netent.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_netent
+)
+
+add_proxy_header_library(
+  struct_protoent
+  HDRS
+    struct_protoent.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_protoent
+)
+
+add_proxy_header_library(
+  struct_servent
+  HDRS
+    struct_servent.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_servent
+)
+
+add_proxy_header_library(
+  mqd_t
+  HDRS
+    mqd_t.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.mqd_t
+)
+add_proxy_header_library(
+  struct_mq_attr
+  HDRS
+    struct_mq_attr.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_mq_attr
+)
+
+
+add_proxy_header_library(
+  struct_timeb
+  HDRS
+    struct_timeb.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_timeb
+)
+
+add_proxy_header_library(
+  struct_tms
+  HDRS
+    struct_tms.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-types.struct_tms
 )

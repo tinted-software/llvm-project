@@ -67,6 +67,31 @@ add_header_library(
 )
 
 add_header_library(
+  realpath
+  HDRS
+    realpath.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.limits_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.mode_t
+    libc.hdr.types.size_t
+    libc.src.__support.common
+    libc.src.__support.CPP.optional
+    libc.src.__support.CPP.string
+    libc.src.__support.CPP.string_view
+    libc.src.__support.error_or
+    libc.src.__support.macros.config
+    libc.src.__support.OSUtil.linux.stat.kernel_statx_types
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getcwd
+    libc.src.__support.OSUtil.linux.syscall_wrappers.readlink
+    libc.src.__support.OSUtil.linux.syscall_wrappers.statx
+    libc.src.__support.OSUtil.path
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_header_library(
   shell_fork
   HDRS
     shell_fork.h
@@ -81,6 +106,7 @@ add_header_library(
     libc.src.__support.OSUtil.osutil
     libc.src.__support.OSUtil.linux.syscall_wrappers.clone3
     libc.src.__support.OSUtil.linux.syscall_wrappers.execle
+    libc.src.__support.OSUtil.linux.syscall_wrappers.fork
     libc.src.__support.OSUtil.linux.syscall_wrappers.wait4
     libc.src.unistd.environ
 )
@@ -122,7 +148,9 @@ add_header_library(
   HDRS
     vdso_sym.h
   DEPENDS
+    libc.hdr.types.cpu_set_t
     libc.src.__support.common
+    libc.hdr.types.cpu_set_t
 )
 
 add_object_library(

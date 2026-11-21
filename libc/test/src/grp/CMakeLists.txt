@@ -39,6 +39,7 @@ add_libc_test(
     libc.src.__support.libc_errno
     libc.src.grp.endgrent
     libc.src.grp.getgrent
+    libc.src.grp.getgrent_r
     libc.src.grp.grp_utils
     libc.src.grp.setgrent
     libc.src.stdio.remove
@@ -68,6 +69,24 @@ add_libc_test(
     libc.src.stdio.remove
     libc.src.string.string_utils
     libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  putgrent_test
+  SUITE
+    libc-grp-tests
+  SRCS
+    putgrent_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.func.free
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_group
+    libc.src.grp.putgrent
+    libc.src.stdio.fclose
+    libc.src.stdio.open_memstream
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
 )
 
 add_libc_test(
@@ -220,4 +239,31 @@ add_libc_test(
     libc.src.unistd.getuid
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  fgetgrent_test
+  SUITE
+    libc-grp-tests
+  SRCS
+    fgetgrent_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_group
+    libc.src.__support.CPP.string_view
+    libc.src.fcntl.open
+    libc.src.grp.fgetgrent
+    libc.src.grp.fgetgrent_r
+    libc.src.grp.getgrouplist
+    libc.src.grp.grp_utils
+    libc.src.grp.putgrent
+    libc.src.stdio.fclose
+    libc.src.stdio.fopen
+    libc.src.stdio.remove
+    libc.src.unistd.close
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
 )

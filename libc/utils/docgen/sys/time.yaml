@@ -11,8 +11,14 @@ types:
   time_t:
     in-latest-posix: ''
 functions:
+  futimes:
+    c-definition: 'TODO: BSD extension'
+  lutimes:
+    c-definition: 'TODO: BSD extension'
   select:
     in-latest-posix: ''
+  settimeofday:
+    c-definition: 'TODO: BSD extension'
   utimes:
     in-latest-posix: ''
   getitimer:

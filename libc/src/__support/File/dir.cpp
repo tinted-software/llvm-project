@@ -43,8 +43,15 @@ ErrorOr<struct dirent *> Dir::read() {
   cpp::lock_guard lock(mutex);
   if (readptr >= fillsize) {
     auto readsize = platform_fetch_dirents(fd, buffer);
-    if (!readsize)
+    if (!readsize) {
+      // A directory that has been removed while it was open has nothing more
+      // in it, which is the end of it rather than something going wrong. A
+      // caller telling the two apart looks at errno, so this must not set
+      // one.
+      if (readsize.error() == ENOENT)
+        return nullptr;
       return LIBC_NAMESPACE::Error(readsize.error());
+    }
     fillsize = readsize.value();
     readptr = 0;
   }
@@ -53,7 +60,12 @@ ErrorOr<struct dirent *> Dir::read() {
 
   cpp::span<uint8_t> buf_span(buffer, BUFSIZE);
 
-  if (fillsize - readptr < sizeof(struct dirent))
+  // Only the part before the name is a fixed size. An entry's name is as
+  // long as it needs to be and no longer, so a record is almost always
+  // shorter than the type, and what has to be there to read one is the part
+  // up to the name plus at least the byte that ends it.
+  constexpr size_t HEADER_SIZE = __builtin_offsetof(struct dirent, d_name);
+  if (fillsize - readptr < HEADER_SIZE + 1)
     return Error(EIO);
 
   struct dirent *d =
@@ -65,7 +77,25 @@ ErrorOr<struct dirent *> Dir::read() {
     return Error(EIO);
 
   readptr += reclen;
+  offset = platform_dir_offset(d);
   return d;
+}
+
+off_t Dir::tell() {
+  cpp::lock_guard lock(mutex);
+  return offset;
+}
+
+int Dir::seek(off_t loc) {
+  cpp::lock_guard lock(mutex);
+  int retval = platform_seekdir(fd, loc);
+  if (retval != 0)
+    return retval;
+  // The buffered entries are from the old position, so drop them.
+  readptr = 0;
+  fillsize = 0;
+  offset = loc;
+  return 0;
 }
 
 int Dir::close() {

@@ -334,6 +334,18 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  cosl
+  SRCS
+    cosl.cpp
+  HDRS
+    ../cosl.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.FPUtil.x87_trig
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
   cospif
   SRCS
     cospif.cpp
@@ -394,6 +406,18 @@ add_entrypoint_object(
     ../sinf16.h
   DEPENDS
     libc.src.__support.math.sinf16
+)
+
+add_entrypoint_object(
+  sinl
+  SRCS
+    sinl.cpp
+  HDRS
+    ../sinl.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.FPUtil.x87_trig
+    libc.src.__support.macros.config
 )
 
 add_entrypoint_object(
@@ -474,6 +498,18 @@ add_entrypoint_object(
     ../tanf16.h
   DEPENDS
     libc.src.__support.math.tanf16
+)
+
+add_entrypoint_object(
+  tanl
+  SRCS
+    tanl.cpp
+  HDRS
+    ../tanl.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.FPUtil.x87_trig
+    libc.src.__support.macros.config
 )
 
 add_entrypoint_object(
@@ -5354,4 +5390,278 @@ add_entrypoint_object(
     ../bf16subf128.h
   DEPENDS
     libc.src.__support.math.bf16subf128
+)
+
+add_entrypoint_object(
+  asinh
+  SRCS
+    asinh.cpp
+  HDRS
+    ../asinh.h
+  DEPENDS
+    libc.src.__support.math.asinh
+)
+
+add_entrypoint_object(
+  acosh
+  SRCS
+    acosh.cpp
+  HDRS
+    ../acosh.h
+  DEPENDS
+    libc.src.__support.math.acosh
+)
+
+add_entrypoint_object(
+  atanh
+  SRCS
+    atanh.cpp
+  HDRS
+    ../atanh.h
+  DEPENDS
+    libc.src.__support.math.atanh
+)
+
+add_entrypoint_object(
+  erf
+  SRCS
+    erf.cpp
+  HDRS
+    ../erf.h
+  DEPENDS
+    libc.src.__support.math.erf
+)
+
+add_entrypoint_object(
+  erfc
+  SRCS
+    erfc.cpp
+  HDRS
+    ../erfc.h
+  DEPENDS
+    libc.src.__support.math.erfc
+)
+
+add_entrypoint_object(
+  erfcf
+  SRCS
+    erfcf.cpp
+  HDRS
+    ../erfcf.h
+  DEPENDS
+    libc.src.__support.FPUtil.fenv_impl
+    libc.src.__support.FPUtil.fp_bits
+    libc.src.__support.macros.optimization
+    libc.src.__support.math.erfc
+)
+
+add_entrypoint_object(
+  log2l
+  SRCS
+    log2l.cpp
+  HDRS
+    ../log2l.h
+  DEPENDS
+    libc.hdr.fenv_macros
+    libc.src.__support.FPUtil.fenv_impl
+    libc.src.__support.FPUtil.fp_bits
+    libc.src.__support.common
+    libc.src.__support.macros.optimization
+    libc.src.__support.math.log2l_impl
+)
+
+add_entrypoint_object(
+  powl
+  SRCS
+    powl.cpp
+  HDRS
+    ../powl.h
+  DEPENDS
+    libc.hdr.fenv_macros
+    libc.src.__support.CPP.bit
+    libc.src.__support.FPUtil.fenv_impl
+    libc.src.__support.FPUtil.fp_bits
+    libc.src.__support.FPUtil.dyadic_float
+    libc.src.__support.FPUtil.sqrt
+    libc.src.__support.common
+    libc.src.__support.macros.optimization
+    libc.src.__support.math.log2l_impl
+    libc.src.__support.math.powl_impl
+    libc.src.__support.uint128
+)
+
+add_entrypoint_object(
+  lgamma
+  SRCS
+    lgamma.cpp
+  HDRS
+    ../lgamma.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.lgamma
+)
+
+add_entrypoint_object(
+  tgamma
+  SRCS
+    tgamma.cpp
+  HDRS
+    ../tgamma.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.tgamma
+)
+
+add_entrypoint_object(
+  tgammaf
+  SRCS
+    tgammaf.cpp
+  HDRS
+    ../tgammaf.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.tgammaf
+)
+
+add_entrypoint_object(
+  lgamma_r
+  SRCS
+    lgamma_r.cpp
+  HDRS
+    ../lgamma_r.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.lgamma
+)
+
+add_entrypoint_object(
+  j0
+  SRCS
+    j0.cpp
+  HDRS
+    ../j0.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  j1
+  SRCS
+    j1.cpp
+  HDRS
+    ../j1.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  y0
+  SRCS
+    y0.cpp
+  HDRS
+    ../y0.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  y1
+  SRCS
+    y1.cpp
+  HDRS
+    ../y1.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  jn
+  SRCS
+    jn.cpp
+  HDRS
+    ../jn.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  yn
+  SRCS
+    yn.cpp
+  HDRS
+    ../yn.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  j0f
+  SRCS
+    j0f.cpp
+  HDRS
+    ../j0f.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  j1f
+  SRCS
+    j1f.cpp
+  HDRS
+    ../j1f.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  y0f
+  SRCS
+    y0f.cpp
+  HDRS
+    ../y0f.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  y1f
+  SRCS
+    y1f.cpp
+  HDRS
+    ../y1f.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  jnf
+  SRCS
+    jnf.cpp
+  HDRS
+    ../jnf.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
+)
+
+add_entrypoint_object(
+  ynf
+  SRCS
+    ynf.cpp
+  HDRS
+    ../ynf.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.math.bessel
 )

@@ -158,3 +158,46 @@ add_libc_test(
     libc.src.string.string_utils
     libc.test.UnitTest.ErrnoCheckingTest
 )
+
+add_libc_test(
+  putpwent_test
+  SUITE
+    libc-pwd-tests
+  SRCS
+    putpwent_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.func.free
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_passwd
+    libc.src.pwd.putpwent
+    libc.src.stdio.fclose
+    libc.src.stdio.open_memstream
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  fgetpwent_test
+  SUITE
+    libc-pwd-tests
+  SRCS
+    fgetpwent_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_passwd
+    libc.src.__support.CPP.string_view
+    libc.src.fcntl.open
+    libc.src.pwd.fgetpwent
+    libc.src.pwd.fgetpwent_r
+    libc.src.pwd.putpwent
+    libc.src.stdio.fclose
+    libc.src.stdio.fopen
+    libc.src.stdio.remove
+    libc.src.unistd.close
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
+)

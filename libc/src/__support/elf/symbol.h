@@ -1,0 +1,210 @@
+//===----------------------------------------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// Symbol lookup in a loaded ELF module
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_LIBC_SRC___SUPPORT_ELF_SYMBOL_H
+#define LLVM_LIBC_SRC___SUPPORT_ELF_SYMBOL_H
+
+#include "hdr/elf_macros.h"
+#include "hdr/elf_proxy.h"
+#include "hdr/link_macros.h"
+#include "hdr/stdint_proxy.h"
+#include "src/__support/elf/hash.h"
+#include "src/__support/macros/attributes.h"
+#include "src/__support/macros/config.h"
+
+namespace LIBC_NAMESPACE_DECL {
+namespace elf {
+
+// Set in a DT_VERSYM entry when the definition is not its name's default
+// version.
+constexpr uint16_t VERSYM_HIDDEN = 0x8000;
+
+// The header of a DT_GNU_HASH table, followed by the Bloom filter, the bucket
+// array and the hash array.
+struct GnuHashHeader {
+  uint32_t nbuckets;
+  // Symbols below this index are not in the hash table at all.
+  uint32_t symoffset;
+  uint32_t bloom_size;
+  uint32_t bloom_shift;
+};
+
+// Looks names up in one module's .dynsym using its DT_GNU_HASH table.
+//
+// The Bloom filter is checked first. It can only give a false positive, never
+// a false negative, so a miss there is conclusive and skips the chain walk
+// entirely. That is the whole reason GNU hash is faster than DT_HASH.
+class GnuSymbolTable {
+public:
+  LIBC_INLINE constexpr GnuSymbolTable() = default;
+  LIBC_INLINE GnuSymbolTable(const void *hash_table, const ElfW(Sym) * symtab,
+                             const char *strtab,
+                             const uint16_t *versym = nullptr,
+                             const ElfW(Verdef) *verdef = nullptr)
+      : symtab_(symtab), strtab_(strtab), versym_(versym), verdef_(verdef) {
+    if (hash_table == nullptr)
+      return;
+    header_ = static_cast<const GnuHashHeader *>(hash_table);
+    bloom_ = reinterpret_cast<const ElfW(Addr) *>(header_ + 1);
+    buckets_ = reinterpret_cast<const uint32_t *>(bloom_ + header_->bloom_size);
+    chain_ = buckets_ + header_->nbuckets;
+  }
+
+  LIBC_INLINE constexpr bool empty() const { return header_ == nullptr; }
+
+  // Returns the matching symbol, or nullptr. Defined only for names this
+  // module actually exports; callers walk modules in search order themselves.
+  //
+  // A module can define a name more than once, under different versions, with
+  // the older ones marked hidden. A reference which names no version gets the
+  // default one, so a hidden definition is only returned when it is the only
+  // one there is.
+  //
+  // A reference which names a version, as one from a module that links
+  // against a versioned library does, passes it as `version` and gets the
+  // definition under that name. A module which defines no versions at all
+  // satisfies any version, and when the module has the name but not that
+  // version the default definition stands in, so a mismatch binds as it did
+  // before versions were looked at rather than failing the load.
+  //
+  // `exact` is for a request which asks for that version and nothing else, as
+  // dlvsym does. Then a definition under another version does not stand in.
+  LIBC_INLINE const ElfW(Sym) *
+      lookup(const char *name, const char *version = nullptr,
+             bool exact = false) const {
+    if (header_ == nullptr || header_->nbuckets == 0)
+      return nullptr;
+
+    const uint32_t hash = gnu_hash(name);
+    if (!bloom_may_contain(hash))
+      return nullptr;
+
+    uint32_t index = buckets_[hash % header_->nbuckets];
+    if (index < header_->symoffset)
+      return nullptr;
+
+    const ElfW(Sym) *hidden = nullptr;
+    const ElfW(Sym) *fallback = nullptr;
+    for (;; ++index) {
+      const uint32_t entry = chain_[index - header_->symoffset];
+      // The low bit is the end-of-chain marker, so it is masked out of the
+      // comparison rather than being part of the hash.
+      if ((entry | 1) == (hash | 1) && matches(index, name)) {
+        if (version != nullptr && versym_ != nullptr && verdef_ != nullptr &&
+            version_is(versym_[index] & ~VERSYM_HIDDEN, version))
+          return &symtab_[index];
+        const bool versioned =
+            version != nullptr && versym_ != nullptr && verdef_ != nullptr;
+        // Another version stands in only for a reference that can take one.
+        if (!(exact && versioned)) {
+          if (versym_ == nullptr || (versym_[index] & VERSYM_HIDDEN) == 0) {
+            if (!versioned)
+              return &symtab_[index];
+            if (fallback == nullptr)
+              fallback = &symtab_[index];
+          } else if (hidden == nullptr) {
+            hidden = &symtab_[index];
+          }
+        }
+      }
+      if (entry & 1)
+        return fallback != nullptr ? fallback : hidden;
+    }
+  }
+
+  // How many symbols .dynsym holds. The section header is not mapped, so the
+  // count is worked out from the hash table: every symbol at or above
+  // symoffset is on exactly one chain, and the chains end at the highest
+  // index there is.
+  LIBC_INLINE uint32_t count() const {
+    if (header_ == nullptr)
+      return 0;
+    uint32_t last = header_->symoffset;
+    for (uint32_t i = 0; i < header_->nbuckets; ++i)
+      if (buckets_[i] > last)
+        last = buckets_[i];
+    if (last < header_->symoffset)
+      return header_->symoffset;
+    // Walk to the end of the chain the highest bucket starts.
+    while ((chain_[last - header_->symoffset] & 1) == 0)
+      ++last;
+    return last + 1;
+  }
+
+  LIBC_INLINE const ElfW(Sym) * symbol(uint32_t index) const {
+    return symtab_ == nullptr ? nullptr : &symtab_[index];
+  }
+
+  LIBC_INLINE const char *name(uint32_t index) const {
+    if (symtab_ == nullptr || strtab_ == nullptr)
+      return nullptr;
+    return strtab_ + symtab_[index].st_name;
+  }
+
+private:
+  // Whether version number `ndx` of this module is the one called `version`.
+  LIBC_INLINE bool version_is(uint16_t ndx, const char *version) const {
+    if (ndx < 2)
+      return false;
+    const ElfW(Verdef) *def = verdef_;
+    for (;;) {
+      if (def->vd_ndx == ndx) {
+        const auto *aux = reinterpret_cast<const ElfW(Verdaux) *>(
+            reinterpret_cast<const char *>(def) + def->vd_aux);
+        const char *candidate = strtab_ + aux->vda_name;
+        for (const char *want = version; *candidate == *want;
+             ++candidate, ++want)
+          if (*candidate == '\0')
+            return true;
+        return false;
+      }
+      if (def->vd_next == 0)
+        return false;
+      def = reinterpret_cast<const ElfW(Verdef) *>(
+          reinterpret_cast<const char *>(def) + def->vd_next);
+    }
+  }
+
+  LIBC_INLINE bool bloom_may_contain(uint32_t hash) const {
+    if (header_->bloom_size == 0)
+      return true;
+    constexpr uint32_t BITS = 8 * sizeof(ElfW(Addr));
+    const ElfW(Addr) word = bloom_[(hash / BITS) % header_->bloom_size];
+    const ElfW(Addr) mask = (ElfW(Addr))1 << (hash % BITS) |
+                            (ElfW(Addr))1
+                                << ((hash >> header_->bloom_shift) % BITS);
+    return (word & mask) == mask;
+  }
+
+  LIBC_INLINE bool matches(uint32_t index, const char *name) const {
+    const char *candidate = strtab_ + symtab_[index].st_name;
+    for (; *candidate == *name; ++candidate, ++name)
+      if (*candidate == '\0')
+        return true;
+    return false;
+  }
+
+  const GnuHashHeader *header_ = nullptr;
+  const ElfW(Addr) *bloom_ = nullptr;
+  const uint32_t *buckets_ = nullptr;
+  const uint32_t *chain_ = nullptr;
+  const ElfW(Sym) *symtab_ = nullptr;
+  const char *strtab_ = nullptr;
+  const uint16_t *versym_ = nullptr;
+  const ElfW(Verdef) *verdef_ = nullptr;
+};
+
+} // namespace elf
+} // namespace LIBC_NAMESPACE_DECL
+
+#endif // LLVM_LIBC_SRC___SUPPORT_ELF_SYMBOL_H

@@ -160,6 +160,7 @@ add_entrypoint_object(
     libc.src.__support.libc_errno
     libc.src.__support.macros.config
     libc.src.__support.macros.null_check
+    libc.src.__support.threads.linux.setxid
     libc.src.errno.errno
 )
 
@@ -192,7 +193,77 @@ add_object_library(
     libc.src.__support.macros.attributes
     libc.src.__support.macros.config
     libc.src.__support.macros.optimization
+    libc.src.__support.nss.dispatch
+    libc.src.__support.nss.lookup
     libc.src.__support.pwd.field_tokenizer
     libc.src.__support.pwd.flat_file_db
     libc.src.__support.str_to_integer
+    libc.src.__support.threads.linux.setxid
+)
+
+add_entrypoint_object(
+  putgrent
+  SRCS
+    putgrent.cpp
+  HDRS
+    putgrent.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_group
+    libc.src.errno.errno
+    libc.src.stdio.fprintf
+)
+
+add_entrypoint_object(
+  fgetgrent
+  SRCS
+    fgetgrent.cpp
+  HDRS
+    fgetgrent.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_group
+    libc.src.__support.CPP.span
+    libc.src.errno.errno
+    libc.src.grp.grp_utils
+    libc.src.stdio.fgets
+)
+
+add_entrypoint_object(
+  fgetgrent_r
+  SRCS
+    fgetgrent_r.cpp
+  HDRS
+    fgetgrent_r.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_group
+    libc.src.__support.CPP.span
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.macros.null_check
+    libc.src.grp.grp_utils
+    libc.src.stdio.fgets
+)
+
+add_entrypoint_object(
+  getgrent_r
+  SRCS
+    getgrent_r.cpp
+  HDRS
+    getgrent_r.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_group
+    libc.src.__support.CPP.span
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.macros.null_check
+    libc.src.grp.grp_utils
 )

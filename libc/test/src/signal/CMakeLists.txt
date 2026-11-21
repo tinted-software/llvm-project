@@ -1,6 +1,28 @@
 add_libc_testsuite(libc-signal-tests)
 
 add_libc_test(
+  sigqueue_basic_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sigqueue_basic_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.sigset_t
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.signal.sigisemptyset
+    libc.src.signal.sigprocmask
+    libc.src.signal.sigqueue
+    libc.src.signal.sigwaitinfo
+    libc.src.unistd.getpid
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
   raise_test
   SUITE
     libc-signal-tests
@@ -38,6 +60,22 @@ add_libc_test(
     libc.src.unistd.getpgrp
     libc.src.unistd.setpgid
     libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  siginterrupt_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    siginterrupt_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.struct_sigaction
+    libc.src.__support.libc_errno
+    libc.src.signal.sigaction
+    libc.src.signal.sigemptyset
+    libc.src.signal.siginterrupt
+    libc.test.UnitTest.ErrnoCheckingTest
 )
 
 add_libc_test(
@@ -189,6 +227,38 @@ add_libc_test(
 )
 
 add_libc_test(
+  sigandset_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sigandset_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.sigset_t
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.signal.sigismember
+    libc.src.signal.sigandset
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  sigorset_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sigorset_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.sigset_t
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.signal.sigismember
+    libc.src.signal.sigorset
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
   sigaddset_test
   SUITE
     libc-signal-tests
@@ -273,6 +343,158 @@ add_libc_test(
     libc.src.signal.raise
     libc.src.signal.sigaltstack
     libc.src.signal.sigaction
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  sigqueue_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sigqueue_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.sigset_t
+    libc.hdr.types.struct_timespec
+    libc.src.signal.killpg
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.signal.sigisemptyset
+    libc.src.signal.sigismember
+    libc.src.signal.sigpending
+    libc.src.signal.sigprocmask
+    libc.src.signal.sigqueue
+    libc.src.signal.sigtimedwait
+    libc.src.signal.sigwaitinfo
+    libc.src.unistd.getpgrp
+    libc.src.unistd.getpid
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  psignal_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    psignal_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.src.__support.CPP.string_view
+    libc.src.__support.StringUtil.signal_to_string
+    libc.src.signal.psignal
+    libc.src.unistd.close
+    libc.src.unistd.dup
+    libc.src.unistd.dup2
+    libc.src.unistd.pipe
+    libc.src.unistd.read
+)
+
+add_libc_test(
+  tgkill_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    tgkill_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.sigset_t
+    libc.hdr.types.struct_timespec
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.signal.sigismember
+    libc.src.signal.sigpending
+    libc.src.signal.sigprocmask
+    libc.src.signal.sigtimedwait
+    libc.src.signal.tgkill
+    libc.src.unistd.getpid
+    libc.src.unistd.gettid
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  pthread_sigqueue_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    pthread_sigqueue_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.sigset_t
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.union_sigval
+    libc.src.pthread.pthread_self
+    libc.src.signal.pthread_sigqueue
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.signal.sigprocmask
+    libc.src.signal.sigtimedwait
+    libc.src.unistd.getpid
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  sig2str_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sig2str_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.src.signal.sig2str
+    libc.src.signal.str2sig
+)
+
+add_libc_test(
+  sys_siglist_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sys_siglist_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.src.signal.sys_siglist
+    libc.src.signal.sys_signame
+)
+
+add_libc_test(
+  sigset64_test
+  SUITE
+    libc-signal-tests
+  SRCS
+    sigset64_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.sigset64_t
+    libc.hdr.types.sigset_t
+    libc.hdr.types.struct_sigaction
+    libc.hdr.types.struct_sigaction64
+    libc.hdr.types.struct_timespec
+    libc.src.signal.kill
+    libc.src.signal.pthread_sigmask64
+    libc.src.signal.sigaction64
+    libc.src.signal.sigaddset64
+    libc.src.signal.sigdelset64
+    libc.src.signal.sigemptyset64
+    libc.src.signal.sigfillset64
+    libc.src.signal.sigismember64
+    libc.src.signal.sigpending64
+    libc.src.signal.sigprocmask64
+    libc.src.signal.sigtimedwait64
+    libc.src.signal.sigwait64
+    libc.src.signal.sigwaitinfo64
+    libc.src.unistd.getpid
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )

@@ -43,6 +43,8 @@ add_entrypoint_object(
   HDRS
     ../open.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.hdr.types.mode_t
     libc.hdr.fcntl_macros
     libc.src.__support.OSUtil.linux.syscall_wrappers.open
@@ -73,9 +75,37 @@ add_entrypoint_object(
     ../posix_fadvise.h
   DEPENDS
     libc.hdr.types.off_t
+    libc.include.sys_syscall
+    libc.src.__support.OSUtil.osutil
     libc.src.__support.OSUtil.linux.syscall_wrappers.posix_fadvise
     libc.src.__support.common
     libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  readahead
+  SRCS
+    readahead.cpp
+  HDRS
+    ../readahead.h
+  DEPENDS
+    libc.hdr.types.off_t
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.readahead
+    libc.src.__support.libc_errno
+)
+
+add_entrypoint_object(
+  sync_file_range
+  SRCS
+    sync_file_range.cpp
+  HDRS
+    ../sync_file_range.h
+  DEPENDS
+    libc.hdr.types.off_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.sync_file_range
+    libc.src.__support.libc_errno
 )
 
 add_entrypoint_object(
@@ -103,4 +133,69 @@ add_entrypoint_object(
     libc.src.__support.OSUtil.linux.syscall_wrappers.fallocate
     libc.src.__support.common
     libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  splice
+  SRCS
+    splice.cpp
+  HDRS
+    ../splice.h
+  DEPENDS
+    libc.hdr.types.off_t
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.splice
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  vmsplice
+  SRCS
+    vmsplice.cpp
+  HDRS
+    ../vmsplice.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.hdr.types.struct_iovec
+    libc.src.__support.OSUtil.linux.syscall_wrappers.vmsplice
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  tee
+  SRCS
+    tee.cpp
+  HDRS
+    ../tee.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.tee
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  name_to_handle_at
+  SRCS
+    name_to_handle_at.cpp
+  HDRS
+    ../name_to_handle_at.h
+  DEPENDS
+    libc.hdr.types.struct_file_handle
+    libc.src.__support.OSUtil.linux.syscall_wrappers.name_to_handle_at
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  open_by_handle_at
+  SRCS
+    open_by_handle_at.cpp
+  HDRS
+    ../open_by_handle_at.h
+  DEPENDS
+    libc.hdr.types.struct_file_handle
+    libc.src.__support.OSUtil.linux.syscall_wrappers.open_by_handle_at
+    libc.src.errno.errno
 )

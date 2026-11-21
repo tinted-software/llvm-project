@@ -67,6 +67,20 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  cfsetspeed
+  SRCS
+    cfsetspeed.cpp
+  HDRS
+    ../cfsetspeed.h
+  DEPENDS
+    libc.hdr.types.speed_t
+    libc.hdr.types.struct_termios
+    libc.src.termios.cfsetispeed
+    libc.src.termios.cfsetospeed
+    libc.src.__support.macros.null_check
+)
+
+add_entrypoint_object(
   tcgetsid
   SRCS
     tcgetsid.cpp
@@ -85,6 +99,8 @@ add_entrypoint_object(
   HDRS
     ../tcdrain.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.src.__support.OSUtil.linux.syscall_wrappers.ioctl
     libc.src.errno.errno
 )
@@ -191,4 +207,15 @@ add_entrypoint_object(
     libc.src.__support.OSUtil.linux.syscall_wrappers.ioctl
     libc.src.errno.errno
     libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  cfmakeraw
+  SRCS
+    cfmakeraw.cpp
+  HDRS
+    ../cfmakeraw.h
+  DEPENDS
+    libc.hdr.termios_macros
+    libc.hdr.types.struct_termios
 )

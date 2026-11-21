@@ -27,6 +27,12 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: acosh
+    standards:
+      - stdc
+    return_type: double
+    arguments:
+      - type: double
   - name: acoshf
     standards:
       - stdc
@@ -72,6 +78,12 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: asinh
+    standards:
+      - stdc
+    return_type: double
+    arguments:
+      - type: double
   - name: asinhf
     standards:
       - stdc
@@ -131,6 +143,19 @@ functions:
     arguments:
       - type: long double
       - type: long double
+  - name: log2l
+    standards:
+      - stdc
+    return_type: long double
+    arguments:
+      - type: long double
+  - name: powl
+    standards:
+      - stdc
+    return_type: long double
+    arguments:
+      - type: long double
+      - type: long double
   - name: atan2f128
     standards:
       - stdc
@@ -160,6 +185,12 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: atanh
+    standards:
+      - stdc
+    return_type: double
+    arguments:
+      - type: double
   - name: atanhf
     standards:
       - stdc
@@ -323,6 +354,12 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: cosl
+    standards:
+      - stdc
+    return_type: long double
+    arguments:
+      - type: long double
   - name: cosh
     standards:
       - stdc
@@ -458,6 +495,24 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: erf
+    standards:
+      - stdc
+    return_type: double
+    arguments:
+      - type: double
+  - name: erfc
+    standards:
+      - stdc
+    return_type: double
+    arguments:
+      - type: double
+  - name: erfcf
+    standards:
+      - stdc
+    return_type: float
+    arguments:
+      - type: float
   - name: erfcf16
     standards:
       - stdc
@@ -1663,6 +1718,44 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: j0
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: double
+  - name: j0f
+    standards:
+      - gnu
+    return_type: float
+    arguments:
+      - type: float
+  - name: j1
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: double
+  - name: j1f
+    standards:
+      - gnu
+    return_type: float
+    arguments:
+      - type: float
+  - name: jn
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: int
+      - type: double
+  - name: jnf
+    standards:
+      - gnu
+    return_type: float
+    arguments:
+      - type: int
+      - type: float
   - name: ldexp
     standards:
       - stdc
@@ -2643,6 +2736,12 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: sinl
+    standards:
+      - stdc
+    return_type: long double
+    arguments:
+      - type: long double
   - name: sincos
     standards:
       - gnu
@@ -2742,6 +2841,12 @@ functions:
     arguments:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
+  - name: tanl
+    standards:
+      - stdc
+    return_type: long double
+    arguments:
+      - type: long double
   - name: tanh
     standards:
       - stdc
@@ -2762,6 +2867,18 @@ functions:
       - type: _Float16
     guard: LIBC_TYPES_HAS_FLOAT16
   - name: tanpif
+    standards:
+      - stdc
+    return_type: float
+    arguments:
+      - type: float
+  - name: tgamma
+    standards:
+      - stdc
+    return_type: double
+    arguments:
+      - type: double
+  - name: tgammaf
     standards:
       - stdc
     return_type: float
@@ -2964,3 +3081,41 @@ functions:
       - type: long double
       - type: int
       - type: unsigned int
+  - name: y0
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: double
+  - name: y0f
+    standards:
+      - gnu
+    return_type: float
+    arguments:
+      - type: float
+  - name: y1
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: double
+  - name: y1f
+    standards:
+      - gnu
+    return_type: float
+    arguments:
+      - type: float
+  - name: yn
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: int
+      - type: double
+  - name: ynf
+    standards:
+      - gnu
+    return_type: float
+    arguments:
+      - type: int
+      - type: float

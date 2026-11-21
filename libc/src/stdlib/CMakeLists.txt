@@ -67,6 +67,18 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  mb_cur_max
+  SRCS
+    mb_cur_max.cpp
+  HDRS
+    mb_cur_max.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
   getenv
   SRCS
     getenv.cpp
@@ -218,6 +230,139 @@ add_entrypoint_object(
   DEPENDS
     libc.src.errno.errno
     libc.src.__support.str_to_float
+)
+
+add_entrypoint_object(
+  getsubopt
+  SRCS
+    getsubopt.cpp
+  HDRS
+    getsubopt.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.string.string_utils
+)
+
+add_object_library(
+  rand48
+  SRCS
+    rand48.cpp
+  HDRS
+    rand48.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  drand48
+  SRCS
+    drand48.cpp
+  HDRS
+    drand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  erand48
+  SRCS
+    erand48.cpp
+  HDRS
+    erand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  lrand48
+  SRCS
+    lrand48.cpp
+  HDRS
+    lrand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  nrand48
+  SRCS
+    nrand48.cpp
+  HDRS
+    nrand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  mrand48
+  SRCS
+    mrand48.cpp
+  HDRS
+    mrand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  jrand48
+  SRCS
+    jrand48.cpp
+  HDRS
+    jrand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  srand48
+  SRCS
+    srand48.cpp
+  HDRS
+    srand48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  seed48
+  SRCS
+    seed48.cpp
+  HDRS
+    seed48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
+)
+
+add_entrypoint_object(
+  lcong48
+  SRCS
+    lcong48.cpp
+  HDRS
+    lcong48.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.rand48
 )
 
 add_entrypoint_object(
@@ -418,6 +563,7 @@ add_object_library(
   HDRS
     rand_util.h
   DEPENDS
+    libc.hdr.stdint_proxy
     libc.src.__support.common
 )
 
@@ -431,6 +577,18 @@ add_entrypoint_object(
     .rand_util
     libc.hdr.stdlib_macros
     libc.src.__support.threads.sleep
+)
+
+add_entrypoint_object(
+  rand_r
+  SRCS
+    rand_r.cpp
+  HDRS
+    rand_r.h
+  DEPENDS
+    .rand_util
+    libc.hdr.stdint_proxy
+    libc.hdr.stdlib_macros
 )
 
 add_entrypoint_object(
@@ -604,6 +762,36 @@ if(NOT LIBC_TARGET_OS_IS_BAREMETAL AND NOT LIBC_TARGET_OS_IS_GPU)
         ${SCUDO_DEPS}
     )
     add_entrypoint_external(
+      mallinfo
+      DEPENDS
+        ${SCUDO_DEPS}
+    )
+    add_entrypoint_external(
+      malloc_info
+      DEPENDS
+        ${SCUDO_DEPS}
+    )
+    add_entrypoint_external(
+      malloc_usable_size
+      DEPENDS
+        ${SCUDO_DEPS}
+    )
+    add_entrypoint_external(
+      memalign
+      DEPENDS
+        ${SCUDO_DEPS}
+    )
+    add_entrypoint_external(
+      valloc
+      DEPENDS
+        ${SCUDO_DEPS}
+    )
+    add_entrypoint_external(
+      pvalloc
+      DEPENDS
+        ${SCUDO_DEPS}
+    )
+    add_entrypoint_external(
       posix_memalign
       DEPENDS
         ${SCUDO_DEPS}
@@ -637,10 +825,54 @@ if(NOT LIBC_TARGET_OS_IS_BAREMETAL AND NOT LIBC_TARGET_OS_IS_GPU)
       posix_memalign
     )
   endif()
+
+  # Plain wrappers over free; they must exist without SCUDO.
+  add_entrypoint_object(
+    free_sized
+    SRCS
+      free_sized.cpp
+    HDRS
+      free_sized.h
+    DEPENDS
+      libc.hdr.func.free
+      libc.hdr.types.size_t
+      libc.src.__support.common
+      libc.src.__support.macros.config
+  )
+  add_entrypoint_object(
+    free_aligned_sized
+    SRCS
+      free_aligned_sized.cpp
+    HDRS
+      free_aligned_sized.h
+    DEPENDS
+      libc.hdr.func.free
+      libc.hdr.types.size_t
+      libc.src.__support.common
+      libc.src.__support.macros.config
+  )
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
+endif()
+
+# Handing memory back is the allocator's to do, so this is only offered where
+# there is an allocator that can be asked.
+if(TARGET libc.src.stdlib.mallopt)
+  add_entrypoint_object(
+    malloc_trim
+    SRCS
+      malloc_trim.cpp
+    HDRS
+      malloc_trim.h
+    DEPENDS
+      libc.hdr.func.mallopt
+      libc.hdr.types.size_t
+      libc.include.llvm-libc-macros.malloc_macros
+      libc.src.__support.common
+      libc.src.__support.macros.config
+  )
 endif()
 
 add_entrypoint_object(
@@ -672,10 +904,24 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  mkostemps
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.mkostemps
+)
+
+add_entrypoint_object(
   mkstemp
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.mkstemp
+)
+
+add_entrypoint_object(
+  mkstemps
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.mkstemps
 )
 
 if(NOT LLVM_LIBC_FULL_BUILD)
@@ -944,4 +1190,152 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.system
+)
+
+add_entrypoint_object(
+  mktemp
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.mktemp
+)
+
+
+
+add_object_library(
+  random_util
+  HDRS
+    random_util.h
+  SRCS
+    random_util.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.size_t
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  random
+  SRCS
+    random.cpp
+  HDRS
+    random.h
+  DEPENDS
+    .random_util
+)
+
+add_entrypoint_object(
+  srandom
+  SRCS
+    srandom.cpp
+  HDRS
+    srandom.h
+  DEPENDS
+    .random_util
+)
+
+add_entrypoint_object(
+  initstate
+  SRCS
+    initstate.cpp
+  HDRS
+    initstate.h
+  DEPENDS
+    .random_util
+    libc.hdr.errno_macros
+    libc.hdr.types.size_t
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  setstate
+  SRCS
+    setstate.cpp
+  HDRS
+    setstate.h
+  DEPENDS
+    .random_util
+    libc.hdr.errno_macros
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  posix_openpt
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.posix_openpt
+)
+
+add_entrypoint_object(
+  grantpt
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.grantpt
+)
+
+add_entrypoint_object(
+  unlockpt
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.unlockpt
+)
+
+add_entrypoint_object(
+  ptsname_r
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.ptsname_r
+)
+
+add_entrypoint_object(
+  ptsname
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.ptsname
+)
+
+add_entrypoint_object(
+  arc4random
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.arc4random
+)
+
+add_entrypoint_object(
+  arc4random_buf
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.arc4random_buf
+)
+
+add_entrypoint_object(
+  arc4random_uniform
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.arc4random_uniform
+)
+
+add_entrypoint_object(
+  getprogname
+  SRCS
+    getprogname.cpp
+  HDRS
+    getprogname.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.compat.progname
+)
+
+add_entrypoint_object(
+  setprogname
+  SRCS
+    setprogname.cpp
+  HDRS
+    setprogname.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.macros.null_check
+    libc.src.compat.progname
 )

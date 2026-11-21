@@ -61,3 +61,82 @@ add_libc_test(
     libc.hdr.types.struct_timeval
     libc.test.UnitTest.ErrnoCheckingTest
 )
+
+add_libc_test(
+  settimeofday_test
+  SUITE
+    libc-sys-time-tests
+  SRCS
+    settimeofday_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.struct_timeval
+    libc.hdr.types.struct_timezone
+    libc.src.errno.errno
+    libc.src.sys.time.gettimeofday
+    libc.src.sys.time.settimeofday
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  futimes_test
+  SUITE
+    libc-sys-time-tests
+  SRCS
+    futimes_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.struct_timeval
+    libc.src.fcntl.open
+    libc.src.sys.stat.fstat
+    libc.src.sys.time.futimes
+    libc.src.unistd.close
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  lutimes_test
+  SUITE
+    libc-sys-time-tests
+  SRCS
+    lutimes_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.struct_timeval
+    libc.src.fcntl.open
+    libc.src.sys.stat.lstat
+    libc.src.sys.stat.stat
+    libc.src.sys.time.lutimes
+    libc.src.unistd.close
+    libc.src.unistd.symlink
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  futimesat_test
+  SUITE
+    libc-sys-time-tests
+  SRCS
+    futimesat_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.struct_timeval
+    libc.src.fcntl.open
+    libc.src.sys.stat.stat
+    libc.src.sys.time.futimesat
+    libc.src.unistd.close
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)

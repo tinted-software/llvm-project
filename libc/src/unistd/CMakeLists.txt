@@ -27,6 +27,13 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  ualarm
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.ualarm
+)
+
+add_entrypoint_object(
   access
   ALIAS
   DEPENDS
@@ -45,6 +52,13 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.chown
+)
+
+add_entrypoint_object(
+  acct
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.acct
 )
 
 add_entrypoint_object(
@@ -141,6 +155,13 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  get_current_dir_name
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.get_current_dir_name
+)
+
+add_entrypoint_object(
   fdatasync
   ALIAS
   DEPENDS
@@ -152,6 +173,13 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.fork
+)
+
+add_entrypoint_object(
+  vfork
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.vfork
 )
 
 add_entrypoint_object(
@@ -253,6 +281,27 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  getdomainname
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.getdomainname
+)
+
+add_entrypoint_object(
+  setdomainname
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.setdomainname
+)
+
+add_entrypoint_object(
+  gethostid
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.gethostid
+)
+
+add_entrypoint_object(
   gethostname
   ALIAS
   DEPENDS
@@ -351,6 +400,14 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+
+  issetugid
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.issetugid
+)
+
+add_entrypoint_object(
   link
   ALIAS
   DEPENDS
@@ -400,6 +457,13 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  _Fork
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}._Fork
+)
+
+add_entrypoint_object(
   pipe
   ALIAS
   DEPENDS
@@ -432,6 +496,13 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.pwrite
+)
+
+add_entrypoint_object(
+  __read_chk
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.__read_chk
 )
 
 add_entrypoint_object(
@@ -491,6 +562,13 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  setpgrp
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.setpgrp
+)
+
+add_entrypoint_object(
   setregid
   ALIAS
   DEPENDS
@@ -523,6 +601,61 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.setsid
+)
+
+add_object_library(
+  usershell
+  SRCS
+    usershell.cpp
+  HDRS
+    usershell.h
+  DEPENDS
+    libc.src.__support.CPP.span
+    libc.src.__support.pwd.flat_file_db
+)
+
+add_entrypoint_object(
+  getusershell
+  SRCS
+    getusershell.cpp
+  HDRS
+    getusershell.h
+  DEPENDS
+    .usershell
+)
+
+add_entrypoint_object(
+  setusershell
+  SRCS
+    setusershell.cpp
+  HDRS
+    setusershell.h
+  DEPENDS
+    .usershell
+)
+
+add_entrypoint_object(
+  endusershell
+  SRCS
+    endusershell.cpp
+  HDRS
+    endusershell.h
+  DEPENDS
+    .usershell
+)
+
+add_entrypoint_object(
+  daemon
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.daemon
+)
+
+add_entrypoint_object(
+  vhangup
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.vhangup
 )
 
 add_entrypoint_object(
@@ -658,6 +791,45 @@ add_entrypoint_object(
     libc.src.__support.File.file
     libc.src.stdio.fprintf
     libc.src.stdio.stderr
+    libc.src.stdlib.environ_internal
+)
+
+add_entrypoint_object(
+  getopt_long
+  SRCS
+    getopt_long.cpp
+  HDRS
+    getopt_long.h
+    getopt_long_impl.h
+    getopt_common.h
+  DEPENDS
+    libc.hdr.getopt_macros
+    libc.include.llvm-libc-types.struct_option
+    libc.src.__support.CPP.optional
+    libc.src.__support.CPP.string_view
+    libc.src.stdio.fprintf
+    libc.src.stdio.stderr
+    libc.src.stdlib.environ_internal
+    libc.src.unistd.getopt
+)
+
+add_entrypoint_object(
+  getopt_long_only
+  SRCS
+    getopt_long_only.cpp
+  HDRS
+    getopt_long_only.h
+    getopt_long_impl.h
+    getopt_common.h
+  DEPENDS
+    libc.hdr.getopt_macros
+    libc.include.llvm-libc-types.struct_option
+    libc.src.__support.CPP.optional
+    libc.src.__support.CPP.string_view
+    libc.src.stdio.fprintf
+    libc.src.stdio.stderr
+    libc.src.stdlib.environ_internal
+    libc.src.unistd.getopt
 )
 
 add_entrypoint_object(
@@ -706,4 +878,80 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.getentropy
+)
+
+add_entrypoint_object(
+  ttyname
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.ttyname
+)
+
+add_entrypoint_object(
+  ttyname_r
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.ttyname_r
+)
+
+add_entrypoint_object(
+  brk
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.brk
+)
+
+add_entrypoint_object(
+  sbrk
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.sbrk
+)
+
+add_entrypoint_object(
+  getlogin_r
+  SRCS
+    getlogin_r.cpp
+  HDRS
+    getlogin_r.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.size_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getuid
+    libc.src.pwd.pwd_utils
+    libc.src.stdlib.environ_internal
+    libc.src.string.string_utils
+)
+
+add_entrypoint_object(
+  getpass
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.getpass
+)
+
+add_entrypoint_object(
+  getlogin
+  SRCS
+    getlogin.cpp
+  HDRS
+    getlogin.h
+  DEPENDS
+    .getlogin_r
+    libc.hdr.limits_macros
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  sethostname
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.sethostname
+)
+
+add_entrypoint_object(
+  getdtablesize
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.getdtablesize
 )

@@ -1,9 +1,20 @@
 set(TARGET_PUBLIC_HEADERS
-    libc.include.alloca
+    libc.include.android_api_level
+    libc.include.android_dlext
+    libc.include.android_fdsan
+    libc.include.android_crash_detail
+    libc.include.android_resolv_netid
+    libc.include.android_set_abort_message
+    libc.include.android_versioning
     libc.include.ar
+    libc.include.alloca
     libc.include.arpa_inet
     libc.include.arpa_nameser
+    libc.include.arpa_nameser_compat
     libc.include.assert
+    libc.include.bits_sa_family_t
+    libc.include.bits_sockaddr_storage
+    libc.include.bits_timespec
     libc.include.byteswap
     libc.include.complex
     libc.include.cpio
@@ -14,12 +25,18 @@ set(TARGET_PUBLIC_HEADERS
     libc.include.endian
     libc.include.err
     libc.include.errno
+    libc.include.error
+    libc.include.execinfo
     libc.include.fcntl
+    libc.include.fts
+    libc.include.ftw
+    libc.include.getopt
     libc.include.features
     libc.include.fenv
     libc.include.fnmatch
     libc.include.float
     libc.include.grp
+    libc.include.gshadow
     libc.include.inttypes
     libc.include.langinfo
     libc.include.libgen
@@ -28,21 +45,33 @@ set(TARGET_PUBLIC_HEADERS
     libc.include.locale
     libc.include.malloc
     libc.include.math
+    libc.include.monetary
     libc.include.memory
     libc.include.net_ethernet
     libc.include.net_if
     libc.include.netinet_ether
     libc.include.netinet_in
     libc.include.netinet_ip
+    libc.include.nl_types
+    libc.include.netinet_icmp6
+    libc.include.netinet_if_ether
+    libc.include.netinet_ip6
     libc.include.netinet_tcp
     libc.include.netinet_udp
+    libc.include.paths
     libc.include.poll
     libc.include.pthread
+    libc.include.mqueue
+    libc.include.printf
     libc.include.pwd
     libc.include.sched
+    libc.include.scsi_scsi
+    libc.include.scsi_scsi_ioctl
+    libc.include.scsi_sg
     libc.include.search
     libc.include.semaphore
     libc.include.setjmp
+    libc.include.shadow
     libc.include.signal
     libc.include.spawn
     libc.include.stdbit
@@ -50,10 +79,13 @@ set(TARGET_PUBLIC_HEADERS
     libc.include.stdfix
     libc.include.stdint
     libc.include.stdio
+    libc.include.stdio_ext
     libc.include.stdlib
     libc.include.string
     libc.include.strings
+    libc.include.sys_cdefs
     libc.include.sys_auxv
+    libc.include.sys_endian
     libc.include.sys_epoll
     libc.include.sys_eventfd
     libc.include.sys_fcntl
@@ -61,16 +93,31 @@ set(TARGET_PUBLIC_HEADERS
     libc.include.sys_inotify
     libc.include.sys_ioctl
     libc.include.sys_klog
+    libc.include.sys_mtio
+    libc.include.sys_ipc
     libc.include.sys_mman
     libc.include.sys_mount
+    libc.include.sys_msg
+    libc.include.sys_pidfd
+    libc.include.sys_signalfd
+    libc.include.sys_timerfd
+    libc.include.sys_fanotify
     libc.include.sys_param
     libc.include.sys_personality
     libc.include.sys_poll
     libc.include.sys_prctl
     libc.include.sys_queue
     libc.include.sys_random
+    libc.include.sys_dir
+    libc.include.sys_errno
+    libc.include.sys_swap
+    libc.include.sys_quota
+    libc.include.sys_reboot
+    libc.include.sys_timex
     libc.include.sys_resource
     libc.include.sys_select
+    libc.include.sys_sem
+    libc.include.sys_single_threaded
     libc.include.sys_sendfile
     libc.include.sys_shm
     libc.include.sys_signal
@@ -78,17 +125,21 @@ set(TARGET_PUBLIC_HEADERS
     libc.include.sys_stat
     libc.include.sys_statfs
     libc.include.sys_statvfs
-    libc.include.sys_swap
     libc.include.sys_sysinfo
     libc.include.sys_syscall
     libc.include.sys_sysmacros
     libc.include.sys_syslog
     libc.include.sys_time
-    libc.include.sys_timerfd
+    libc.include.sys_times
+    libc.include.sys_timeb
     libc.include.sys_types
+    libc.include.sys_ucontext
     libc.include.sys_uio
     libc.include.sys_un
     libc.include.sys_unistd
+    libc.include.sys__system_properties
+    libc.include.sys_system_properties
+    libc.include.sys_user
     libc.include.sys_utsname
     libc.include.sys_vfs
     libc.include.sys_wait
@@ -100,7 +151,13 @@ set(TARGET_PUBLIC_HEADERS
     libc.include.threads
     libc.include.time
     libc.include.uchar
+    libc.include.ucontext
     libc.include.unistd
+    libc.include.mntent
+    libc.include.utime
+    libc.include.values
+    libc.include.wait
+    libc.include.utmpx
     libc.include.wchar
     libc.include.wctype
 )
@@ -110,8 +167,29 @@ if(LLVM_LIBC_FULL_BUILD AND LLVM_LIBC_ENABLE_EXPERIMENTAL_ENTRYPOINTS)
     libc.include.glob
     libc.include.ifaddrs
     libc.include.libintl
+    libc.include.nss
+    libc.include.gnu_libc_version
+    libc.include.iconv
+    libc.include.lastlog
+    libc.include.net_if_arp
+    libc.include.net_route
     libc.include.netdb
+    libc.include.netinet_igmp
+    libc.include.netinet_in_systm
+    libc.include.netinet_in6
+    libc.include.netinet_ip_icmp
+    libc.include.netpacket_packet
+    libc.include.pty
     libc.include.regex
+    libc.include.resolv
+    libc.include.sys_fsuid
+    libc.include.sys_limits
+    libc.include.sys_kd
     libc.include.sys_ptrace
+    libc.include.sys_soundcard
+    libc.include.utmp
+    libc.include.sys_ttydefaults
+    libc.include.sys_vt
+    libc.include.wordexp
   )
 endif()

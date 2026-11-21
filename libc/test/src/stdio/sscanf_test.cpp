@@ -8,11 +8,15 @@
 
 #include "src/stdio/sscanf.h"
 
+#include "hdr/func/free.h"
 #include "hdr/stdio_macros.h" // For EOF
+#include "hdr/types/wchar_t.h"
 #include "src/__support/CPP/limits.h"
 #include "src/__support/FPUtil/FPBits.h"
+#include "src/string/string_utils.h"
 #include "test/UnitTest/FPMatcher.h"
 #include "test/UnitTest/Test.h"
+#include "test/UnitTest/Utf8Locale.h"
 
 TEST(LlvmLibcSScanfTest, SimpleStringConv) {
   int ret_val;
@@ -219,8 +223,9 @@ TEST(LlvmLibcSScanfTest, IntConvNoWriteTests) {
   EXPECT_EQ(ret_val, 0);
   EXPECT_EQ(result, 0);
 
+  // A suppressed conversion assigns nothing, so it is not counted.
   ret_val = LIBC_NAMESPACE::sscanf("01", "%*1i", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_EQ(result, 0);
 
   ret_val = LIBC_NAMESPACE::sscanf("0x1", "%*2i", &result);
@@ -232,7 +237,7 @@ TEST(LlvmLibcSScanfTest, IntConvNoWriteTests) {
   EXPECT_EQ(result, 0);
 
   ret_val = LIBC_NAMESPACE::sscanf("123", "%*i", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_EQ(result, 0);
 }
 
@@ -398,6 +403,49 @@ TEST(LlvmLibcSScanfTest, FloatConvLongNumber) {
   EXPECT_FP_EQ(d_result, 1e287);
 }
 
+TEST(LlvmLibcSScanfTest, InputFailureBeforeAnyConversion) {
+  int a = 0, b = 0;
+  char buf[8];
+
+  // Running out of input before anything has been assigned is EOF.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "%d", &a), EOF);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "%s", buf), EOF);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "%c", buf), EOF);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "x"), EOF);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "%*d"), EOF);
+
+  // White space alone is not something to convert, so a conversion which
+  // finds only white space and then the end also ran out of input.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("  ", "%d", &a), EOF);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("\n", "%u %u", &a, &b), EOF);
+
+  // Input which is there but does not match is a matching failure, and that
+  // is a count of zero.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("x", "%d", &a), 0);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("x", "y"), 0);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("0x", "%x", &a), 0);
+
+  // Once something has been assigned the count is what is reported, however
+  // the rest of the format goes.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("12", "%u %u", &a, &b), 1);
+
+  // A directive which only skips white space does not fail, so a format made
+  // of nothing else leaves the count at zero rather than reporting EOF.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", " "), 0);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", ""), 0);
+}
+
+TEST(LlvmLibcSScanfTest, UnterminatedScanSet) {
+  char buf[8];
+  buf[0] = 'z';
+
+  // A set which is never closed is not a conversion, and the scan stops
+  // where it is rather than matching the rest of the format as text.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "%[", buf), 0);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("abc", "%[", buf), 0);
+  EXPECT_EQ(buf[0], 'z');
+}
+
 TEST(LlvmLibcSScanfTest, FloatConvComplexParsing) {
   int ret_val;
   float result = 0;
@@ -409,8 +457,10 @@ TEST(LlvmLibcSScanfTest, FloatConvComplexParsing) {
   EXPECT_EQ(ret_val, 1);
   EXPECT_FP_EQ(result, 0x1.0e3p0f);
 
+  // Nothing to read at all is an input failure before any conversion, which
+  // is reported as EOF rather than as a count of zero.
   ret_val = LIBC_NAMESPACE::sscanf("", "%a", &result);
-  EXPECT_EQ(ret_val, 0);
+  EXPECT_EQ(ret_val, EOF);
 
   ret_val = LIBC_NAMESPACE::sscanf("+", "%a", &result);
   EXPECT_EQ(ret_val, 0);
@@ -537,55 +587,56 @@ TEST(LlvmLibcSScanfTest, FloatConvMaxWidth) {
 }
 
 TEST(LlvmLibcSScanfTest, FloatConvNoWrite) {
+  // A suppressed conversion assigns nothing, so none of these are counted.
   int ret_val;
   float result = 0;
 
   ret_val = LIBC_NAMESPACE::sscanf("123", "%*f", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("456.1", "%*a", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("0x789.ap0", "%*e", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("+12.0e1", "%*g", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("inf", "%*F", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("NaN", "%*A", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("-InFiNiTy", "%*E", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("1e10", "%*G", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf(".1", "%*G", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("123", "%*3f", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("123", "%*5f", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("456", "%*1f", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_FP_EQ(result, 0.0f);
 
   ret_val = LIBC_NAMESPACE::sscanf("Not a float", "%*f", &result);
@@ -623,7 +674,9 @@ TEST(LlvmLibcSScanfTest, CurPosCombined) {
                                    "00000000000000000000000000000000"
                                    "00000000000000000000000000000000",
                                    "%*d%hhn", &c_result);
-  EXPECT_EQ(ret_val, 1);
+  // Neither a suppressed conversion nor %n assigns any of the input, so
+  // neither is counted.
+  EXPECT_EQ(ret_val, 0);
   EXPECT_EQ(c_result, char(288)); // Overflow is handled by casting.
 
   // 320 characters
@@ -638,7 +691,7 @@ TEST(LlvmLibcSScanfTest, CurPosCombined) {
                                    "00000000000000000000000000000000"
                                    "00000000000000000000000000000000",
                                    "%*d%n", &result);
-  EXPECT_EQ(ret_val, 1);
+  EXPECT_EQ(ret_val, 0);
   EXPECT_EQ(result, 320);
 }
 #endif
@@ -704,4 +757,108 @@ TEST(LlvmLibcSScanfTest, CombinedConv) {
   EXPECT_EQ(ret_val, 0);
   EXPECT_EQ(result, -1);
   ASSERT_STREQ(buffer, "abc");
+}
+
+TEST(LlvmLibcSScanfTest, AllocatingStringConv) {
+  // The allocating conversion is given somewhere to put a pointer rather than
+  // somewhere to put the characters, and finds the room itself.
+  char *result = nullptr;
+  int ret_val = LIBC_NAMESPACE::sscanf("hello world", "%ms", &result);
+  EXPECT_EQ(ret_val, 1);
+  ASSERT_TRUE(result != nullptr);
+  ASSERT_STREQ(result, "hello");
+  ::free(result);
+
+  char *first = nullptr;
+  char *second = nullptr;
+  ret_val = LIBC_NAMESPACE::sscanf("one two", "%ms %ms", &first, &second);
+  EXPECT_EQ(ret_val, 2);
+  ASSERT_STREQ(first, "one");
+  ASSERT_STREQ(second, "two");
+  EXPECT_TRUE(first != second);
+  ::free(first);
+  ::free(second);
+
+  // Longer than any buffer this starts with, so the room has to grow.
+  result = nullptr;
+  ret_val = LIBC_NAMESPACE::sscanf(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "%ms", &result);
+  EXPECT_EQ(ret_val, 1);
+  ASSERT_TRUE(result != nullptr);
+  EXPECT_EQ(LIBC_NAMESPACE::internal::string_length(result), size_t(136));
+  ::free(result);
+
+  // A width limits what is taken, as it does without the flag.
+  result = nullptr;
+  ret_val = LIBC_NAMESPACE::sscanf("abcdef", "%3ms", &result);
+  EXPECT_EQ(ret_val, 1);
+  ASSERT_STREQ(result, "abc");
+  ::free(result);
+
+  // And a scan set works the same way.
+  result = nullptr;
+  ret_val = LIBC_NAMESPACE::sscanf("abc123def", "%m[a-z]", &result);
+  EXPECT_EQ(ret_val, 1);
+  ASSERT_STREQ(result, "abc");
+  ::free(result);
+
+  // Nothing matched, so nothing was allocated and nothing is stored.
+  result = nullptr;
+  ret_val = LIBC_NAMESPACE::sscanf("123", "%m[a-z]", &result);
+  EXPECT_EQ(ret_val, 0);
+  EXPECT_EQ(result, static_cast<char *>(nullptr));
+
+  // %c is not terminated, so only the width says how much was written.
+  result = nullptr;
+  ret_val = LIBC_NAMESPACE::sscanf("xyz", "%2mc", &result);
+  EXPECT_EQ(ret_val, 1);
+  ASSERT_TRUE(result != nullptr);
+  EXPECT_EQ(result[0], 'x');
+  EXPECT_EQ(result[1], 'y');
+  ::free(result);
+}
+
+TEST(LlvmLibcSScanfTest, ExactWidthCharConv) {
+  char buffer[8] = {};
+  // %c takes exactly as many characters as its width says. Fewer than that in
+  // the input is the input running out, not a mismatch.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("ab", "%5c", buffer), EOF);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("ab", "%2c", buffer), 1);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("ab", "%1c", buffer), 1);
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("", "%1c", buffer), EOF);
+}
+
+TEST(LlvmLibcSScanfTest, ScanSetWithNonAsciiBytes) {
+  char buf[16];
+  // Bytes above 0x7f are negative as char, and must still index the set.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("a\xc3\xa9z!", "%[^!]", buf), 1);
+  ASSERT_STREQ(buf, "a\xc3\xa9z");
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("\xc3\xa9\xc3\xa9x", "%[^x]", buf), 1);
+  ASSERT_STREQ(buf, "\xc3\xa9\xc3\xa9");
+}
+
+TEST(LlvmLibcSScanfTest, WideStringConv) {
+  wchar_t buf[16];
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("ab\xc3\xa9 x", "%ls", buf), 1);
+  ASSERT_EQ(buf[0], L'a');
+  ASSERT_EQ(buf[1], L'b');
+  ASSERT_EQ(buf[2], static_cast<wchar_t>(0xe9));
+  ASSERT_EQ(buf[3], L'\0');
+
+  // The width counts characters, not bytes.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("\xc3\xa9\xc3\xa9\xc3\xa9", "%2ls", buf), 1);
+  ASSERT_EQ(buf[1], static_cast<wchar_t>(0xe9));
+  ASSERT_EQ(buf[2], L'\0');
+
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("abc", "%2lc", buf), 1);
+  ASSERT_EQ(buf[1], L'b');
+
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("ab\xc3\xa9!", "%l[^!]", buf), 1);
+  ASSERT_EQ(buf[2], static_cast<wchar_t>(0xe9));
+  ASSERT_EQ(buf[3], L'\0');
+
+  // An invalid sequence is a conversion failure.
+  EXPECT_EQ(LIBC_NAMESPACE::sscanf("\xff\xff", "%ls", buf), 0);
 }

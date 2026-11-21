@@ -17,11 +17,13 @@
 #include "src/__support/common.h"
 #include "src/__support/libc_errno.h"
 #include "src/__support/macros/config.h"
+#include "src/__support/threads/cancel.h"
 
 namespace LIBC_NAMESPACE_DECL {
 
 LLVM_LIBC_FUNCTION(int, msync, (void *addr, size_t len, int flags)) {
-  auto result = linux_syscalls::msync(addr, len, flags);
+  auto result = internal::cancellable(
+      [&] { return linux_syscalls::msync(addr, len, flags); });
   if (!result) {
     libc_errno = result.error();
     return -1;

@@ -11,33 +11,179 @@
 
 // IEEE Std 1003.1-2017 - basedefs/sys_socket.h.html
 // Macro values come from the Linux syscall interface.
+//
+// The AF_ names are defined in terms of the PF_ ones, as glibc does, because
+// systemd scans for "#define AF_x AF_y" or "PF_y" to build its table of
+// address families and finds none when AF_ names are numbers.
 
-#define AF_UNSPEC 0   // Unspecified
-#define AF_UNIX 1     // Unix domain sockets
-#define AF_LOCAL 1    // POSIX name for AF_UNIX
-#define AF_INET 2     // Internet IPv4 Protocol
-#define AF_INET6 10   // IP version 6
-#define AF_NETLINK 16 // Netlink sockets
+// bionic's <sys/socket.h> brings in <linux/sockios.h>, and Android programs
+// take the SIOC* ioctl numbers from it.
+#if defined(__ANDROID__) && defined(__has_include)
+#if __has_include(<linux/sockios.h>)
+#include <linux/sockios.h>
+#endif
+#endif
 
 // 4.2BSD protocol families
-#define PF_UNSPEC AF_UNSPEC
-#define PF_UNIX AF_UNIX
-#define PF_LOCAL AF_LOCAL
-#define PF_INET AF_INET
-#define PF_INET6 AF_INET6
-#define PF_NETLINK AF_NETLINK
+#define PF_UNSPEC 0
+#define PF_UNIX 1
+#define PF_LOCAL 1
+#define PF_INET 2
+#define PF_INET6 10
+#define PF_NETLINK 16
+#define PF_BRIDGE 7
+#define PF_PACKET 17
+#define PF_VSOCK 40
+#define PF_MPLS 28
+#define PF_CAN 29
+#define PF_ALG 38
+#define PF_XDP 44
+#define PF_AX25 3
+#define PF_IPX 4
+#define PF_APPLETALK 5
+#define PF_NETROM 6
+#define PF_ATMPVC 8
+#define PF_X25 9
+#define PF_ROSE 11
+#define PF_DECnet 12
+#define PF_NETBEUI 13
+#define PF_SECURITY 14
+#define PF_KEY 15
+#define PF_ASH 18
+#define PF_ECONET 19
+#define PF_ATMSVC 20
+#define PF_RDS 21
+#define PF_SNA 22
+#define PF_IRDA 23
+#define PF_PPPOX 24
+#define PF_WANPIPE 25
+#define PF_LLC 26
+#define PF_IB 27
+#define PF_TIPC 30
+#define PF_BLUETOOTH 31
+#define PF_IUCV 32
+#define PF_RXRPC 33
+#define PF_ISDN 34
+#define PF_PHONET 35
+#define PF_IEEE802154 36
+#define PF_CAIF 37
+#define PF_NFC 39
+#define PF_KCM 41
+#define PF_QIPCRTR 42
+#define PF_SMC 43
+#define PF_MCTP 45
+#define PF_MAX 46
+#define PF_FILE PF_LOCAL
+#define PF_ROUTE PF_NETLINK
+
+#define AF_UNSPEC PF_UNSPEC   // Unspecified
+#define AF_UNIX PF_UNIX       // Unix domain sockets
+#define AF_LOCAL PF_LOCAL     // POSIX name for AF_UNIX
+#define AF_INET PF_INET       // Internet IPv4 Protocol
+#define AF_INET6 PF_INET6     // IP version 6
+#define AF_NETLINK PF_NETLINK // Netlink sockets
+#define AF_BRIDGE PF_BRIDGE   // Multiprotocol bridge
+#define AF_PACKET PF_PACKET   // Packets straight off the device
+#define AF_VSOCK PF_VSOCK     // Sockets between a guest and its host
+#define AF_MPLS PF_MPLS       // Multiprotocol label switching
+#define AF_CAN PF_CAN         // Controller area network
+#define AF_ALG PF_ALG         // Kernel crypto
+#define AF_XDP PF_XDP         // Express data path
+
+// The rest of the families the kernel knows, at the numbers it gives them.
+// AF_FILE and AF_ROUTE are the names 4.4BSD used for two of them.
+#define AF_AX25 PF_AX25
+#define AF_IPX PF_IPX
+#define AF_APPLETALK PF_APPLETALK
+#define AF_NETROM PF_NETROM
+#define AF_ATMPVC PF_ATMPVC
+#define AF_X25 PF_X25
+#define AF_ROSE PF_ROSE
+#define AF_DECnet PF_DECnet
+#define AF_NETBEUI PF_NETBEUI
+#define AF_SECURITY PF_SECURITY
+#define AF_KEY PF_KEY
+#define AF_ASH PF_ASH
+#define AF_ECONET PF_ECONET
+#define AF_ATMSVC PF_ATMSVC
+#define AF_RDS PF_RDS
+#define AF_SNA PF_SNA
+#define AF_IRDA PF_IRDA
+#define AF_PPPOX PF_PPPOX
+#define AF_WANPIPE PF_WANPIPE
+#define AF_LLC PF_LLC
+#define AF_IB PF_IB
+#define AF_TIPC PF_TIPC
+#define AF_BLUETOOTH PF_BLUETOOTH
+#define AF_IUCV PF_IUCV
+#define AF_RXRPC PF_RXRPC
+#define AF_ISDN PF_ISDN
+#define AF_PHONET PF_PHONET
+#define AF_IEEE802154 PF_IEEE802154
+#define AF_CAIF PF_CAIF
+#define AF_NFC PF_NFC
+#define AF_KCM PF_KCM
+#define AF_QIPCRTR PF_QIPCRTR
+#define AF_SMC PF_SMC
+#define AF_MCTP PF_MCTP
+#define AF_MAX PF_MAX
+#define AF_FILE PF_FILE
+#define AF_ROUTE PF_ROUTE
 
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
 #define SOCK_RAW 3
 #define SOCK_RDM 4
 #define SOCK_SEQPACKET 5
+#define SOCK_DCCP 6
 #define SOCK_PACKET 10
 
 #define SOCK_CLOEXEC 0x80000
 #define SOCK_NONBLOCK 0x800
 
 #define SOL_SOCKET 1
+
+// How many connections a listening socket may have waiting by default.
+#define SOMAXCONN 4096
+
+// The other levels setsockopt takes, for options which belong to a
+// protocol rather than to the socket itself. The ones which name a
+// protocol carried over IP are that protocol's own number.
+#define SOL_IP 0
+#define SOL_TCP 6
+#define SOL_UDP 17
+#define SOL_IPV6 41
+#define SOL_ICMPV6 58
+#define SOL_SCTP 132
+#define SOL_UDPLITE 136
+#define SOL_RAW 255
+#define SOL_DECNET 261
+#define SOL_X25 262
+#define SOL_PACKET 263
+#define SOL_ATM 264
+#define SOL_AAL 265
+#define SOL_IRDA 266
+#define SOL_NETBEUI 267
+#define SOL_LLC 268
+#define SOL_DCCP 269
+#define SOL_NETLINK 270
+#define SOL_TIPC 271
+#define SOL_RXRPC 272
+#define SOL_PPPOL2TP 273
+#define SOL_BLUETOOTH 274
+#define SOL_PNPIPE 275
+#define SOL_RDS 276
+#define SOL_IUCV 277
+#define SOL_CAIF 278
+#define SOL_ALG 279
+#define SOL_NFC 280
+#define SOL_KCM 281
+#define SOL_TLS 282
+#define SOL_XDP 283
+#define SOL_MPTCP 284
+#define SOL_MCTP 285
+#define SOL_SMC 286
+#define SOL_VSOCK 287
 
 // The values of the following constants differ on some architectures
 #if defined(__parisc__) || defined(__alpha__) || defined(__sparc__) ||         \
@@ -66,8 +212,8 @@
 #define SO_SNDLOWAT 19
 
 // The "old" options use a 32-bit time_t on 32-bit systems.
-// #define SO_RCVTIMEO_OLD 20
-// #define SO_SNDTIMEO_OLD 21
+#define SO_RCVTIMEO_OLD 20
+#define SO_SNDTIMEO_OLD 21
 
 #define SO_SECURITY_AUTHENTICATION 22
 #define SO_SECURITY_ENCRYPTION_TRANSPORT 23
@@ -77,19 +223,20 @@
 #define SO_DETACH_FILTER 27
 #define SO_GET_FILTER SO_ATTACH_FILTER
 #define SO_PEERNAME 28
-// #define SO_TIMESTAMP_OLD 29
+#define SO_TIMESTAMP_OLD 29
 #define SO_ACCEPTCONN 30
 #define SO_PEERSEC 31
 #define SO_SNDBUFFORCE 32
 #define SO_RCVBUFFORCE 33
 #define SO_PASSSEC 34
-// #define SO_TIMESTAMPNS_OLD 35
+#define SO_TIMESTAMPNS_OLD 35
 #define SO_MARK 36
-// #define SO_TIMESTAMPING_OLD 37
+#define SO_TIMESTAMPING_OLD 37
 #define SO_PROTOCOL 38
 #define SO_DOMAIN 39
 #define SO_RXQ_OVFL 40
 #define SO_WIFI_STATUS 41
+#define SCM_WIFI_STATUS SO_WIFI_STATUS
 #define SO_PEEK_OFF 42
 #define SO_NOFCS 43
 #define SO_LOCK_FILTER 44
@@ -111,15 +258,38 @@
 #define SO_PEERGROUPS 59
 #define SO_ZEROCOPY 60
 #define SO_TXTIME 61
+#define SCM_TXTIME SO_TXTIME
 #define SO_BINDTOIFINDEX 62
 
 // These are the "new" options, which assume a 64-bit time_t, regardless of the
 // pointer size.
-#define SO_TIMESTAMP 63
-#define SO_TIMESTAMPNS 64
-#define SO_TIMESTAMPING 65
-#define SO_RCVTIMEO 66
-#define SO_SNDTIMEO 67
+#define SO_TIMESTAMP_NEW 63
+#define SO_TIMESTAMPNS_NEW 64
+#define SO_TIMESTAMPING_NEW 65
+#define SO_RCVTIMEO_NEW 66
+#define SO_SNDTIMEO_NEW 67
+
+// Where time_t is already 64 bits the old options are the same thing, and
+// they are the ones glibc gives the plain names.
+#if defined(__LP64__)
+#define SO_TIMESTAMP SO_TIMESTAMP_OLD
+#define SO_TIMESTAMPNS SO_TIMESTAMPNS_OLD
+#define SO_TIMESTAMPING SO_TIMESTAMPING_OLD
+#define SO_RCVTIMEO SO_RCVTIMEO_OLD
+#define SO_SNDTIMEO SO_SNDTIMEO_OLD
+#else
+#define SO_TIMESTAMP SO_TIMESTAMP_NEW
+#define SO_TIMESTAMPNS SO_TIMESTAMPNS_NEW
+#define SO_TIMESTAMPING SO_TIMESTAMPING_NEW
+#define SO_RCVTIMEO SO_RCVTIMEO_NEW
+#define SO_SNDTIMEO SO_SNDTIMEO_NEW
+#endif
+
+// The control message a timestamp arrives in is named by the option which
+// asked for it.
+#define SCM_TIMESTAMP SO_TIMESTAMP
+#define SCM_TIMESTAMPNS SO_TIMESTAMPNS
+#define SCM_TIMESTAMPING SO_TIMESTAMPING
 
 #define SO_DETACH_REUSEPORT_BPF 68
 #define SO_PREFER_BUSY_POLL 69
@@ -146,6 +316,9 @@
 #define SCM_TIMESTAMP SO_TIMESTAMP
 #define SCM_TIMESTAMPNS SO_TIMESTAMPNS
 #define SCM_TIMESTAMPING SO_TIMESTAMPING
+#define SCM_CREDENTIALS 2
+#define SCM_SECURITY 3
+#define SCM_PIDFD 4
 
 #define MSG_OOB 0x01
 #define MSG_PEEK 0x02

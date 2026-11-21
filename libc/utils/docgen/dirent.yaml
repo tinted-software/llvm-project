@@ -29,6 +29,8 @@ macros:
     in-latest-posix: ''
   DT_SOCK:
     in-latest-posix: ''
+  DT_WHT:
+    c-definition: 'TODO: BSD extension'
   DT_UNKNOWN:
     in-latest-posix: ''
   DT_MQ:
@@ -49,6 +51,8 @@ functions:
     in-latest-posix: ''
   fdopendir:
     in-latest-posix: ''
+  getdents64:
+    c-definition: 'TODO: Linux extension'
   opendir:
     in-latest-posix: ''
   posix_getdents:
@@ -65,3 +69,5 @@ functions:
     in-latest-posix: ''
   telldir:
     in-latest-posix: ''
+  versionsort:
+    c-definition: 'TODO: glibc extension'

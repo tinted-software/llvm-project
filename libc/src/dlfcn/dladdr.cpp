@@ -15,14 +15,23 @@
 
 #include "src/__support/common.h"
 #include "src/__support/macros/config.h"
+#include "src/dlfcn/dl_address.h"
 
 namespace LIBC_NAMESPACE_DECL {
 
-// TODO: https:// github.com/llvm/llvm-project/issues/97929
+// Says which object an address is in, and which symbol of it. Unlike the rest
+// of dlfcn this reports failure with zero rather than with a message, and it
+// leaves dlerror alone, which is what every other implementation does.
+namespace internal {
+int dladdr_impl(const void *__restrict addr, Dl_info *__restrict info) {
+  return dl::address_lookup(addr, info, nullptr, nullptr) ? 1 : 0;
+}
+
+} // namespace internal
+
 LLVM_LIBC_FUNCTION(int, dladdr,
-                   ([[maybe_unused]] const void *__restrict addr,
-                    [[maybe_unused]] Dl_info *__restrict info)) {
-  return 0; // Returns 0 on fail, nonzero on success.
+                   (const void *__restrict addr, Dl_info *__restrict info)) {
+  return internal::dladdr_impl(addr, info);
 }
 
 } // namespace LIBC_NAMESPACE_DECL

@@ -1,6 +1,16 @@
 header: sys/types.h
 standards:
   - posix
+public_includes:
+  - endian.h
+  # glibc's <sys/types.h> brings in <sys/cdefs.h> through <features.h>, and
+  # headers written for glibc and bionic open their declarations with
+  # __BEGIN_DECLS having included nothing else that defines it.
+  - sys/cdefs.h
+  # glibc's <sys/types.h> carries fd_set and the macros that go with it, and
+  # a good deal of code counts on finding them there rather than including
+  # <sys/select.h> for itself.
+  - sys/select.h
 types:
   - type_name: blkcnt_t
   - type_name: blksize_t
@@ -11,6 +21,9 @@ types:
   - type_name: id_t
   - type_name: ino_t
   - type_name: ino64_t
+  - type_name: blkcnt64_t
+  - type_name: fsblkcnt64_t
+  - type_name: fsfilcnt64_t
   - type_name: key_t
   - type_name: loff_t
   - type_name: mode_t
@@ -37,11 +50,15 @@ types:
   - type_name: u_int
   - type_name: u_int16_t
   - type_name: u_int32_t
+  - type_name: u_int64_t
+  - type_name: quad_t
+  - type_name: u_quad_t
   - type_name: u_int8_t
   - type_name: u_long
   - type_name: u_short
   - type_name: uid_t
   - type_name: uint
+  - type_name: uint_t
   - type_name: ulong
   - type_name: useconds_t
   - type_name: ushort

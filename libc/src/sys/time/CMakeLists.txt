@@ -3,6 +3,27 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
 endif()
 
 add_entrypoint_object(
+  futimes
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.futimes
+)
+
+add_entrypoint_object(
+  futimesat
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.futimesat
+)
+
+add_entrypoint_object(
+  lutimes
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.lutimes
+)
+
+add_entrypoint_object(
   utimes
   ALIAS
   DEPENDS
@@ -28,4 +49,11 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.gettimeofday
+)
+
+add_entrypoint_object(
+  settimeofday
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.settimeofday
 )

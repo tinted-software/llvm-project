@@ -18,10 +18,25 @@
 #define EXIT_FAILURE 1
 
 #ifndef MB_CUR_MAX
-// We only support the "C" locale right now, so this is a constant byte.
-#define MB_CUR_MAX 1
+// How wide a character is follows from the locale in force, so this is not a
+// constant. Callers size buffers by it before writing a character into one.
+#define MB_CUR_MAX (__llvm_libc_mb_cur_max)
 #endif // MB_CUR_MAX
 
 #define RAND_MAX 2147483647
+
+// glibc's <stdlib.h> brings in <sys/types.h> for anything but a strict
+// standard view, and a good deal of code counts on finding dev_t and the rest
+// of its types there. Only the public header does; the library's own sources
+// include what they use.
+#if defined(_DEFAULT_SOURCE) && defined(_LLVM_LIBC_STDLIB_H)
+#include "../sys/types.h"
+#endif
+
+// POSIX has <stdlib.h> define the macros that take apart the status system()
+// returns, as <sys/wait.h> does.
+#ifdef _LLVM_LIBC_STDLIB_H
+#include "sys-wait-macros.h"
+#endif
 
 #endif // LLVM_LIBC_MACROS_STDLIB_MACROS_H

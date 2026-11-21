@@ -90,6 +90,7 @@ add_generic_entrypoint_object(
     ../fileno.h
   DEPENDS
     libc.hdr.types.FILE
+    libc.src.errno.errno
     libc.src.__support.File.file
     libc.src.__support.File.platform_file
     libc.src.__support.libc_errno
@@ -311,6 +312,49 @@ add_generic_entrypoint_object(
     ../fputs.h
   DEPENDS
     libc.src.errno.errno
+    libc.hdr.types.FILE
+    libc.src.__support.File.file
+    libc.src.__support.File.platform_file
+)
+
+add_generic_entrypoint_object(
+  fflush_unlocked
+  SRCS
+    fflush_unlocked.cpp
+  HDRS
+    ../fflush_unlocked.h
+  DEPENDS
+    libc.src.errno.errno
+    libc.hdr.stdio_macros
+    libc.hdr.types.FILE
+    libc.src.__support.File.file
+    libc.src.__support.File.platform_file
+)
+
+add_generic_entrypoint_object(
+  fputs_unlocked
+  SRCS
+    fputs_unlocked.cpp
+  HDRS
+    ../fputs_unlocked.h
+  DEPENDS
+    libc.src.errno.errno
+    libc.hdr.stdio_macros
+    libc.hdr.types.FILE
+    libc.src.__support.CPP.string_view
+    libc.src.__support.File.file
+    libc.src.__support.File.platform_file
+)
+
+add_generic_entrypoint_object(
+  fputc_unlocked
+  SRCS
+    fputc_unlocked.cpp
+  HDRS
+    ../fputc_unlocked.h
+  DEPENDS
+    libc.src.errno.errno
+    libc.hdr.stdio_macros
     libc.hdr.types.FILE
     libc.src.__support.File.file
     libc.src.__support.File.platform_file
@@ -558,6 +602,7 @@ add_generic_entrypoint_object(
   HDRS
     ../fprintf.h
   DEPENDS
+    .vfprintf
     ${fprintf_deps}
 )
 
@@ -744,4 +789,70 @@ add_generic_entrypoint_object(
     libc.hdr.types.FILE
     libc.src.__support.File.file
     libc.src.stdio.stderr
+)
+
+
+add_entrypoint_object(
+  dprintf
+  SRCS
+    dprintf.cpp
+  HDRS
+    ../dprintf.h
+  DEPENDS
+    libc.src.__support.CPP.limits
+    libc.src.__support.arg_list
+    libc.src.__support.printf_core.error_mapper
+    libc.src.__support.printf_core.vdprintf_internal
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  vdprintf
+  SRCS
+    vdprintf.cpp
+  HDRS
+    ../vdprintf.h
+  DEPENDS
+    libc.src.__support.CPP.limits
+    libc.src.__support.arg_list
+    libc.src.__support.printf_core.error_mapper
+    libc.src.__support.printf_core.vdprintf_internal
+    libc.src.errno.errno
+)
+
+add_generic_entrypoint_object(
+  setlinebuf
+  SRCS
+    setlinebuf.cpp
+  HDRS
+    ../setlinebuf.h
+  DEPENDS
+    libc.hdr.stdio_macros
+    libc.hdr.types.FILE
+    libc.src.__support.File.file
+)
+
+add_generic_entrypoint_object(
+  setbuffer
+  SRCS
+    setbuffer.cpp
+  HDRS
+    ../setbuffer.h
+  DEPENDS
+    libc.hdr.stdio_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.size_t
+    libc.src.__support.File.file
+)
+
+add_generic_entrypoint_object(
+  __fsetlocking
+  SRCS
+    __fsetlocking.cpp
+  HDRS
+    ../__fsetlocking.h
+  DEPENDS
+    libc.hdr.stdio_ext_macros
+    libc.hdr.types.FILE
+    libc.src.__support.File.file
 )

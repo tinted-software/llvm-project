@@ -1,0 +1,197 @@
+add_object_library(
+  dns_message
+  SRCS
+    dns_message.cpp
+  HDRS
+    dns_message.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.size_t
+    libc.src.__support.macros.config
+    libc.src.string.string_utils
+)
+
+add_header_library(
+  file_lines
+  HDRS
+    file_lines.h
+  DEPENDS
+    libc.src.__support.macros.attributes
+    libc.hdr.fcntl_macros
+    libc.hdr.types.size_t
+    libc.src.__support.CPP.string_view
+    libc.src.__support.OSUtil.linux.syscall_wrappers.open
+    libc.src.__support.OSUtil.linux.syscall_wrappers.read
+    libc.src.__support.ctype_utils
+    libc.src.__support.macros.config
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+)
+
+add_object_library(
+  services
+  SRCS
+    services.cpp
+  HDRS
+    services.h
+  DEPENDS
+    libc.hdr.types.struct_servent
+    libc.src.__support.macros.attributes
+    .file_lines
+    libc.hdr.stdint_proxy
+    libc.hdr.types.size_t
+    libc.src.__support.CPP.string_view
+    libc.src.__support.macros.config
+    libc.src.__support.nss.dispatch
+    libc.src.__support.nss.lookup
+    libc.src.__support.str_to_integer
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_object_library(
+  networks
+  SRCS
+    networks.cpp
+  HDRS
+    networks.h
+  DEPENDS
+    .file_lines
+    libc.hdr.stdint_proxy
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_netent
+    libc.src.__support.CPP.string_view
+    libc.src.__support.ctype_utils
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+    libc.src.__support.nss.dispatch
+    libc.src.__support.nss.lookup
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_object_library(
+  exchange
+  SRCS
+    exchange.cpp
+  HDRS
+    exchange.h
+  DEPENDS
+    .resolv_conf
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_pollfd
+    libc.hdr.types.struct_sockaddr_in
+    libc.hdr.types.struct_sockaddr_in6
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.time_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+    libc.src.__support.OSUtil.linux.syscall_wrappers.ppoll
+    libc.src.__support.OSUtil.linux.syscall_wrappers.recvfrom
+    libc.src.__support.OSUtil.linux.syscall_wrappers.sendto
+    libc.src.__support.OSUtil.linux.syscall_wrappers.socket
+    libc.src.__support.error_or
+    libc.src.__support.macros.config
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_object_library(
+  hosts
+  SRCS
+    hosts.cpp
+  HDRS
+    hosts.h
+  DEPENDS
+    .file_lines
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_hostent
+    libc.src.__support.CPP.string_view
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+    libc.src.__support.nss.dispatch
+    libc.src.__support.nss.lookup
+    libc.src.arpa.inet.inet_pton
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_object_library(
+  protocols
+  SRCS
+    protocols.cpp
+  HDRS
+    protocols.h
+  DEPENDS
+    .file_lines
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_protoent
+    libc.src.__support.CPP.string_view
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+    libc.src.__support.nss.dispatch
+    libc.src.__support.nss.lookup
+    libc.src.__support.str_to_integer
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_object_library(
+  resolv_conf
+  SRCS
+    resolv_conf.cpp
+  HDRS
+    resolv_conf.h
+  DEPENDS
+    libc.hdr.fcntl_macros
+    libc.hdr.stdint_proxy
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.size_t
+    libc.src.__support.CPP.string_view
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+    libc.src.__support.OSUtil.linux.syscall_wrappers.open
+    libc.src.__support.OSUtil.linux.syscall_wrappers.read
+    libc.src.__support.ctype_utils
+    libc.src.__support.macros.config
+    libc.src.__support.str_to_integer
+    libc.src.arpa.inet.inet_pton
+    libc.src.net.if.if_nametoindex
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_object_library(
+  lookup
+  SRCS
+    lookup.cpp
+  HDRS
+    lookup.h
+  DEPENDS
+    .dns_message
+    .resolv_conf
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.netdb_macros
+    libc.include.llvm-libc-macros.poll-macros
+    libc.hdr.stdint_proxy
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.size_t
+    libc.hdr.types.socklen_t
+    libc.hdr.types.struct_hostent
+    libc.hdr.types.struct_pollfd
+    libc.hdr.types.struct_sockaddr_in
+    libc.hdr.types.struct_sockaddr_in6
+    libc.src.__support.CPP.string_view
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getrandom
+    libc.src.__support.ctype_utils
+    libc.src.__support.libc_errno
+    libc.src.__support.macros.config
+    libc.src.__support.nss.dispatch
+    libc.src.arpa.inet.inet_pton
+    libc.src.net.if.if_nametoindex
+    libc.src.string.memory_utils.inline_memcpy
+    libc.src.string.string_utils
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+    libc.src.__support.OSUtil.linux.syscall_wrappers.ppoll
+    libc.src.__support.OSUtil.linux.syscall_wrappers.recvfrom
+    libc.src.__support.OSUtil.linux.syscall_wrappers.sendto
+    libc.src.__support.OSUtil.linux.syscall_wrappers.socket
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.time_t
+    libc.src.__support.error_or
+)

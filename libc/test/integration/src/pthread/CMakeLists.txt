@@ -1,6 +1,104 @@
 add_libc_testsuite(libc-pthread-integration-tests PARENT libc-integration-tests)
 
 add_integration_test(
+  pthread_mutex_robust_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_mutex_robust_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.stdint_proxy
+    libc.include.pthread
+    libc.src.__support.OSUtil.osutil
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.pthread.pthread_mutex_consistent
+    libc.src.pthread.pthread_mutex_destroy
+    libc.src.pthread.pthread_mutex_init
+    libc.src.pthread.pthread_mutex_lock
+    libc.src.pthread.pthread_mutex_unlock
+    libc.src.pthread.pthread_mutexattr_destroy
+    libc.src.pthread.pthread_mutexattr_init
+    libc.src.pthread.pthread_mutexattr_setrobust
+)
+
+add_integration_test(
+  pthread_mutex_timedlock_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_mutex_timedlock_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.time_macros
+    libc.hdr.types.struct_timespec
+    libc.include.pthread
+    libc.src.pthread.pthread_mutex_init
+    libc.src.pthread.pthread_mutex_lock
+    libc.src.pthread.pthread_mutex_timedlock
+    libc.src.pthread.pthread_mutex_unlock
+    libc.src.time.clock_gettime
+)
+
+add_integration_test(
+  pthread_rwlock_monotonic_np_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_rwlock_monotonic_np_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.time_macros
+    libc.hdr.types.struct_timespec
+    libc.include.pthread
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.pthread.pthread_rwlock_init
+    libc.src.pthread.pthread_rwlock_timedrdlock_monotonic_np
+    libc.src.pthread.pthread_rwlock_timedwrlock_monotonic_np
+    libc.src.pthread.pthread_rwlock_unlock
+    libc.src.pthread.pthread_rwlock_wrlock
+    libc.src.time.clock_gettime
+)
+
+add_integration_test(
+  pthread_mutexattr_protocol_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_mutexattr_protocol_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.include.pthread
+    libc.src.pthread.pthread_mutexattr_destroy
+    libc.src.pthread.pthread_mutexattr_getprotocol
+    libc.src.pthread.pthread_mutexattr_init
+    libc.src.pthread.pthread_mutexattr_setprotocol
+)
+
+add_integration_test(
+  pthread_attr_default_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_attr_default_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.include.pthread
+    libc.src.pthread.pthread_attr_destroy
+    libc.src.pthread.pthread_attr_getstacksize
+    libc.src.pthread.pthread_attr_init
+    libc.src.pthread.pthread_attr_setstacksize
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_getattr_default_np
+    libc.src.pthread.pthread_getattr_np
+    libc.src.pthread.pthread_join
+    libc.src.pthread.pthread_self
+    libc.src.pthread.pthread_setattr_default_np
+)
+
+add_integration_test(
   pthread_mutex_test
   SUITE
     libc-pthread-integration-tests
@@ -18,9 +116,11 @@ add_integration_test(
     libc.src.pthread.pthread_mutex_unlock
     libc.src.pthread.pthread_mutexattr_destroy
     libc.src.pthread.pthread_mutexattr_init
+    libc.src.pthread.pthread_mutexattr_setprotocol
     libc.src.pthread.pthread_mutexattr_settype
     libc.src.pthread.pthread_create
     libc.src.pthread.pthread_join
+    libc.src.time.clock_gettime
 )
 
 add_integration_test(
@@ -114,7 +214,9 @@ add_integration_test(
     libc.src.pthread.pthread_mutex_unlock
     libc.src.pthread.pthread_mutexattr_destroy
     libc.src.pthread.pthread_mutexattr_init
+    libc.src.pthread.pthread_mutexattr_setprotocol
     libc.src.pthread.pthread_mutexattr_setpshared
+    libc.src.pthread.pthread_mutexattr_setrobust
     libc.src.time.clock_gettime
 )
 
@@ -160,6 +262,37 @@ add_integration_test(
     libc.include.pthread
     libc.src.pthread.pthread_create
     libc.src.pthread.pthread_join
+)
+
+add_integration_test(
+  pthread_stack_guard_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_stack_guard_test.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.include.pthread
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+)
+
+add_integration_test(
+  pthread_stacksize_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_stacksize_test.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.sys_resource_macros
+    libc.hdr.types.struct_rlimit
+    libc.include.pthread
+    libc.src.pthread.pthread_attr_getstacksize
+    libc.src.pthread.pthread_attr_init
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.sys.resource.getrlimit
 )
 
 add_integration_test(
@@ -218,6 +351,19 @@ add_integration_test(
 )
 
 add_integration_test(
+  single_threaded_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    single_threaded_test.cpp
+  DEPENDS
+    libc.include.pthread
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.sys.single_threaded.__libc_single_threaded
+)
+
+add_integration_test(
   pthread_tss_test
   SUITE
     libc-pthread-integration-tests
@@ -268,6 +414,21 @@ add_integration_test(
     libc.src.pthread.pthread_create
     libc.src.pthread.pthread_join
     libc.src.pthread.pthread_self
+)
+
+add_integration_test(
+  pthread_tryjoin_np_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_tryjoin_np_test.cpp
+  DEPENDS
+    libc.src.__support.CPP.atomic
+    libc.include.pthread
+    libc.src.errno.errno
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_self
+    libc.src.pthread.pthread_tryjoin_np
 )
 
 add_integration_test(
@@ -396,6 +557,56 @@ add_integration_test(
     libc.src.pthread.pthread_mutex_unlock
     libc.src.pthread.pthread_self
     libc.src.pthread.pthread_setschedparam
+    libc.src.pthread.pthread_setschedprio
+)
+
+add_integration_test(
+  pthread_detach_signal_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_detach_signal_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.sigset_t
+    libc.hdr.types.struct_sigaction
+    libc.include.pthread
+    libc.src.__support.CPP.atomic
+    libc.src.__support.OSUtil.osutil
+    libc.src.pthread.pthread_attr_init
+    libc.src.pthread.pthread_attr_setdetachstate
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.signal.kill
+    libc.src.signal.pthread_sigmask
+    libc.src.signal.sigaction
+    libc.src.signal.sigaddset
+    libc.src.signal.sigemptyset
+    libc.src.unistd.getpid
+)
+
+add_integration_test(
+  pthread_sandbox_limits_test
+  SUITE
+    libc-pthread-integration-tests
+  SRCS
+    pthread_sandbox_limits_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_rlimit
+    libc.include.pthread
+    libc.include.sys_resource
+    libc.include.unistd
+    libc.src.__support.OSUtil.osutil
+    libc.src.compat.__llvm_libc_init_main_thread
+    libc.src.pthread.pthread_attr_destroy
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_getattr_np
+    libc.src.pthread.pthread_join
+    libc.src.pthread.pthread_self
+    libc.src.sys.resource.getrlimit
+    libc.src.sys.resource.setrlimit
+    libc.src.unistd.isatty
+    libc.src.unistd.sysconf
 )
 
 add_integration_test(
@@ -410,6 +621,7 @@ add_integration_test(
     libc.hdr.types.pthread_t
     libc.hdr.types.struct_timespec
     libc.hdr.types.time_t
+    libc.include.pthread
     libc.src.__support.CPP.atomic
     libc.src.__support.threads.futex_utils
     libc.src.__support.threads.thread

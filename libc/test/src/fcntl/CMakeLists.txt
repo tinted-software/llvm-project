@@ -9,6 +9,7 @@ add_libc_test(
   SRCS
     creat_test.cpp
   DEPENDS
+    libc.hdr.fcntl_macros
     libc.hdr.sys_stat_macros
     libc.include.fcntl
     libc.src.fcntl.creat
@@ -49,6 +50,86 @@ add_libc_test(
     libc.src.fcntl.openat
     libc.src.unistd.close
     libc.src.unistd.read
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  vmsplice_test
+  SUITE
+    libc-fcntl-tests
+  SRCS
+    vmsplice_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_iovec
+    libc.src.fcntl.tee
+    libc.src.fcntl.vmsplice
+    libc.src.unistd.close
+    libc.src.unistd.pipe
+    libc.src.unistd.read
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  allocate_test
+  SUITE
+    libc-fcntl-tests
+  SRCS
+    allocate_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.include.fcntl
+    libc.src.__support.libc_errno
+    libc.src.fcntl.fallocate
+    libc.src.fcntl.open
+    libc.src.fcntl.posix_fadvise
+    libc.src.fcntl.posix_fallocate
+    libc.src.sys.stat.fstat
+    libc.src.unistd.close
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  splice_test
+  SUITE
+    libc-fcntl-tests
+  SRCS
+    splice_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.fcntl.open
+    libc.src.fcntl.splice
+    libc.src.string.memcmp
+    libc.src.unistd.close
+    libc.src.unistd.pipe
+    libc.src.unistd.read
+    libc.src.unistd.unlink
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  sync_file_range_test
+  SUITE
+    libc-fcntl-tests
+  SRCS
+    sync_file_range_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.fcntl.open
+    libc.src.fcntl.sync_file_range
+    libc.src.unistd.close
+    libc.src.unistd.unlink
+    libc.src.unistd.write
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
@@ -117,3 +198,47 @@ add_libc_test(
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
   add_subdirectory(${LIBC_TARGET_OS})
 endif()
+
+add_libc_test(
+  file_handle_test
+  SUITE
+    libc-fcntl-tests
+  SRCS
+    file_handle_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.struct_file_handle
+    libc.src.__support.libc_errno
+    libc.src.fcntl.name_to_handle_at
+    libc.src.fcntl.open
+    libc.src.fcntl.open_by_handle_at
+    libc.src.string.memcmp
+    libc.src.unistd.close
+    libc.src.unistd.read
+    libc.src.unistd.unlink
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  readahead_test
+  SUITE
+    libc-fcntl-tests
+  SRCS
+    readahead_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.fcntl.open
+    libc.src.fcntl.readahead
+    libc.src.unistd.close
+    libc.src.unistd.unlink
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+

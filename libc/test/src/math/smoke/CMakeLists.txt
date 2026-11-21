@@ -1,6 +1,74 @@
 add_libc_testsuite(libc-math-smoke-tests PARENT libc-math-tests)
 
 add_fp_unittest(
+  tgamma_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    tgamma_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.tgamma
+    libc.src.math.tgammaf
+)
+
+add_fp_unittest(
+  bessel_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    bessel_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.j0
+    libc.src.math.j0f
+    libc.src.math.j1
+    libc.src.math.j1f
+    libc.src.math.jn
+    libc.src.math.jnf
+    libc.src.math.y0
+    libc.src.math.y0f
+    libc.src.math.y1
+    libc.src.math.y1f
+    libc.src.math.yn
+    libc.src.math.ynf
+)
+
+add_fp_unittest(
+  lgamma_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    lgamma_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.lgamma
+    libc.src.math.lgamma_r
+)
+
+add_fp_unittest(
+  powl_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    powl_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.powl
+)
+
+add_fp_unittest(
+  log2l_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    log2l_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.log2l
+)
+
+add_fp_unittest(
   cosf_test
   SUITE
     libc-math-smoke-tests
@@ -6621,6 +6689,39 @@ add_fp_unittest(
 )
 
 add_fp_unittest(
+  sinl_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    sinl_test.cpp
+  DEPENDS
+    libc.src.math.sinl
+    libc.hdr.errno_macros
+)
+
+add_fp_unittest(
+  cosl_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    cosl_test.cpp
+  DEPENDS
+    libc.src.math.cosl
+    libc.hdr.errno_macros
+)
+
+add_fp_unittest(
+  tanl_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    tanl_test.cpp
+  DEPENDS
+    libc.src.math.tanl
+    libc.hdr.errno_macros
+)
+
+add_fp_unittest(
   sin_test
   SUITE
     libc-math-smoke-tests
@@ -7255,3 +7356,70 @@ add_fp_unittest(
     libc.src.__support.FPUtil.bfloat16
     libc.src.__support.macros.properties.os
 )
+
+add_fp_unittest(
+  asinh_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    asinh_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.asinh
+)
+
+add_fp_unittest(
+  acosh_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    acosh_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.acosh
+)
+
+add_fp_unittest(
+  atanh_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    atanh_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.atanh
+)
+
+add_fp_unittest(
+  erf_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    erf_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.erf
+)
+
+add_fp_unittest(
+  erfc_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    erfc_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.math.erfc
+)
+
+add_fp_unittest(
+  erfcf_test
+  SUITE
+    libc-math-smoke-tests
+  SRCS
+    erfcf_test.cpp
+  DEPENDS
+    libc.src.math.erfcf
+    libc.src.__support.FPUtil.fp_bits
+)
+

@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "src/stdio/clearerr.h"
+#include "hdr/errno_macros.h"
 #include "src/stdio/fclose.h"
 #include "src/stdio/fflush.h"
+#include "src/stdio/ferror.h"
 #include "src/stdio/fopen.h"
 #include "src/stdio/fread.h"
 #include "src/stdio/fwrite.h"
@@ -21,6 +23,7 @@
 #include "test/UnitTest/ErrnoCheckingTest.h"
 #include "test/UnitTest/Test.h"
 
+#include "hdr/errno_macros.h"
 #include "hdr/stdio_macros.h"
 
 using LlvmLibcSetvbufTest = LIBC_NAMESPACE::testing::ErrnoCheckingTest;
@@ -30,7 +33,7 @@ TEST_F(LlvmLibcSetvbufTest, SetNBFBuffer) {
   // then set a NBF buffer to the write handle. Since it is NBF, the data
   // written using the write handle should be immediately readable by the read
   // handle.
-  constexpr char FILENAME[] = "testdata/setvbuf_nbf.test";
+  auto FILENAME = libc_make_test_file_path("setvbuf_nbf.test");
 
   ::FILE *fw = LIBC_NAMESPACE::fopen(FILENAME, "w");
   ASSERT_FALSE(fw == nullptr);
@@ -66,7 +69,7 @@ TEST_F(LlvmLibcSetvbufTest, SetLBFBuffer) {
   // then set a LBF buffer to the write handle. Since it is LBF, the data
   // written using the write handle should be available right after a '\n' is
   // written.
-  constexpr char FILENAME[] = "testdata/setvbuf_lbf.test";
+  auto FILENAME = libc_make_test_file_path("setvbuf_lbf.test");
 
   ::FILE *fw = LIBC_NAMESPACE::fopen(FILENAME, "w");
   ASSERT_FALSE(fw == nullptr);
@@ -106,7 +109,7 @@ TEST_F(LlvmLibcSetvbufTest, NullBufferOfNoSizeIsUnbuffered) {
   // A buffer of no size cannot hold anything, so the stream is unbuffered
   // whatever mode was asked for, and what is written is readable through
   // another handle without a flush.
-  constexpr char FILENAME[] = "testdata/setvbuf_null_buffer_no_size.test";
+  auto FILENAME = libc_make_test_file_path("setvbuf_null_buffer_no_size.test");
   constexpr char CONTENT[] = "abcdef";
   constexpr size_t CONTENT_SIZE = sizeof(CONTENT) - 1;
 
@@ -127,7 +130,7 @@ TEST_F(LlvmLibcSetvbufTest, NullBufferOfNoSizeIsUnbuffered) {
 }
 
 TEST_F(LlvmLibcSetvbufTest, LineBufferedNullBufferOfNoSizeIsUnbuffered) {
-  constexpr char FILENAME[] = "testdata/setvbuf_null_buffer_no_size_lbf.test";
+  auto FILENAME = libc_make_test_file_path("setvbuf_null_buffer_no_size_lbf.test");
   constexpr char CONTENT[] = "abcdef";
   constexpr size_t CONTENT_SIZE = sizeof(CONTENT) - 1;
 
@@ -150,7 +153,7 @@ TEST_F(LlvmLibcSetvbufTest, LineBufferedNullBufferOfNoSizeIsUnbuffered) {
 }
 
 TEST_F(LlvmLibcSetvbufTest, NullBufferWithASizeStaysBuffered) {
-  constexpr char FILENAME[] = "testdata/setvbuf_null_buffer_sized.test";
+  auto FILENAME = libc_make_test_file_path("setvbuf_null_buffer_sized.test");
   constexpr char CONTENT[] = "abcdef";
   constexpr size_t CONTENT_SIZE = sizeof(CONTENT) - 1;
 
@@ -175,7 +178,7 @@ TEST_F(LlvmLibcSetvbufTest, NullBufferWithASizeStaysBuffered) {
 }
 
 TEST(LlvmLibcSetbufTest, InvalidBufferMode) {
-  constexpr char FILENAME[] = "testdata/setvbuf_invalid_bufmode.test";
+  auto FILENAME = libc_make_test_file_path("setvbuf_invalid_bufmode.test");
   ::FILE *f = LIBC_NAMESPACE::fopen(FILENAME, "w");
   ASSERT_FALSE(f == nullptr);
   char buf[BUFSIZ];
@@ -184,4 +187,35 @@ TEST(LlvmLibcSetbufTest, InvalidBufferMode) {
   ASSERT_ERRNO_EQ(EINVAL);
 
   ASSERT_EQ(0, LIBC_NAMESPACE::fclose(f));
+}
+
+TEST_F(LlvmLibcSetvbufTest, WhatIsWaitingInTheOldBufferIsNotLost) {
+  auto FILENAME = libc_make_test_file_path("setvbuf_flush.test");
+
+  ::FILE *fw = LIBC_NAMESPACE::fopen(FILENAME, "w");
+  ASSERT_FALSE(fw == nullptr);
+  ASSERT_EQ(LIBC_NAMESPACE::fwrite("abc", 1, 3, fw), size_t(3));
+  // The three bytes are still in the stream's own buffer here.
+  static char buffer[BUFSIZ];
+  ASSERT_EQ(LIBC_NAMESPACE::setvbuf(fw, buffer, _IOFBF, BUFSIZ), 0);
+  ASSERT_EQ(LIBC_NAMESPACE::fclose(fw), 0);
+
+  ::FILE *fr = LIBC_NAMESPACE::fopen(FILENAME, "r");
+  ASSERT_FALSE(fr == nullptr);
+  char data[4] = {};
+  ASSERT_EQ(LIBC_NAMESPACE::fread(data, 1, 3, fr), size_t(3));
+  ASSERT_STREQ(data, "abc");
+  ASSERT_EQ(LIBC_NAMESPACE::fclose(fr), 0);
+}
+
+TEST_F(LlvmLibcSetvbufTest, AnUnbufferedWriteThatFailsSaysWhy) {
+  ::FILE *f = LIBC_NAMESPACE::fopen("/dev/full", "w");
+  ASSERT_FALSE(f == nullptr);
+  ASSERT_EQ(LIBC_NAMESPACE::setvbuf(f, nullptr, _IONBF, 0), 0);
+  ASSERT_EQ(LIBC_NAMESPACE::fwrite("x", 1, 1, f), size_t(0));
+  ASSERT_NE(LIBC_NAMESPACE::ferror(f), 0);
+  ASSERT_ERRNO_EQ(ENOSPC);
+  // The failed byte was let go of rather than kept, so closing has nothing
+  // left to fail on.
+  ASSERT_EQ(LIBC_NAMESPACE::fclose(f), 0);
 }

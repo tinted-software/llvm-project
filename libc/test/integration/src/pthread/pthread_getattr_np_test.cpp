@@ -37,6 +37,18 @@ static size_t pagesize() {
   return static_cast<size_t>(LIBC_NAMESPACE::sysconf(_SC_PAGESIZE));
 }
 
+// The guard size a thread gets when none is asked for. It is a multiple of the
+// largest page size the architecture has, not of the one in use, so it is not
+// always the page size.
+static size_t default_guardsize() {
+  pthread_attr_t attr;
+  size_t guardsize = 0;
+  ASSERT_EQ(LIBC_NAMESPACE::pthread_attr_init(&attr), 0);
+  ASSERT_EQ(LIBC_NAMESPACE::pthread_attr_getguardsize(&attr, &guardsize), 0);
+  ASSERT_EQ(LIBC_NAMESPACE::pthread_attr_destroy(&attr), 0);
+  return guardsize;
+}
+
 static void check_readable(const void *start, size_t size) {
   size_t page_size = pagesize();
   auto *bytes = static_cast<const volatile char *>(start);
@@ -76,20 +88,23 @@ struct PthreadAttrValues {
 };
 
 // Test 1: Main thread attributes
-// Verifies that pthread_getattr_np on the main thread reports a detached state,
-// a dynamic stack size (PTHREAD_STACK_DYNAMIC_NP), and a zero guard size.
+// Verifies that pthread_getattr_np on the main thread reports a joinable
+// state, a zero guard size and, as glibc does, a stack as large as its limit
+// allows, reaching down from the top of the stack.
 static void test_main_thread() {
   PthreadAttrValues values;
   values.populate_from(LIBC_NAMESPACE::pthread_self());
 
   ASSERT_EQ(values.detachstate, static_cast<int>(PTHREAD_CREATE_JOINABLE));
   ASSERT_NE(values.stackaddr, static_cast<void *>(nullptr));
-  ASSERT_EQ(values.stacksize, static_cast<size_t>(PTHREAD_STACK_DYNAMIC_NP));
+  ASSERT_TRUE(values.stacksize > 0);
   ASSERT_EQ(reinterpret_cast<uintptr_t>(values.stackaddr) % pagesize(),
             static_cast<uintptr_t>(0));
 
   uintptr_t local_var_addr = reinterpret_cast<uintptr_t>(&values);
-  uintptr_t stack_high = reinterpret_cast<uintptr_t>(values.stackaddr);
+  uintptr_t stack_low = reinterpret_cast<uintptr_t>(values.stackaddr);
+  uintptr_t stack_high = stack_low + values.stacksize;
+  ASSERT_TRUE(local_var_addr >= stack_low);
   ASSERT_TRUE(local_var_addr < stack_high);
   check_readable(&values, stack_high - local_var_addr);
 
@@ -116,7 +131,7 @@ static void *child_default_func(void *arg) {
 
   check_readable(values->stackaddr, values->stacksize);
 
-  ASSERT_EQ(values->guardsize, pagesize());
+  ASSERT_EQ(values->guardsize, default_guardsize());
 
   wait_barrier(ready_barrier);
   wait_barrier(done_barrier);
@@ -199,7 +214,7 @@ static void *child_detached_func(void *) {
   values.populate_from(LIBC_NAMESPACE::pthread_self());
 
   ASSERT_EQ(values.detachstate, static_cast<int>(PTHREAD_CREATE_DETACHED));
-  ASSERT_EQ(values.guardsize, pagesize());
+  ASSERT_EQ(values.guardsize, default_guardsize());
 
   wait_barrier(done_barrier);
   return nullptr;

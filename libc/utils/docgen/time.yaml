@@ -116,6 +116,8 @@ functions:
     in-latest-posix: ''
   timer_settime:
     in-latest-posix: ''
+  tz_variables:
+    c-definition: 'TODO: glibc extension'
   tzset:
     in-latest-posix: ''
   timespec_getres:

@@ -9,15 +9,9 @@
 #ifndef LLVM_LIBC_TYPES__BARRIER_TYPE_H
 #define LLVM_LIBC_TYPES__BARRIER_TYPE_H
 
-#include <stdbool.h>
-
-typedef struct __attribute__((aligned(8 /* alignof (Barrier) */))) {
-  unsigned expected;
-  unsigned waiting;
-  bool blocking;
-  char entering[24 /* sizeof (CndVar) */];
-  char exiting[24 /* sizeof (CndVar) */];
-  char mutex[24 /* sizeof (Mutex) */];
+// glibc's size and alignment. The implementation needs about twenty bytes.
+typedef struct __attribute__((aligned(8))) {
+  char __size[32];
 } __barrier_type;
 
 #endif // LLVM_LIBC_TYPES__BARRIER_TYPE_H

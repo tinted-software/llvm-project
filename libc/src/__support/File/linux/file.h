@@ -31,6 +31,7 @@ FileIOResult linux_file_write(File *, const void *, size_t);
 FileIOResult linux_file_read(File *, void *, size_t);
 ErrorOr<off_t> linux_file_seek(File *, off_t, int);
 int linux_file_close(File *);
+bool linux_file_isatty(File *);
 
 // Returns true iff |f| is actually a LinuxFile, as opposed to some other
 // File subclass (e.g. CookieFile, MemoryFile) that doesn't have a real
@@ -47,9 +48,12 @@ protected:
   // For subclasses which need to do extra cleanup when the file is closed.
   constexpr LinuxFile(int file_descriptor, uint8_t *buffer, size_t buffer_size,
                       int buffer_mode, bool owned, FileMode mode,
-                      CloseFunc *close_func)
+                      CloseFunc *close_func, bool static_stream = false,
+                      bool settle_buffer_mode = false)
       : File(&linux_file_write, &linux_file_read, &linux_file_seek, close_func,
-             buffer, buffer_size, buffer_mode, owned, mode),
+             buffer, buffer_size, buffer_mode, owned, mode, static_stream,
+             /*has_file_descriptor=*/true, &linux_file_isatty,
+             settle_buffer_mode),
         fd(file_descriptor) {}
 
   // Closes the underlying file descriptor. Returns 0 on success, or an error
@@ -58,9 +62,11 @@ protected:
 
 public:
   constexpr LinuxFile(int file_descriptor, uint8_t *buffer, size_t buffer_size,
-                      int buffer_mode, bool owned, FileMode mode)
+                      int buffer_mode, bool owned, FileMode mode,
+                      bool static_stream = false,
+                      bool settle_buffer_mode = false)
       : LinuxFile(file_descriptor, buffer, buffer_size, buffer_mode, owned,
-                  mode, &linux_file_close) {}
+                  mode, &linux_file_close, static_stream, settle_buffer_mode) {}
 
   // Allocates a FileT owning a new default-size buffer. FileT must be
   // LinuxFile or a subclass with LinuxFile's constructor signature.

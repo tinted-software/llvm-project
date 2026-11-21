@@ -28,9 +28,9 @@ namespace LIBC_NAMESPACE_DECL {
 namespace pthread_cond_utils {
 
 static_assert(
-    sizeof(CndVar) == sizeof(pthread_cond_t) &&
-        alignof(CndVar) == alignof(pthread_cond_t),
-    "The public pthread_cond_t type must be of the same size and alignment "
+    sizeof(CndVar) <= sizeof(pthread_cond_t) &&
+        alignof(CndVar) <= alignof(pthread_cond_t),
+    "The public pthread_cond_t type must be at least as large and as aligned "
     "as the internal condition variable type.");
 
 LIBC_INLINE CndVar *to_cndvar(pthread_cond_t *cond) {
@@ -44,9 +44,7 @@ LIBC_INLINE Mutex *to_mutex(pthread_mutex_t *mutex) {
   LIBC_CRASH_ON_NULLPTR(mutex);
   // TODO: use cpp:start_lifetime_as once
   // https://github.com/llvm/llvm-project/pull/193326 is merged
-  Mutex *m = reinterpret_cast<Mutex *>(mutex);
-  LIBC_ASSERT(!m->is_robust() && "Robust mutex not supported yet");
-  return m;
+  return reinterpret_cast<Mutex *>(mutex);
 }
 
 LIBC_INLINE bool is_supported_clock(clockid_t clock_id) {

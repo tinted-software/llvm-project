@@ -9,22 +9,130 @@
 #ifndef LLVM_LIBC_MACROS_NETINET_IN_MACROS_H
 #define LLVM_LIBC_MACROS_NETINET_IN_MACROS_H
 
+#include "uapi-compat-macros.h"
+
 #include "../__llvm-libc-common.h"
 #include "../llvm-libc-types/in_addr_t.h"
 #include "../llvm-libc-types/struct_in6_addr.h"
 
+// The protocol numbers are the kernel's too, in <linux/in.h>. Leaving them
+// to it is right only where that header has been read.
+#if !(defined(__UAPI_DEF_IN_IPPROTO) && __UAPI_DEF_IN_IPPROTO &&               \
+      defined(_LINUX_IN_H))
 #define IPPROTO_IP 0
 #define IPPROTO_ICMP 1
+#define IPPROTO_IGMP 2
+#define IPPROTO_IPIP 4
 #define IPPROTO_TCP 6
+#define IPPROTO_EGP 8
+#define IPPROTO_PUP 12
 #define IPPROTO_UDP 17
+#define IPPROTO_IDP 22
+#define IPPROTO_TP 29
+#define IPPROTO_DCCP 33
 #define IPPROTO_IPV6 41
+#define IPPROTO_RSVP 46
+#define IPPROTO_GRE 47
+#define IPPROTO_ESP 50
+#define IPPROTO_AH 51
+#define IPPROTO_MTP 92
+#define IPPROTO_BEETPH 94
+#define IPPROTO_ENCAP 98
+#define IPPROTO_PIM 103
+#define IPPROTO_COMP 108
+#define IPPROTO_L2TP 115
+#define IPPROTO_SCTP 132
+#define IPPROTO_UDPLITE 136
+#define IPPROTO_MPLS 137
+#define IPPROTO_ETHERNET 143
+#define IPPROTO_AGGFRAG 144
 #define IPPROTO_RAW 255
+#define IPPROTO_SMC 256
+#define IPPROTO_MPTCP 262
+
+// One past the last of them, which is what a table indexed by protocol needs
+// to be as large as.
+#define IPPROTO_MAX 263
+
+// Say the definitions here are the ones, so <linux/in.h> skips its own if
+// it is read after this.
+#undef __UAPI_DEF_IN_IPPROTO
+#define __UAPI_DEF_IN_IPPROTO 0
+#endif
+
+// The extension headers an IPv6 packet may carry, which sit in the same
+// number space as the protocols above. The kernel has these in
+// <linux/in6.h>.
+#if !(defined(__UAPI_DEF_IPPROTO_V6) && __UAPI_DEF_IPPROTO_V6 &&               \
+      defined(_LINUX_IN6_H))
+#define IPPROTO_HOPOPTS 0
+#define IPPROTO_ROUTING 43
+#define IPPROTO_FRAGMENT 44
+#define IPPROTO_ICMPV6 58
+#define IPPROTO_NONE 59
+#define IPPROTO_DSTOPTS 60
+#define IPPROTO_MH 135
+
+#undef __UAPI_DEF_IPPROTO_V6
+#define __UAPI_DEF_IPPROTO_V6 0
+#endif
+
+// The classes addresses were once divided into. Subnetting replaced them
+// long ago, but the names are still how a program asks whether an address is
+// a multicast one.
+#define IN_CLASSA(a)                                                           \
+  ((__LLVM_LIBC_CAST(static_cast, in_addr_t, a) & 0x80000000) == 0)
+#define IN_CLASSA_NET 0xff000000
+#define IN_CLASSA_NSHIFT 24
+#define IN_CLASSA_HOST (0xffffffff & ~IN_CLASSA_NET)
+#define IN_CLASSA_MAX 128
+
+#define IN_CLASSB(a)                                                           \
+  ((__LLVM_LIBC_CAST(static_cast, in_addr_t, a) & 0xc0000000) == 0x80000000)
+#define IN_CLASSB_NET 0xffff0000
+#define IN_CLASSB_NSHIFT 16
+#define IN_CLASSB_HOST (0xffffffff & ~IN_CLASSB_NET)
+#define IN_CLASSB_MAX 65536
+
+#define IN_CLASSC(a)                                                           \
+  ((__LLVM_LIBC_CAST(static_cast, in_addr_t, a) & 0xe0000000) == 0xc0000000)
+#define IN_CLASSC_NET 0xffffff00
+#define IN_CLASSC_NSHIFT 8
+#define IN_CLASSC_HOST (0xffffffff & ~IN_CLASSC_NET)
+
+#define IN_CLASSD(a)                                                           \
+  ((__LLVM_LIBC_CAST(static_cast, in_addr_t, a) & 0xf0000000) == 0xe0000000)
+#define IN_MULTICAST(a) IN_CLASSD(a)
+
+#define IN_EXPERIMENTAL(a)                                                     \
+  ((__LLVM_LIBC_CAST(static_cast, in_addr_t, a) & 0xe0000000) == 0xe0000000)
+#define IN_BADCLASS(a)                                                         \
+  ((__LLVM_LIBC_CAST(static_cast, in_addr_t, a) & 0xf0000000) == 0xf0000000)
+
+// The network the loopback address belongs to.
+#define IN_LOOPBACKNET 127
+
+// Not glibc's, but the kernel's <linux/in.h> has it, spelt as here so that
+// reading both is not a redefinition, and Android's netd uses it.
+#define IN_LOOPBACK(a) ((((long int)(a)) & 0xff000000) == 0x7f000000)
 
 #define INADDR_ANY __LLVM_LIBC_CAST(static_cast, in_addr_t, 0x00000000)
 #define INADDR_BROADCAST __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xffffffff)
 #define INADDR_NONE __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xffffffff)
 // Not specified by POSIX, added in SVR4
 #define INADDR_LOOPBACK __LLVM_LIBC_CAST(static_cast, in_addr_t, 0x7f000001)
+#define INADDR_DUMMY __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xc0000008)
+
+// The multicast groups every host and router belongs to.
+#define INADDR_UNSPEC_GROUP __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xe0000000)
+#define INADDR_ALLHOSTS_GROUP                                                  \
+  __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xe0000001)
+#define INADDR_ALLRTRS_GROUP                                                   \
+  __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xe0000002)
+#define INADDR_ALLSNOOPERS_GROUP                                               \
+  __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xe000006a)
+#define INADDR_MAX_LOCAL_GROUP                                                 \
+  __LLVM_LIBC_CAST(static_cast, in_addr_t, 0xe00000ff)
 
 #define IN6ADDR_ANY_INIT                                                       \
   {                                                                            \
@@ -54,33 +162,52 @@
 
 #define IN6_IS_ADDR_UNSPECIFIED(a)                                             \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     __IN6_IS_ADDR_UNSPECIFIED(__a);                                            \
   }))
 
 #define IN6_IS_ADDR_LOOPBACK(a)                                                \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     __IN6_IS_ADDR_LOOPBACK(__a);                                               \
   }))
 
-#define IN6_IS_ADDR_MULTICAST(a) ((a)->s6_addr[0] == 0xff)
+// Every one of these takes something that points at the sixteen octets of an
+// address, not necessarily a struct in6_addr: netlink code has them as four
+// words, and packet code has them as bytes. The cast is what lets it.
+#define IN6_IS_ADDR_MULTICAST(a) (((const unsigned char *)(a))[0] == 0xff)
 
 #define IN6_IS_ADDR_LINKLOCAL(a)                                               \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     __a->s6_addr[0] == 0xfe && (__a->s6_addr[1] & 0xc0) == 0x80;               \
   }))
 
 #define IN6_IS_ADDR_SITELOCAL(a)                                               \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     __a->s6_addr[0] == 0xfe && (__a->s6_addr[1] & 0xc0) == 0xc0;               \
   }))
 
+// bionic's unique local address test (RFC 4193), which the Android network code
+// uses and which no standard header has.
+#ifdef __ANDROID__
+#define IN6_IS_ADDR_ULA(a) ((((const unsigned char *)(a))[0] & 0xfe) == 0xfc)
+
+// The scope of an IPv6 multicast address and the values it takes, which
+// bionic's <netinet/in6.h> has and Android's address selection uses.
+#define IPV6_ADDR_SCOPE_NODELOCAL 0x01
+#define IPV6_ADDR_SCOPE_INTFACELOCAL 0x01
+#define IPV6_ADDR_SCOPE_LINKLOCAL 0x02
+#define IPV6_ADDR_SCOPE_SITELOCAL 0x05
+#define IPV6_ADDR_SCOPE_ORGLOCAL 0x08
+#define IPV6_ADDR_SCOPE_GLOBAL 0x0e
+#define IPV6_ADDR_MC_SCOPE(a) (((const unsigned char *)(a))[1] & 0x0f)
+#endif
+
 #define IN6_IS_ADDR_V4MAPPED(a)                                                \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     __a->s6_addr32[0] == 0 && __a->s6_addr32[1] == 0 &&                        \
         __a->s6_addr[8] == 0 && __a->s6_addr[9] == 0 &&                        \
         __a->s6_addr[10] == 0xff && __a->s6_addr[11] == 0xff;                  \
@@ -88,40 +215,189 @@
 
 #define IN6_IS_ADDR_V4COMPAT(a)                                                \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     __a->s6_addr32[0] == 0 && __a->s6_addr32[1] == 0 &&                        \
         __a->s6_addr32[2] == 0 && !__IN6_IS_ADDR_UNSPECIFIED(__a) &&           \
         !__IN6_IS_ADDR_LOOPBACK(__a);                                          \
   }))
 
+#define IN6_ARE_ADDR_EQUAL(a, b)                                               \
+  (__extension__({                                                             \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
+    const struct in6_addr *__b = (const struct in6_addr *)(b);                 \
+    __a->s6_addr32[0] == __b->s6_addr32[0] &&                                  \
+        __a->s6_addr32[1] == __b->s6_addr32[1] &&                              \
+        __a->s6_addr32[2] == __b->s6_addr32[2] &&                              \
+        __a->s6_addr32[3] == __b->s6_addr32[3];                                \
+  }))
+
 #define IN6_IS_ADDR_MC_NODELOCAL(a)                                            \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     IN6_IS_ADDR_MULTICAST(__a) && (__a->s6_addr[1] & 0xf) == 0x1;              \
   }))
 
 #define IN6_IS_ADDR_MC_LINKLOCAL(a)                                            \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     IN6_IS_ADDR_MULTICAST(__a) && (__a->s6_addr[1] & 0xf) == 0x2;              \
   }))
 
 #define IN6_IS_ADDR_MC_SITELOCAL(a)                                            \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     IN6_IS_ADDR_MULTICAST(__a) && (__a->s6_addr[1] & 0xf) == 0x5;              \
   }))
 
 #define IN6_IS_ADDR_MC_ORGLOCAL(a)                                             \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     IN6_IS_ADDR_MULTICAST(__a) && (__a->s6_addr[1] & 0xf) == 0x8;              \
   }))
 
 #define IN6_IS_ADDR_MC_GLOBAL(a)                                               \
   (__extension__({                                                             \
-    const struct in6_addr *__a = (a);                                          \
+    const struct in6_addr *__a = (const struct in6_addr *)(a);                 \
     IN6_IS_ADDR_MULTICAST(__a) && (__a->s6_addr[1] & 0xf) == 0xe;              \
   }))
+
+// Socket options at the IPPROTO_IP level.
+#define IP_TOS 1
+#define IP_TTL 2
+#define IP_HDRINCL 3
+#define IP_OPTIONS 4
+#define IP_ROUTER_ALERT 5
+#define IP_RECVOPTS 6
+#define IP_RETOPTS 7
+#define IP_PKTINFO 8
+#define IP_PKTOPTIONS 9
+#define IP_MTU_DISCOVER 10
+#define IP_RECVERR 11
+#define IP_RECVTTL 12
+#define IP_RECVTOS 13
+#define IP_MTU 14
+#define IP_FREEBIND 15
+#define IP_IPSEC_POLICY 16
+#define IP_XFRM_POLICY 17
+#define IP_PASSSEC 18
+#define IP_TRANSPARENT 19
+#define IP_ORIGDSTADDR 20
+#define IP_RECVORIGDSTADDR IP_ORIGDSTADDR
+#define IP_MINTTL 21
+#define IP_NODEFRAG 22
+#define IP_CHECKSUM 23
+#define IP_BIND_ADDRESS_NO_PORT 24
+#define IP_RECVFRAGSIZE 25
+
+#define IP_MULTICAST_IF 32
+#define IP_MULTICAST_TTL 33
+#define IP_MULTICAST_LOOP 34
+#define IP_ADD_MEMBERSHIP 35
+#define IP_DROP_MEMBERSHIP 36
+#define IP_UNBLOCK_SOURCE 37
+#define IP_BLOCK_SOURCE 38
+#define IP_ADD_SOURCE_MEMBERSHIP 39
+#define IP_DROP_SOURCE_MEMBERSHIP 40
+#define IP_MSFILTER 41
+#define IP_MULTICAST_ALL 49
+#define IP_UNICAST_IF 50
+#define IP_LOCAL_PORT_RANGE 51
+#define IP_PROTOCOL 52
+
+// What IP_MTU_DISCOVER may be set to.
+#define IP_PMTUDISC_DONT 0
+#define IP_PMTUDISC_WANT 1
+#define IP_PMTUDISC_DO 2
+#define IP_PMTUDISC_PROBE 3
+#define IP_PMTUDISC_INTERFACE 4
+#define IP_PMTUDISC_OMIT 5
+
+// Socket options at the IPPROTO_IPV6 level.
+#define IPV6_ADDRFORM 1
+#define IPV6_2292PKTINFO 2
+#define IPV6_2292HOPOPTS 3
+#define IPV6_2292DSTOPTS 4
+#define IPV6_2292RTHDR 5
+#define IPV6_2292PKTOPTIONS 6
+#define IPV6_CHECKSUM 7
+#define IPV6_2292HOPLIMIT 8
+#define IPV6_NEXTHOP 9
+#define IPV6_FLOWINFO 11
+
+#define IPV6_UNICAST_HOPS 16
+#define IPV6_MULTICAST_IF 17
+#define IPV6_MULTICAST_HOPS 18
+#define IPV6_MULTICAST_LOOP 19
+#define IPV6_ADD_MEMBERSHIP 20
+#define IPV6_DROP_MEMBERSHIP 21
+#define IPV6_JOIN_GROUP IPV6_ADD_MEMBERSHIP
+#define IPV6_LEAVE_GROUP IPV6_DROP_MEMBERSHIP
+#define IPV6_ROUTER_ALERT 22
+#define IPV6_MTU_DISCOVER 23
+#define IPV6_MTU 24
+#define IPV6_RECVERR 25
+#define IPV6_V6ONLY 26
+#define IPV6_JOIN_ANYCAST 27
+#define IPV6_LEAVE_ANYCAST 28
+#define IPV6_MULTICAST_ALL 29
+#define IPV6_ROUTER_ALERT_ISOLATE 30
+#define IPV6_RECVERR_RFC4884 31
+
+#define IPV6_RECVPKTINFO 49
+#define IPV6_PKTINFO 50
+#define IPV6_RECVHOPLIMIT 51
+#define IPV6_HOPLIMIT 52
+#define IPV6_RECVHOPOPTS 53
+#define IPV6_HOPOPTS 54
+#define IPV6_RTHDRDSTOPTS 55
+#define IPV6_RECVRTHDR 56
+#define IPV6_RTHDR 57
+#define IPV6_RECVDSTOPTS 58
+#define IPV6_DSTOPTS 59
+#define IPV6_RECVPATHMTU 60
+#define IPV6_PATHMTU 61
+#define IPV6_DONTFRAG 62
+
+#define IPV6_RECVTCLASS 66
+#define IPV6_TCLASS 67
+
+#define IPV6_AUTOFLOWLABEL 70
+#define IPV6_ADDR_PREFERENCES 72
+#define IPV6_MINHOPCOUNT 73
+#define IPV6_ORIGDSTADDR 74
+#define IPV6_RECVORIGDSTADDR IPV6_ORIGDSTADDR
+#define IPV6_TRANSPARENT 75
+#define IPV6_UNICAST_IF 76
+#define IPV6_RECVFRAGSIZE 77
+#define IPV6_FREEBIND 78
+
+// What IPV6_MTU_DISCOVER may be set to.
+#define IPV6_PMTUDISC_DONT 0
+#define IPV6_PMTUDISC_WANT 1
+#define IPV6_PMTUDISC_DO 2
+#define IPV6_PMTUDISC_PROBE 3
+#define IPV6_PMTUDISC_INTERFACE 4
+#define IPV6_PMTUDISC_OMIT 5
+
+// The rest of what glibc's header has: older names, and values a program
+// compares against.
+#define IP_PMTUDISC 10
+#define IP_RECVERR_RFC4884 26
+#define IP_RECVRETOPTS IP_RETOPTS
+#define IP_DEFAULT_MULTICAST_TTL 1
+#define IP_DEFAULT_MULTICAST_LOOP 1
+#define IP_MAX_MEMBERSHIPS 20
+#define IP_MSFILTER_SIZE(numsrc)                                               \
+  (sizeof(struct ip_msfilter) - sizeof(struct in_addr) +                       \
+   (numsrc) * sizeof(struct in_addr))
+
+#define IPV6_IPSEC_POLICY 34
+#define IPV6_XFRM_POLICY 35
+#define IPV6_HDRINCL 36
+#define IPV6_RXHOPOPTS IPV6_HOPOPTS
+#define IPV6_RXDSTOPTS IPV6_DSTOPTS
+#define IPV6_RTHDR_LOOSE 0
+#define IPV6_RTHDR_STRICT 1
+#define IPV6_RTHDR_TYPE_0 0
 
 #endif // LLVM_LIBC_MACROS_NETINET_IN_MACROS_H

@@ -5,6 +5,8 @@ add_entrypoint_object(
   HDRS
     ../readv.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.hdr.types.ssize_t
     libc.hdr.types.struct_iovec
     libc.src.__support.OSUtil.linux.syscall_wrappers.readv
@@ -21,6 +23,8 @@ add_entrypoint_object(
   HDRS
     ../writev.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.hdr.types.ssize_t
     libc.hdr.types.struct_iovec
     libc.src.__support.OSUtil.linux.syscall_wrappers.writev
@@ -61,5 +65,33 @@ add_entrypoint_object(
     libc.src.__support.common
     libc.src.__support.libc_errno
     libc.src.__support.macros.config
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  preadv
+  SRCS
+    preadv.cpp
+  HDRS
+    ../preadv.h
+  DEPENDS
+    libc.hdr.types.off_t
+    libc.hdr.types.ssize_t
+    libc.hdr.types.struct_iovec
+    libc.src.__support.OSUtil.linux.syscall_wrappers.preadv
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  pwritev
+  SRCS
+    pwritev.cpp
+  HDRS
+    ../pwritev.h
+  DEPENDS
+    libc.hdr.types.off_t
+    libc.hdr.types.ssize_t
+    libc.hdr.types.struct_iovec
+    libc.src.__support.OSUtil.linux.syscall_wrappers.pwritev
     libc.src.errno.errno
 )

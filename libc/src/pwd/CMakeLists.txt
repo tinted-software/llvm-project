@@ -123,6 +123,20 @@ add_entrypoint_object(
     .pwd_utils
 )
 
+add_entrypoint_object(
+  putpwent
+  SRCS
+    putpwent.cpp
+  HDRS
+    putpwent.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_passwd
+    libc.src.errno.errno
+    libc.src.stdio.fprintf
+)
+
 add_object_library(
   pwd_utils
   HDRS
@@ -146,9 +160,47 @@ add_object_library(
     libc.src.__support.ctype_utils
     libc.src.__support.dynamic_buffer
     libc.src.__support.error_or
+    libc.src.__support.nss.dispatch
+    libc.src.__support.nss.lookup
     libc.src.__support.pwd.field_tokenizer
     libc.src.__support.pwd.flat_file_db
     libc.src.__support.str_to_integer
     libc.src.__support.macros.attributes
     libc.src.__support.macros.config
+)
+
+
+add_entrypoint_object(
+  fgetpwent
+  SRCS
+    fgetpwent.cpp
+  HDRS
+    fgetpwent.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.struct_passwd
+    libc.src.__support.CPP.span
+    libc.src.errno.errno
+    libc.src.pwd.pwd_utils
+    libc.src.stdio.fgets
+)
+
+add_entrypoint_object(
+  fgetpwent_r
+  SRCS
+    fgetpwent_r.cpp
+  HDRS
+    fgetpwent_r.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.size_t
+    libc.hdr.types.struct_passwd
+    libc.src.__support.CPP.span
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.macros.null_check
+    libc.src.pwd.pwd_utils
+    libc.src.stdio.fgets
 )

@@ -24,12 +24,291 @@
 
 // Relocations
 
+#ifdef __ANDROID__
+// bionic's test for the magic number at the start of an ELF header.
+#define IS_ELF(ehdr)                                                           \
+  ((ehdr).e_ident[EI_MAG0] == ELFMAG0 && (ehdr).e_ident[EI_MAG1] == ELFMAG1 && \
+   (ehdr).e_ident[EI_MAG2] == ELFMAG2 && (ehdr).e_ident[EI_MAG3] == ELFMAG3)
+#endif
+
 #define ELF32_R_SYM(i) ((i) >> 8)
 #define ELF32_R_TYPE(i) ((unsigned char)(i))
 #define ELF32_R_INFO(s, t) (((s) << 8) + (unsigned char)(t))
 
 #define ELF64_R_SYM(i) ((i) >> 32)
-#define ELF64_R_TYPE(i) ((i) & 0xffffffffL)
-#define ELF64_R_INFO(s, t) (((s) << 32) + ((t) & 0xffffffffL))
+#define ELF64_R_TYPE(i) ((i) & 0xffffffff)
+// The symbol index is widened before it is moved, since a caller holding it
+// in something 32 bits wide, which is where it came from, would otherwise be
+// shifting a value by its own width and losing all of it.
+#define ELF64_R_INFO(s, t) ((((__UINT64_TYPE__)(s)) << 32) + (t))
+
+// Per architecture relocation types.
+//
+// Only the types the startup code and the dynamic loader apply are listed.
+// RELATIVE adds the load bias to the addend; IRELATIVE additionally calls the
+// resolver at that address and stores what it returns.
+
+// x86_64
+
+// aarch64
+#define R_AARCH64_ABS64 257
+#define R_AARCH64_RELATIVE 1027
+#define R_AARCH64_GLOB_DAT 1025
+#define R_AARCH64_JUMP_SLOT 1026
+#define R_AARCH64_IRELATIVE 1032
+#define R_AARCH64_COPY 1024
+#define R_AARCH64_TLS_DTPMOD 1028
+#define R_AARCH64_TLS_DTPREL 1029
+
+// arm
+#define R_ARM_ABS32 2
+#define R_ARM_RELATIVE 23
+#define R_ARM_GLOB_DAT 21
+#define R_ARM_JUMP_SLOT 22
+#define R_ARM_IRELATIVE 160
+#define R_ARM_COPY 20
+
+// riscv
+#define R_RISCV_64 2
+#define R_RISCV_RELATIVE 3
+#define R_RISCV_TLS_TPREL64 11
+#define R_RISCV_JUMP_SLOT 5
+#define R_RISCV_IRELATIVE 58
+#define R_RISCV_COPY 4
+#define R_RISCV_TLS_DTPMOD64 7
+#define R_RISCV_TLS_DTPREL64 9
+#define R_RISCV_TLSDESC 12
+
+// The no-op relocation is type zero on every architecture, and the absolute
+// data relocations below are what object file tools match against.
+
+// x86, complete: object file tools switch over every relocation type an
+// input might carry, not just the ones this build emits.
+#define R_386_16 20
+#define R_386_32 1
+#define R_386_32PLT 11
+#define R_386_8 22
+#define R_386_COPY 5
+#define R_386_GLOB_DAT 6
+#define R_386_GOT32 3
+#define R_386_GOT32X 43
+#define R_386_GOTOFF 9
+#define R_386_GOTPC 10
+#define R_386_IRELATIVE 42
+#define R_386_JMP_SLOT 7
+#define R_386_NONE 0
+#define R_386_NUM 44
+#define R_386_PC16 21
+#define R_386_PC32 2
+#define R_386_PC8 23
+#define R_386_PLT32 4
+#define R_386_RELATIVE 8
+#define R_386_SIZE32 38
+#define R_386_TLS_DESC 41
+#define R_386_TLS_DESC_CALL 40
+#define R_386_TLS_DTPMOD32 35
+#define R_386_TLS_DTPOFF32 36
+#define R_386_TLS_GD 18
+#define R_386_TLS_GD_32 24
+#define R_386_TLS_GD_CALL 26
+#define R_386_TLS_GD_POP 27
+#define R_386_TLS_GD_PUSH 25
+#define R_386_TLS_GOTDESC 39
+#define R_386_TLS_GOTIE 16
+#define R_386_TLS_IE 15
+#define R_386_TLS_IE_32 33
+#define R_386_TLS_LDM 19
+#define R_386_TLS_LDM_32 28
+#define R_386_TLS_LDM_CALL 30
+#define R_386_TLS_LDM_POP 31
+#define R_386_TLS_LDM_PUSH 29
+#define R_386_TLS_LDO_32 32
+#define R_386_TLS_LE 17
+#define R_386_TLS_LE_32 34
+#define R_386_TLS_TPOFF 14
+#define R_386_TLS_TPOFF32 37
+
+#define R_X86_64_16 12
+#define R_X86_64_32 10
+#define R_X86_64_32S 11
+#define R_X86_64_64 1
+#define R_X86_64_8 14
+#define R_X86_64_COPY 5
+#define R_X86_64_DTPMOD64 16
+#define R_X86_64_DTPOFF32 21
+#define R_X86_64_DTPOFF64 17
+#define R_X86_64_GLOB_DAT 6
+#define R_X86_64_GOT32 3
+#define R_X86_64_GOT64 27
+#define R_X86_64_GOTOFF64 25
+#define R_X86_64_GOTPC32 26
+#define R_X86_64_GOTPC32_TLSDESC 34
+#define R_X86_64_GOTPC64 29
+#define R_X86_64_GOTPCREL 9
+#define R_X86_64_GOTPCREL64 28
+#define R_X86_64_GOTPCRELX 41
+#define R_X86_64_GOTPLT64 30
+#define R_X86_64_GOTTPOFF 22
+#define R_X86_64_IRELATIVE 37
+#define R_X86_64_JUMP_SLOT 7
+#define R_X86_64_NONE 0
+#define R_X86_64_NUM 43
+#define R_X86_64_PC16 13
+#define R_X86_64_PC32 2
+#define R_X86_64_PC64 24
+#define R_X86_64_PC8 15
+#define R_X86_64_PLT32 4
+#define R_X86_64_PLTOFF64 31
+#define R_X86_64_RELATIVE 8
+#define R_X86_64_RELATIVE64 38
+#define R_X86_64_REX_GOTPCRELX 42
+#define R_X86_64_SIZE32 32
+#define R_X86_64_SIZE64 33
+#define R_X86_64_TLSDESC 36
+#define R_X86_64_TLSDESC_CALL 35
+#define R_X86_64_TLSGD 19
+#define R_X86_64_TLSLD 20
+#define R_X86_64_TPOFF32 23
+#define R_X86_64_TPOFF64 18
+
+#define R_AARCH64_NONE 0
+#define R_AARCH64_TLS_TPREL 1030
+#define R_AARCH64_TLSDESC 1031
+
+#define R_ARM_NONE 0
+
+#define R_MIPS_32 2
+#define R_MIPS_64 18
+
+#define R_PPC_ADDR32 1
+#define R_PPC64_ADDR64 38
+
+#define R_390_64 22
+
+#define R_SH_DIR32 1
+
+#define R_SPARC_64 32
+
+#define R_LARCH_32 1
+#define R_LARCH_64 2
+#define R_LARCH_MARK_LA 20
+#define R_LARCH_SOP_PUSH_PLT_PCREL 29
+
+// Additional relocation and symbol types that object file tools match
+// against. R_ARM_THM_CALL is the current name for the value glibc still
+// spells R_ARM_THM_PC22.
+#define R_ARM_CALL 28
+#define R_ARM_JUMP24 29
+#define R_ARM_MOVT_ABS 44
+#define R_ARM_MOVW_ABS_NC 43
+#define R_ARM_PC24 1
+#define R_ARM_REL32 3
+#define R_ARM_THM_CALL 10
+#define R_ARM_THM_JUMP19 51
+#define R_ARM_THM_JUMP24 30
+#define R_ARM_THM_MOVT_ABS 48
+#define R_ARM_THM_MOVW_ABS_NC 47
+#define R_ARM_THM_PC22 10
+
+#define R_AARCH64_CALL26 283
+
+#define R_MIPS_26 4
+#define R_MIPS_LO16 6
+
+#define R_RISCV_SUB32 39
+
+#define R_LARCH_ALIGN 102
+#define R_LARCH_RELAX 100
+#define R_LARCH_SUB32 55
+
+#define STT_SPARC_REGISTER 13
+
+// The thirty two bit absolute data relocation of each remaining
+// architecture, which is what a tool rewriting debug information matches
+// against to find a value it has to adjust.
+#define R_390_32 4
+#define R_68K_32 1
+#define R_ALPHA_REFLONG 1
+#define R_IA64_SECREL32LSB 0x65
+#define R_PARISC_DIR32 1
+#define R_PPC_UADDR32 24
+#define R_SPARC_32 3
+#define R_SPARC_UA32 23
+
+// The section a MIPS object keeps its debug information in.
+#define SHT_MIPS_DWARF 0x7000001e
+
+// The operating system an object was built for, in e_ident[EI_OSABI].
+#define ELFOSABI_NONE 0
+#define ELFOSABI_SYSV 0
+#define ELFOSABI_HPUX 1
+#define ELFOSABI_NETBSD 2
+#define ELFOSABI_GNU 3
+#define ELFOSABI_LINUX ELFOSABI_GNU
+#define ELFOSABI_SOLARIS 6
+#define ELFOSABI_AIX 7
+#define ELFOSABI_IRIX 8
+#define ELFOSABI_FREEBSD 9
+#define ELFOSABI_TRU64 10
+#define ELFOSABI_MODESTO 11
+#define ELFOSABI_OPENBSD 12
+#define ELFOSABI_ARM_AEABI 64
+#define ELFOSABI_ARM 97
+#define ELFOSABI_STANDALONE 255
+
+// The names a note section is written under.
+#define ELF_NOTE_SOLARIS "SUNW Solaris"
+#define ELF_NOTE_GNU "GNU"
+
+// The operating systems an NT_VERSION note can name in its first word.
+#define ELF_NOTE_OS_LINUX 0
+#define ELF_NOTE_OS_GNU 1
+#define ELF_NOTE_OS_SOLARIS2 2
+#define ELF_NOTE_OS_FREEBSD 3
+
+// Processor specific flags in e_flags, from the ARM and RISC-V ELF psABIs.
+#define EF_ARM_RELEXEC 0x01
+#define EF_ARM_HASENTRY 0x02
+#define EF_ARM_INTERWORK 0x04
+#define EF_ARM_APCS_26 0x08
+#define EF_ARM_APCS_FLOAT 0x10
+#define EF_ARM_PIC 0x20
+#define EF_ARM_ALIGN8 0x40
+#define EF_ARM_NEW_ABI 0x80
+#define EF_ARM_OLD_ABI 0x100
+#define EF_ARM_SOFT_FLOAT 0x200
+#define EF_ARM_VFP_FLOAT 0x400
+#define EF_ARM_MAVERICK_FLOAT 0x800
+#define EF_ARM_ABI_FLOAT_SOFT 0x200
+#define EF_ARM_ABI_FLOAT_HARD 0x400
+#define EF_ARM_SYMSARESORTED 0x04
+#define EF_ARM_DYNSYMSUSESEGIDX 0x08
+#define EF_ARM_MAPSYMSFIRST 0x10
+#define EF_ARM_LE8 0x00400000
+#define EF_ARM_BE8 0x00800000
+#define EF_ARM_GCCMASK 0x00400fff
+#define EF_ARM_EABIMASK 0xff000000
+#define EF_ARM_EABI_UNKNOWN 0x00000000
+#define EF_ARM_EABI_VER1 0x01000000
+#define EF_ARM_EABI_VER2 0x02000000
+#define EF_ARM_EABI_VER3 0x03000000
+#define EF_ARM_EABI_VER4 0x04000000
+#define EF_ARM_EABI_VER5 0x05000000
+#define EF_ARM_EABI_VERSION(flags) ((flags) & EF_ARM_EABIMASK)
+#define EF_RISCV_RVC 0x0001
+#define EF_RISCV_FLOAT_ABI 0x0006
+#define EF_RISCV_FLOAT_ABI_SOFT 0x0000
+#define EF_RISCV_FLOAT_ABI_SINGLE 0x0002
+#define EF_RISCV_FLOAT_ABI_DOUBLE 0x0004
+#define EF_RISCV_FLOAT_ABI_QUAD 0x0006
+#define EF_RISCV_RVE 0x0008
+#define EF_RISCV_TSO 0x0010
+
+#ifdef __ANDROID__
+// bionic's names for the parts of st_info and the way to build it.
+#define ELF_ST_BIND(i) ((i) >> 4)
+#define ELF_ST_TYPE(i) ((i) & 0xf)
+#define ELF_ST_INFO(b, t) (((b) << 4) + ((t) & 0xf))
+#endif
 
 #endif // LLVM_LIBC_MACROS_ELF_MACROS_H

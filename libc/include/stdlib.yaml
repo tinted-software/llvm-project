@@ -1,15 +1,22 @@
 header: stdlib.h
+header_template: stdlib.h.def
 standards:
   - stdc
 merge_yaml_files:
   - stdlib-alloca.yaml
   - stdlib-malloc.yaml
 macros:
+  - macro_name: mkstemp64
+    macro_header: lfs64-macros.h
+  - macro_name: mkostemp64
+    macro_header: lfs64-macros.h
   - macro_name: "NULL"
     macro_header: null-macro.h
   - macro_name: EXIT_SUCCESS
     macro_header: stdlib-macros.h
   - macro_name: EXIT_FAILURE
+    macro_header: stdlib-macros.h
+  - macro_name: MB_CUR_MAX
     macro_header: stdlib-macros.h
 types:
   - type_name: __atexithandler_t
@@ -24,9 +31,10 @@ types:
   - type_name: rsize_t
   - type_name: size_t
   - type_name: wchar_t
-  - type_name: errno_t
 enums: []
-objects: []
+objects:
+  - object_name: __llvm_libc_mb_cur_max
+    object_type: size_t
 functions:
   - name: _Exit
     standards:
@@ -52,6 +60,25 @@ functions:
     return_type: int
     arguments:
       - type: int
+  - name: arc4random
+    standards:
+      - bsd
+    return_type: uint32_t
+    arguments:
+      - type: void
+  - name: arc4random_buf
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: void *
+      - type: size_t
+  - name: arc4random_uniform
+    standards:
+      - bsd
+    return_type: uint32_t
+    arguments:
+      - type: uint32_t
   - name: at_quick_exit
     standards:
       - stdc
@@ -130,6 +157,80 @@ functions:
     arguments:
       - type: double[]
       - type: int
+  - name: getprogname
+    standards:
+      - bsd
+    return_type: const char *
+    arguments:
+      - type: void
+  - name: getsubopt
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: char **
+      - type: char *const *
+      - type: char **
+  - name: drand48
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: void
+  - name: erand48
+    standards:
+      - posix
+    return_type: double
+    arguments:
+      - type: unsigned short *
+  - name: lrand48
+    standards:
+      - posix
+    return_type: long
+    arguments:
+      - type: void
+  - name: nrand48
+    standards:
+      - posix
+    return_type: long
+    arguments:
+      - type: unsigned short *
+  - name: mrand48
+    standards:
+      - posix
+    return_type: long
+    arguments:
+      - type: void
+  - name: jrand48
+    standards:
+      - posix
+    return_type: long
+    arguments:
+      - type: unsigned short *
+  - name: setprogname
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: const char *
+  - name: srand48
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: long
+  - name: seed48
+    standards:
+      - posix
+    return_type: unsigned short *
+    arguments:
+      - type: unsigned short *
+  - name: lcong48
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: unsigned short *
   - name: labs
     standards:
       - stdc
@@ -185,6 +286,38 @@ functions:
     return_type: size_t
     arguments:
       - type: const void *
+  - name: random
+    standards:
+      - posix
+    return_type: long
+    arguments:
+      - type: void
+  - name: srandom
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: unsigned int
+  - name: initstate
+    standards:
+      - posix
+    return_type: char *
+    arguments:
+      - type: unsigned int
+      - type: char *
+      - type: size_t
+  - name: setstate
+    standards:
+      - posix
+    return_type: char *
+    arguments:
+      - type: char *
+  - name: mktemp
+    standards:
+      - gnu
+    return_type: char *
+    arguments:
+      - type: char *
   - name: mkdtemp
     standards:
       - posix
@@ -198,12 +331,27 @@ functions:
     arguments:
       - type: char *
       - type: int
+  - name: mkostemps
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: char *
+      - type: int
+      - type: int
   - name: mkstemp
     standards:
       - posix
     return_type: int
     arguments:
       - type: char *
+  - name: mkstemps
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: char *
+      - type: int
   - name: posix_memalign
     standards:
       - posix
@@ -212,6 +360,38 @@ functions:
       - type: void **
       - type: size_t
       - type: size_t
+  - name: grantpt
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: int
+  - name: posix_openpt
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: int
+  - name: ptsname
+    standards:
+      - posix
+    return_type: char *
+    arguments:
+      - type: int
+  - name: ptsname_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: int
+      - type: char *
+      - type: size_t
+  - name: unlockpt
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: int
   - name: putenv
     standards:
       - posix
@@ -249,6 +429,12 @@ functions:
     return_type: int
     arguments:
       - type: void
+  - name: rand_r
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: unsigned int *
   - name: realpath
     standards:
       - posix

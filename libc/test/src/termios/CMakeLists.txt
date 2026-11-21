@@ -15,6 +15,7 @@ add_libc_test(
     libc.src.termios.cfgetospeed
     libc.src.termios.cfsetispeed
     libc.src.termios.cfsetospeed
+    libc.src.termios.cfsetspeed
     libc.src.termios.tcgetattr
     libc.src.termios.tcgetsid
     libc.src.termios.tcsetattr
@@ -81,4 +82,16 @@ add_libc_test(
     libc.src.unistd.pipe
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  cfmakeraw_test
+  SUITE
+    libc-termios-tests
+  SRCS
+    cfmakeraw_test.cpp
+  DEPENDS
+    libc.hdr.termios_macros
+    libc.hdr.types.struct_termios
+    libc.src.termios.cfmakeraw
 )

@@ -2,6 +2,20 @@ header: sys/resource.h
 standards:
   - posix
 macros:
+  - macro_name: rlimit64
+    macro_header: sys-resource-macros.h
+  - macro_name: getrlimit64
+    macro_header: lfs64-macros.h
+  - macro_name: setrlimit64
+    macro_header: lfs64-macros.h
+  - macro_name: prlimit64
+    macro_header: lfs64-macros.h
+  - macro_name: RLIM_INFINITY
+    macro_header: sys-resource-macros.h
+  - macro_name: RLIM_SAVED_CUR
+    macro_header: sys-resource-macros.h
+  - macro_name: RLIM_SAVED_MAX
+    macro_header: sys-resource-macros.h
   - macro_name: RLIMIT_CPU
     macro_header: sys-resource-macros.h
   - macro_name: RUSAGE_SELF
@@ -19,6 +33,8 @@ macros:
   - macro_name: PRIO_USER
     macro_header: sys-resource-macros.h
 types:
+  - type_name: rlim64_t
+  - type_name: pid_t
   - type_name: struct_rlimit
   - type_name: rlim_t
   - type_name: struct_rusage
@@ -54,6 +70,15 @@ functions:
       - type: int
       - type: id_t
       - type: int
+  - name: prlimit
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: pid_t
+      - type: int
+      - type: const struct rlimit *
+      - type: struct rlimit *
   - name: setrlimit
     standards:
       - posix

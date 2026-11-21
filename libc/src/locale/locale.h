@@ -14,6 +14,8 @@
 #ifndef LLVM_LIBC_SRC_LOCALE_LOCALE_H
 #define LLVM_LIBC_SRC_LOCALE_LOCALE_H
 
+#include "src/__support/CPP/string_view.h"
+
 #include "hdr/types/locale_t.h"
 #include "src/__support/macros/config.h"
 #include "src/locale/locale_data.h"
@@ -34,6 +36,18 @@ extern __locale_t c_locale;
 // The static UTF-8 locale instance.
 extern __locale_t utf8_locale;
 
+// Long enough for the names locales go by, which run to a language, a
+// territory, a codeset and a modifier.
+static constexpr size_t MAX_LOCALE_NAME_SIZE = 64;
+
+struct __locale_data {
+  char name[MAX_LOCALE_NAME_SIZE];
+  // Whether the codeset the name states is UTF-8. Nothing else about a locale
+  // is read: what is kept is the name it goes by and how wide a character is
+  // in it.
+  bool utf8;
+};
+
 // Global locale accessor functions.
 locale_t get_global_locale();
 void set_global_locale(locale_t loc);
@@ -41,6 +55,49 @@ void set_global_locale(locale_t loc);
 // Thread-local locale accessor functions.
 locale_t get_thread_locale();
 void set_thread_locale(locale_t loc);
+
+namespace internal {
+
+// Whether a name states UTF-8 as its codeset, which is the part of it after a
+// full stop, compared without regard to case or to the hyphen.
+bool name_states_utf8(cpp::string_view name);
+
+// Whether the codeset a name states is one that can be honoured. There is no
+// locale database, so what a name can ask for is the character set: UTF-8, or
+// the ASCII the C locale means. A name stating anything else is refused
+// rather than answered with the wrong encoding.
+bool codeset_is_supported(cpp::string_view name);
+
+// A single name, or a composite such as "LC_CTYPE=a;LC_NUMERIC=b".
+bool locale_name_is_supported(cpp::string_view name);
+
+// What the environment says a variable is, or nullptr where it says nothing.
+const char *environment_value(const char *name);
+
+// What the environment says the given category should be: LC_ALL where it is
+// set to anything, then the variable for the category itself, then LANG. A
+// null return means none of them said.
+const char *locale_from_environment(int category);
+
+// Puts a name in place, working out from it how wide a character is. An empty
+// name means the one the environment states.
+//
+// Returns the name settled on, which is what setlocale reports, or nullptr
+// where the name states a codeset that cannot be honoured.
+const char *set_locale_name(int category, cpp::string_view name);
+
+// The name in force, which setlocale reports when asked rather than told.
+const char *current_locale_name(int category);
+
+// Whether LC_CTYPE in force uses UTF-8, rather than the ASCII the C locale
+// means. The multibyte conversions follow it.
+bool ctype_is_utf8();
+
+// The name of the character set the locale in force uses: "UTF-8", or the
+// ASCII the C locale means, under the name glibc gives it.
+const char *current_codeset();
+
+} // namespace internal
 
 } // namespace LIBC_NAMESPACE_DECL
 

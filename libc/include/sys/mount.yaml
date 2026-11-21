@@ -1,8 +1,42 @@
 # NOTE: Semantics of sys/mount.h is different on Linux and BSD systems.
 header: sys/mount.h
+public_includes:
+  # The block device requests are given to ioctl, so what takes them comes
+  # with them.
+  - sys/ioctl.h
 standards:
   - linux
 macros:
+  - macro_name: BLKGETSIZE64
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKBSZSET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKBSZGET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKSSZGET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKSECTGET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKSECTSET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKFRAGET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKFRASET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKRAGET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKRASET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKFLSBUF
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKGETSIZE
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKRRPART
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKROGET
+    macro_header: sys-mount-macros.h
+  - macro_name: BLKROSET
+    macro_header: sys-mount-macros.h
   # MS_ macro are defined only on Linux systems. Instead of listing
   # them all here, do a shortcut (for now), and only reference a single
   # one to ensure the inclusion of sys-mount-macros.h that would dispatch
@@ -21,6 +55,67 @@ types: []
 enums: []
 objects: []
 functions:
+  - name: fsopen
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: unsigned int
+  - name: fsmount
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: unsigned int
+      - type: unsigned int
+  - name: fsconfig
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: unsigned int
+      - type: const char *
+      - type: const void *
+      - type: int
+  - name: fspick
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: unsigned int
+  - name: open_tree
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: unsigned int
+  - name: move_mount
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: int
+      - type: const char *
+      - type: unsigned int
+  - name: mount_setattr
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: unsigned int
+      - type: struct mount_attr *
+      - type: size_t
   - name: mount
     standards:
       - linux

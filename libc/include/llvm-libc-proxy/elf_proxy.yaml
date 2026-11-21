@@ -75,18 +75,375 @@ macros:
     macro_value: '0xffff'
   - macro_name: EM_NONE
     macro_value: 0
+  - macro_name: EM_M32
+    macro_value: 1
+  - macro_name: EM_SPARC
+    macro_value: 2
   - macro_name: EM_386
     macro_value: 3
+  - macro_name: EM_68K
+    macro_value: 4
+  - macro_name: EM_88K
+    macro_value: 5
+  - macro_name: EM_860
+    macro_value: 7
+  - macro_name: EM_MIPS
+    macro_value: 8
+  - macro_name: EM_S370
+    macro_value: 9
+  - macro_name: EM_MIPS_RS3_LE
+    macro_value: 10
+  - macro_name: EM_PARISC
+    macro_value: 15
+  - macro_name: EM_SPARC32PLUS
+    macro_value: 18
+  - macro_name: EM_PPC
+    macro_value: 20
   - macro_name: EM_PPC64
     macro_value: 21
+  - macro_name: EM_S390
+    macro_value: 22
+  - macro_name: EM_SPU
+    macro_value: 23
+  - macro_name: EM_SH
+    macro_value: 42
+  - macro_name: EM_SPARCV9
+    macro_value: 43
+  - macro_name: EM_IA_64
+    macro_value: 50
   - macro_name: EM_ARM
     macro_value: 40
   - macro_name: EM_X86_64
     macro_value: 62
   - macro_name: EM_AARCH64
     macro_value: 183
+  - macro_name: EM_MICROBLAZE
+    macro_value: 189
+  - macro_name: EM_XTENSA
+    macro_value: 94
+  - macro_name: EM_BLACKFIN
+    macro_value: 106
+  - macro_name: EM_ALTERA_NIOS2
+    macro_value: 113
+  - macro_name: EM_TI_C6000
+    macro_value: 140
+  - macro_name: EM_TILEPRO
+    macro_value: 188
+  - macro_name: EM_TILEGX
+    macro_value: 191
   - macro_name: EM_RISCV
     macro_value: 243
+  - macro_name: EM_BPF
+    macro_value: 247
+  - macro_name: EM_CSKY
+    macro_value: 252
+  - macro_name: EM_LOONGARCH
+    macro_value: 258
+  - macro_name: EM_IAMCU
+    macro_value: 6
+  - macro_name: EM_VPP500
+    macro_value: 17
+  - macro_name: EM_960
+    macro_value: 19
+  - macro_name: EM_V800
+    macro_value: 36
+  - macro_name: EM_FR20
+    macro_value: 37
+  - macro_name: EM_RH32
+    macro_value: 38
+  - macro_name: EM_RCE
+    macro_value: 39
+  - macro_name: EM_TRICORE
+    macro_value: 44
+  - macro_name: EM_ARC
+    macro_value: 45
+  - macro_name: EM_H8_300
+    macro_value: 46
+  - macro_name: EM_H8_300H
+    macro_value: 47
+  - macro_name: EM_H8S
+    macro_value: 48
+  - macro_name: EM_H8_500
+    macro_value: 49
+  - macro_name: EM_MIPS_X
+    macro_value: 51
+  - macro_name: EM_COLDFIRE
+    macro_value: 52
+  - macro_name: EM_68HC12
+    macro_value: 53
+  - macro_name: EM_MMA
+    macro_value: 54
+  - macro_name: EM_PCP
+    macro_value: 55
+  - macro_name: EM_NCPU
+    macro_value: 56
+  - macro_name: EM_NDR1
+    macro_value: 57
+  - macro_name: EM_STARCORE
+    macro_value: 58
+  - macro_name: EM_ME16
+    macro_value: 59
+  - macro_name: EM_ST100
+    macro_value: 60
+  - macro_name: EM_TINYJ
+    macro_value: 61
+  - macro_name: EM_PDSP
+    macro_value: 63
+  - macro_name: EM_PDP10
+    macro_value: 64
+  - macro_name: EM_PDP11
+    macro_value: 65
+  - macro_name: EM_FX66
+    macro_value: 66
+  - macro_name: EM_ST9PLUS
+    macro_value: 67
+  - macro_name: EM_ST7
+    macro_value: 68
+  - macro_name: EM_68HC16
+    macro_value: 69
+  - macro_name: EM_68HC11
+    macro_value: 70
+  - macro_name: EM_68HC08
+    macro_value: 71
+  - macro_name: EM_68HC05
+    macro_value: 72
+  - macro_name: EM_SVX
+    macro_value: 73
+  - macro_name: EM_ST19
+    macro_value: 74
+  - macro_name: EM_VAX
+    macro_value: 75
+  - macro_name: EM_CRIS
+    macro_value: 76
+  - macro_name: EM_JAVELIN
+    macro_value: 77
+  - macro_name: EM_FIREPATH
+    macro_value: 78
+  - macro_name: EM_ZSP
+    macro_value: 79
+  - macro_name: EM_MMIX
+    macro_value: 80
+  - macro_name: EM_HUANY
+    macro_value: 81
+  - macro_name: EM_PRISM
+    macro_value: 82
+  - macro_name: EM_AVR
+    macro_value: 83
+  - macro_name: EM_FR30
+    macro_value: 84
+  - macro_name: EM_D10V
+    macro_value: 85
+  - macro_name: EM_D30V
+    macro_value: 86
+  - macro_name: EM_V850
+    macro_value: 87
+  - macro_name: EM_M32R
+    macro_value: 88
+  - macro_name: EM_MN10300
+    macro_value: 89
+  - macro_name: EM_MN10200
+    macro_value: 90
+  - macro_name: EM_PJ
+    macro_value: 91
+  - macro_name: EM_OPENRISC
+    macro_value: 92
+  - macro_name: EM_ARC_COMPACT
+    macro_value: 93
+  - macro_name: EM_VIDEOCORE
+    macro_value: 95
+  - macro_name: EM_TMM_GPP
+    macro_value: 96
+  - macro_name: EM_NS32K
+    macro_value: 97
+  - macro_name: EM_TPC
+    macro_value: 98
+  - macro_name: EM_SNP1K
+    macro_value: 99
+  - macro_name: EM_ST200
+    macro_value: 100
+  - macro_name: EM_IP2K
+    macro_value: 101
+  - macro_name: EM_MAX
+    macro_value: 102
+  - macro_name: EM_CR
+    macro_value: 103
+  - macro_name: EM_F2MC16
+    macro_value: 104
+  - macro_name: EM_MSP430
+    macro_value: 105
+  - macro_name: EM_SE_C33
+    macro_value: 107
+  - macro_name: EM_SEP
+    macro_value: 108
+  - macro_name: EM_ARCA
+    macro_value: 109
+  - macro_name: EM_UNICORE
+    macro_value: 110
+  - macro_name: EM_EXCESS
+    macro_value: 111
+  - macro_name: EM_DXP
+    macro_value: 112
+  - macro_name: EM_CRX
+    macro_value: 114
+  - macro_name: EM_XGATE
+    macro_value: 115
+  - macro_name: EM_C166
+    macro_value: 116
+  - macro_name: EM_M16C
+    macro_value: 117
+  - macro_name: EM_DSPIC30F
+    macro_value: 118
+  - macro_name: EM_CE
+    macro_value: 119
+  - macro_name: EM_M32C
+    macro_value: 120
+  - macro_name: EM_TSK3000
+    macro_value: 131
+  - macro_name: EM_RS08
+    macro_value: 132
+  - macro_name: EM_SHARC
+    macro_value: 133
+  - macro_name: EM_ECOG2
+    macro_value: 134
+  - macro_name: EM_SCORE7
+    macro_value: 135
+  - macro_name: EM_DSP24
+    macro_value: 136
+  - macro_name: EM_VIDEOCORE3
+    macro_value: 137
+  - macro_name: EM_LATTICEMICO32
+    macro_value: 138
+  - macro_name: EM_SE_C17
+    macro_value: 139
+  - macro_name: EM_TI_C2000
+    macro_value: 141
+  - macro_name: EM_TI_C5500
+    macro_value: 142
+  - macro_name: EM_TI_ARP32
+    macro_value: 143
+  - macro_name: EM_TI_PRU
+    macro_value: 144
+  - macro_name: EM_MMDSP_PLUS
+    macro_value: 160
+  - macro_name: EM_CYPRESS_M8C
+    macro_value: 161
+  - macro_name: EM_R32C
+    macro_value: 162
+  - macro_name: EM_TRIMEDIA
+    macro_value: 163
+  - macro_name: EM_QDSP6
+    macro_value: 164
+  - macro_name: EM_8051
+    macro_value: 165
+  - macro_name: EM_STXP7X
+    macro_value: 166
+  - macro_name: EM_NDS32
+    macro_value: 167
+  - macro_name: EM_ECOG1X
+    macro_value: 168
+  - macro_name: EM_MAXQ30
+    macro_value: 169
+  - macro_name: EM_XIMO16
+    macro_value: 170
+  - macro_name: EM_MANIK
+    macro_value: 171
+  - macro_name: EM_CRAYNV2
+    macro_value: 172
+  - macro_name: EM_RX
+    macro_value: 173
+  - macro_name: EM_METAG
+    macro_value: 174
+  - macro_name: EM_MCST_ELBRUS
+    macro_value: 175
+  - macro_name: EM_ECOG16
+    macro_value: 176
+  - macro_name: EM_CR16
+    macro_value: 177
+  - macro_name: EM_ETPU
+    macro_value: 178
+  - macro_name: EM_SLE9X
+    macro_value: 179
+  - macro_name: EM_L10M
+    macro_value: 180
+  - macro_name: EM_K10M
+    macro_value: 181
+  - macro_name: EM_AVR32
+    macro_value: 185
+  - macro_name: EM_STM8
+    macro_value: 186
+  - macro_name: EM_TILE64
+    macro_value: 187
+  - macro_name: EM_CUDA
+    macro_value: 190
+  - macro_name: EM_CLOUDSHIELD
+    macro_value: 192
+  - macro_name: EM_COREA_1ST
+    macro_value: 193
+  - macro_name: EM_COREA_2ND
+    macro_value: 194
+  - macro_name: EM_ARCV2
+    macro_value: 195
+  - macro_name: EM_OPEN8
+    macro_value: 196
+  - macro_name: EM_RL78
+    macro_value: 197
+  - macro_name: EM_VIDEOCORE5
+    macro_value: 198
+  - macro_name: EM_78KOR
+    macro_value: 199
+  - macro_name: EM_56800EX
+    macro_value: 200
+  - macro_name: EM_BA1
+    macro_value: 201
+  - macro_name: EM_BA2
+    macro_value: 202
+  - macro_name: EM_XCORE
+    macro_value: 203
+  - macro_name: EM_MCHP_PIC
+    macro_value: 204
+  - macro_name: EM_INTELGT
+    macro_value: 205
+  - macro_name: EM_KM32
+    macro_value: 210
+  - macro_name: EM_KMX32
+    macro_value: 211
+  - macro_name: EM_EMX16
+    macro_value: 212
+  - macro_name: EM_EMX8
+    macro_value: 213
+  - macro_name: EM_KVARC
+    macro_value: 214
+  - macro_name: EM_CDP
+    macro_value: 215
+  - macro_name: EM_COGE
+    macro_value: 216
+  - macro_name: EM_COOL
+    macro_value: 217
+  - macro_name: EM_NORC
+    macro_value: 218
+  - macro_name: EM_CSR_KALIMBA
+    macro_value: 219
+  - macro_name: EM_Z80
+    macro_value: 220
+  - macro_name: EM_VISIUM
+    macro_value: 221
+  - macro_name: EM_FT32
+    macro_value: 222
+  - macro_name: EM_MOXIE
+    macro_value: 223
+  - macro_name: EM_AMDGPU
+    macro_value: 224
+  - macro_name: EM_NUM
+    macro_value: 259
+  - macro_name: EM_ARC_A5
+    macro_value: 93
+  # Alpha was never given a number by the registry. 41 was written into the
+  # early objects and is kept under the name glibc gives it; 0x9026 is what
+  # everything since uses.
+  - macro_name: EM_FAKE_ALPHA
+    macro_value: 41
+  - macro_name: EM_ALPHA
+    macro_value: '0x9026'
   - macro_name: EV_NONE
     macro_value: 0
   - macro_name: EV_CURRENT
@@ -157,7 +514,7 @@ macros:
   - macro_name: SHT_LOUSER
     macro_value: '0x80000000'
   - macro_name: SHT_HIUSER
-    macro_value: '0xffffffff'
+    macro_value: '0x8fffffff'
   - macro_name: SHF_WRITE
     macro_value: '0x1'
   - macro_name: SHF_ALLOC
@@ -207,6 +564,10 @@ macros:
     macro_value: 2
   - macro_name: STB_LOOS
     macro_value: 10
+  - macro_name: STB_GNU_UNIQUE
+    macro_value: 10
+    standards:
+      - gnu
   - macro_name: STB_HIOS
     macro_value: 12
   - macro_name: STB_LOPROC
@@ -272,6 +633,8 @@ macros:
     macro_value: '0x70000000'
   - macro_name: PT_HIPROC
     macro_value: '0x7fffffff'
+  - macro_name: PT_ARM_EXIDX
+    macro_value: '0x70000001'
   - macro_name: PT_GNU_EH_FRAME
     macro_value: '0x6474e550'
     standards:
@@ -368,63 +731,131 @@ macros:
   - macro_name: DT_SYMTAB_SHNDX
     macro_value: 34
   - macro_name: DT_LOOS
-    macro_value: '0x6000000D'
+    macro_value: 0x6000000d
   - macro_name: DT_HIOS
-    macro_value: '0x6ffff000'
+    macro_value: 0x6ffff000
   - macro_name: DT_LOPROC
-    macro_value: '0x70000000'
+    macro_value: 0x70000000
   - macro_name: DT_HIPROC
-    macro_value: '0x7fffffff'
+    macro_value: 0x7fffffff
   - macro_name: DT_ADDRRNGLO
-    macro_value: '0x6ffffe00'
+    macro_value: 0x6ffffe00
   - macro_name: DT_GNU_HASH
-    macro_value: '0x6ffffef5'
+    macro_value: 0x6ffffef5
     standards:
       - gnu
   - macro_name: DT_TLSDESC_PLT
-    macro_value: '0x6ffffef6'
+    macro_value: 0x6ffffef6
     standards:
       - gnu
   - macro_name: DT_TLSDESC_GOT
-    macro_value: '0x6ffffef7'
+    macro_value: 0x6ffffef7
     standards:
       - gnu
   - macro_name: DT_GNU_CONFLICT
-    macro_value: '0x6ffffef8'
+    macro_value: 0x6ffffef8
     standards:
       - gnu
   - macro_name: DT_GNU_LIBLIST
-    macro_value: '0x6ffffef9'
+    macro_value: 0x6ffffef9
     standards:
       - gnu
   - macro_name: DT_CONFIG
-    macro_value: '0x6ffffefa'
+    macro_value: 0x6ffffefa
   - macro_name: DT_DEPAUDIT
-    macro_value: '0x6ffffefb'
+    macro_value: 0x6ffffefb
   - macro_name: DT_AUDIT
-    macro_value: '0x6ffffefc'
+    macro_value: 0x6ffffefc
   - macro_name: DT_PLTPAD
-    macro_value: '0x6ffffefd'
+    macro_value: 0x6ffffefd
   - macro_name: DT_MOVETAB
-    macro_value: '0x6ffffefe'
+    macro_value: 0x6ffffefe
   - macro_name: DT_SYMINFO
-    macro_value: '0x6ffffeff'
+    macro_value: 0x6ffffeff
   - macro_name: DT_ADDRRNGHI
-    macro_value: '0x6ffffeff'
+    macro_value: 0x6ffffeff
   - macro_name: DT_VERSYM
-    macro_value: '0x6ffffff0'
+    macro_value: 0x6ffffff0
   - macro_name: DT_RELACOUNT
-    macro_value: '0x6ffffff9'
+    macro_value: 0x6ffffff9
   - macro_name: DT_RELCOUNT
-    macro_value: '0x6ffffffa'
+    macro_value: 0x6ffffffa
   - macro_name: DT_VERDEF
-    macro_value: '0x6ffffffc'
+    macro_value: 0x6ffffffc
   - macro_name: DT_VERDEFNUM
-    macro_value: '0x6ffffffd'
+    macro_value: 0x6ffffffd
   - macro_name: DT_VERNEED
-    macro_value: '0x6ffffffe'
+    macro_value: 0x6ffffffe
   - macro_name: DT_VERNEEDNUM
-    macro_value: '0x6fffffff'
+    macro_value: 0x6fffffff
+  - macro_name: DT_ADDRNUM
+    macro_value: 11
+  - macro_name: DT_AUXILIARY
+    macro_value: 0x7ffffffd
+  - macro_name: DT_CHECKSUM
+    macro_value: 0x6ffffdf8
+  - macro_name: DT_EXTRANUM
+    macro_value: 3
+  - macro_name: DT_FEATURE_1
+    macro_value: 0x6ffffdfc
+  - macro_name: DT_FILTER
+    macro_value: 0x7fffffff
+  - macro_name: DT_FLAGS_1
+    macro_value: 0x6ffffffb
+  - macro_name: DT_GNU_CONFLICTSZ
+    macro_value: 0x6ffffdf6
+  - macro_name: DT_GNU_LIBLISTSZ
+    macro_value: 0x6ffffdf7
+  - macro_name: DT_GNU_PRELINKED
+    macro_value: 0x6ffffdf5
+  - macro_name: DT_MOVEENT
+    macro_value: 0x6ffffdfa
+  - macro_name: DT_MOVESZ
+    macro_value: 0x6ffffdfb
+  - macro_name: DT_PLTPADSZ
+    macro_value: 0x6ffffdf9
+  - macro_name: DT_POSFLAG_1
+    macro_value: 0x6ffffdfd
+  - macro_name: DT_RELR
+    macro_value: 36
+  - macro_name: DT_RELRENT
+    macro_value: 37
+  - macro_name: DT_RELRSZ
+    macro_value: 35
+  - macro_name: DT_SYMINENT
+    macro_value: 0x6ffffdff
+  - macro_name: DT_SYMINSZ
+    macro_value: 0x6ffffdfe
+  - macro_name: DT_VALNUM
+    macro_value: 12
+  - macro_name: DT_VALRNGHI
+    macro_value: 0x6ffffdff
+  - macro_name: DT_VALRNGLO
+    macro_value: 0x6ffffd00
+  - macro_name: DT_VERSIONTAGNUM
+    macro_value: 16
+  - macro_name: DT_X86_64_NUM
+    macro_value: 4
+  - macro_name: DT_X86_64_PLT
+    macro_value: (DT_LOPROC + 0)
+  - macro_name: DT_X86_64_PLTENT
+    macro_value: (DT_LOPROC + 3)
+  - macro_name: DT_X86_64_PLTSZ
+    macro_value: (DT_LOPROC + 1)
+  - macro_name: DT_MIPS_RLD_MAP_REL
+    macro_value: 0x70000035
+  - macro_name: DT_MIPS_RLD_MAP
+    macro_value: 0x70000016
+  - macro_name: DT_MIPS_NUM
+    macro_value: 0x37
+  - macro_name: DT_AARCH64_BTI_PLT
+    macro_value: (DT_LOPROC + 1)
+  - macro_name: DT_AARCH64_PAC_PLT
+    macro_value: (DT_LOPROC + 3)
+  - macro_name: DT_AARCH64_VARIANT_PCS
+    macro_value: (DT_LOPROC + 5)
+  - macro_name: DT_AARCH64_NUM
+    macro_value: 6
   - macro_name: DF_ORIGIN
     macro_value: '0x1'
   - macro_name: DF_SYMBOLIC
@@ -435,6 +866,69 @@ macros:
     macro_value: '0x8'
   - macro_name: DF_STATIC_TLS
     macro_value: '0x10'
+  # The word DT_FLAGS_1 holds.
+  - macro_name: DF_1_NOW
+    macro_value: '0x00000001'
+  - macro_name: DF_1_GLOBAL
+    macro_value: '0x00000002'
+  - macro_name: DF_1_GROUP
+    macro_value: '0x00000004'
+  - macro_name: DF_1_NODELETE
+    macro_value: '0x00000008'
+  - macro_name: DF_1_LOADFLTR
+    macro_value: '0x00000010'
+  - macro_name: DF_1_INITFIRST
+    macro_value: '0x00000020'
+  - macro_name: DF_1_NOOPEN
+    macro_value: '0x00000040'
+  - macro_name: DF_1_ORIGIN
+    macro_value: '0x00000080'
+  - macro_name: DF_1_DIRECT
+    macro_value: '0x00000100'
+  - macro_name: DF_1_TRANS
+    macro_value: '0x00000200'
+  - macro_name: DF_1_INTERPOSE
+    macro_value: '0x00000400'
+  - macro_name: DF_1_NODEFLIB
+    macro_value: '0x00000800'
+  - macro_name: DF_1_NODUMP
+    macro_value: '0x00001000'
+  - macro_name: DF_1_CONFALT
+    macro_value: '0x00002000'
+  - macro_name: DF_1_ENDFILTEE
+    macro_value: '0x00004000'
+  - macro_name: DF_1_DISPRELDNE
+    macro_value: '0x00008000'
+  - macro_name: DF_1_DISPRELPND
+    macro_value: '0x00010000'
+  - macro_name: DF_1_NODIRECT
+    macro_value: '0x00020000'
+  - macro_name: DF_1_IGNMULDEF
+    macro_value: '0x00040000'
+  - macro_name: DF_1_NOKSYMS
+    macro_value: '0x00080000'
+  - macro_name: DF_1_NOHDR
+    macro_value: '0x00100000'
+  - macro_name: DF_1_EDITED
+    macro_value: '0x00200000'
+  - macro_name: DF_1_NORELOC
+    macro_value: '0x00400000'
+  - macro_name: DF_1_SYMINTPOSE
+    macro_value: '0x00800000'
+  - macro_name: DF_1_GLOBAUDIT
+    macro_value: '0x01000000'
+  - macro_name: DF_1_SINGLETON
+    macro_value: '0x02000000'
+  - macro_name: DF_1_STUB
+    macro_value: '0x04000000'
+  - macro_name: DF_1_PIE
+    macro_value: '0x08000000'
+  - macro_name: DF_1_KMOD
+    macro_value: '0x10000000'
+  - macro_name: DF_1_WEAKFILTER
+    macro_value: '0x20000000'
+  - macro_name: DF_1_NOCOMMON
+    macro_value: '0x40000000'
   # Notes used in ET_CORE.
   - macro_name: NN_PRSTATUS
     macro_value: '"CORE"'
@@ -493,6 +987,31 @@ macros:
     macro_value: 5
     standards:
       - gnu
+  # Notes of the register sets a debugger reads from a thread.
+  - macro_name: NT_ARM_VFP
+    macro_value: '0x400'
+  - macro_name: NT_ARM_TLS
+    macro_value: '0x401'
+  - macro_name: NT_ARM_HW_BREAK
+    macro_value: '0x402'
+  - macro_name: NT_ARM_HW_WATCH
+    macro_value: '0x403'
+  - macro_name: NT_ARM_SYSTEM_CALL
+    macro_value: '0x404'
+  - macro_name: NT_ARM_SVE
+    macro_value: '0x405'
+  - macro_name: NT_ARM_PAC_MASK
+    macro_value: '0x406'
+  - macro_name: NT_ARM_PACA_KEYS
+    macro_value: '0x407'
+  - macro_name: NT_ARM_PACG_KEYS
+    macro_value: '0x408'
+  - macro_name: NT_ARM_TAGGED_ADDR_CTRL
+    macro_value: '0x409'
+  - macro_name: NT_ARM_PAC_ENABLED_KEYS
+    macro_value: '0x40a'
+  - macro_name: NT_RISCV_VECTOR
+    macro_value: '0x901'
   # Symbol Versioning
   - macro_name: VER_DEF_NONE
     macro_value: 0
@@ -542,6 +1061,86 @@ macros:
     macro_header: elf-macros.h
   - macro_name: ELF64_ST_VISIBILITY
     macro_header: elf-macros.h
+  - macro_name: IS_ELF
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_RELEXEC
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_HASENTRY
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_INTERWORK
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_APCS_26
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_APCS_FLOAT
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_PIC
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_ALIGN8
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_NEW_ABI
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_OLD_ABI
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_SOFT_FLOAT
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_VFP_FLOAT
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_MAVERICK_FLOAT
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_ABI_FLOAT_SOFT
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_ABI_FLOAT_HARD
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_SYMSARESORTED
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_DYNSYMSUSESEGIDX
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_MAPSYMSFIRST
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_LE8
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_BE8
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_GCCMASK
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABIMASK
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_UNKNOWN
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_VER1
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_VER2
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_VER3
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_VER4
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_VER5
+    macro_header: elf-macros.h
+  - macro_name: EF_ARM_EABI_VERSION
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_RVC
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_FLOAT_ABI
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_FLOAT_ABI_SOFT
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_FLOAT_ABI_SINGLE
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_FLOAT_ABI_DOUBLE
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_FLOAT_ABI_QUAD
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_RVE
+    macro_header: elf-macros.h
+  - macro_name: EF_RISCV_TSO
+    macro_header: elf-macros.h
+  - macro_name: ELF_ST_BIND
+    macro_header: elf-macros.h
+  - macro_name: ELF_ST_TYPE
+    macro_header: elf-macros.h
+  - macro_name: ELF_ST_INFO
+    macro_header: elf-macros.h
   - macro_name: ELF32_R_SYM
     macro_header: elf-macros.h
   - macro_name: ELF32_R_TYPE
@@ -556,6 +1155,14 @@ macros:
     macro_header: elf-macros.h
   - macro_name: PT_AARCH64_MEMTAG_MTE
     macro_value: '0x70000002'
+  - macro_name: PT_MIPS_REGINFO
+    macro_value: '0x70000000'
+  - macro_name: PT_MIPS_RTPROC
+    macro_value: '0x70000001'
+  - macro_name: PT_MIPS_OPTIONS
+    macro_value: '0x70000002'
+  - macro_name: PT_MIPS_ABIFLAGS
+    macro_value: '0x70000003'
   - macro_name: PN_XNUM
     macro_value: '0xffff'
   - macro_name: ELFCLASSNUM
@@ -622,18 +1229,184 @@ macros:
     macro_header: sys-auxv-macros.h
   - macro_name: AT_MINSIGSTKSZ
     macro_header: sys-auxv-macros.h
+  # GNU and Solaris extensions that glibc's <elf.h> defines
+  - macro_name: SHN_BEFORE
+    macro_value: '0xff00'
+  - macro_name: SHN_AFTER
+    macro_value: '0xff01'
+  - macro_name: SHT_RELR
+    macro_value: '19'
+  - macro_name: SHT_GNU_ATTRIBUTES
+    macro_value: '0x6ffffff5'
+  - macro_name: SHT_GNU_HASH
+    macro_value: '0x6ffffff6'
+  - macro_name: SHT_GNU_LIBLIST
+    macro_value: '0x6ffffff7'
+  - macro_name: SHT_CHECKSUM
+    macro_value: '0x6ffffff8'
+  - macro_name: SHT_LOSUNW
+    macro_value: '0x6ffffffa'
+  - macro_name: SHT_SUNW_move
+    macro_value: '0x6ffffffa'
+  - macro_name: SHT_SUNW_COMDAT
+    macro_value: '0x6ffffffb'
+  - macro_name: SHT_SUNW_syminfo
+    macro_value: '0x6ffffffc'
+  - macro_name: SHT_GNU_verdef
+    macro_value: '0x6ffffffd'
+  - macro_name: SHT_GNU_verneed
+    macro_value: '0x6ffffffe'
+  - macro_name: SHT_GNU_versym
+    macro_value: '0x6fffffff'
+  - macro_name: SHT_HISUNW
+    macro_value: '0x6fffffff'
+  - macro_name: SHF_GNU_RETAIN
+    macro_value: '(1 << 21)'
+  - macro_name: SHF_ORDERED
+    macro_value: '(1 << 30)'
+  - macro_name: SHF_EXCLUDE
+    macro_value: '(1U << 31)'
+  - macro_name: GRP_COMDAT
+    macro_value: '0x1'
+  - macro_name: SYMINFO_BT_SELF
+    macro_value: '0xffff'
+  - macro_name: SYMINFO_BT_PARENT
+    macro_value: '0xfffe'
+  - macro_name: SYMINFO_BT_LOWRESERVE
+    macro_value: '0xff00'
+  - macro_name: SYMINFO_FLG_DIRECT
+    macro_value: '0x0001'
+  - macro_name: SYMINFO_FLG_PASSTHRU
+    macro_value: '0x0002'
+  - macro_name: SYMINFO_FLG_COPY
+    macro_value: '0x0004'
+  - macro_name: SYMINFO_FLG_LAZYLOAD
+    macro_value: '0x0008'
+  - macro_name: SYMINFO_NONE
+    macro_value: '0'
+  - macro_name: SYMINFO_CURRENT
+    macro_value: '1'
+  - macro_name: SYMINFO_NUM
+    macro_value: '2'
+  - macro_name: PT_GNU_SFRAME
+    macro_value: '0x6474e554'
+  - macro_name: PT_LOSUNW
+    macro_value: '0x6ffffffa'
+  - macro_name: PT_SUNWBSS
+    macro_value: '0x6ffffffa'
+  - macro_name: PT_SUNWSTACK
+    macro_value: '0x6ffffffb'
+  - macro_name: PT_HISUNW
+    macro_value: '0x6fffffff'
+  - macro_name: NT_GWINDOWS
+    macro_value: '7'
+  - macro_name: NT_ASRS
+    macro_value: '8'
+  - macro_name: NT_PSTATUS
+    macro_value: '10'
+  - macro_name: NT_PSINFO
+    macro_value: '13'
+  - macro_name: NT_PRCRED
+    macro_value: '14'
+  - macro_name: NT_UTSNAME
+    macro_value: '15'
+  - macro_name: NT_LWPSTATUS
+    macro_value: '16'
+  - macro_name: NT_LWPSINFO
+    macro_value: '17'
+  - macro_name: NT_PRXFPREG
+    macro_value: '0x46e62b7f'
+  - macro_name: NT_386_TLS
+    macro_value: '0x200'
+  - macro_name: NT_386_IOPERM
+    macro_value: '0x201'
+  - macro_name: NT_X86_XSTATE
+    macro_value: '0x202'
+  - macro_name: NT_X86_SHSTK
+    macro_value: '0x204'
+  - macro_name: NT_X86_XSAVE_LAYOUT
+    macro_value: '0x205'
+  - macro_name: NT_VMCOREDD
+    macro_value: '0x700'
+  - macro_name: NT_LOONGARCH_CPUCFG
+    macro_value: '0xa00'
+  - macro_name: NT_LOONGARCH_CSR
+    macro_value: '0xa01'
+  - macro_name: NT_LOONGARCH_LSX
+    macro_value: '0xa02'
+  - macro_name: NT_LOONGARCH_LASX
+    macro_value: '0xa03'
+  - macro_name: NT_LOONGARCH_LBT
+    macro_value: '0xa04'
+  - macro_name: NT_LOONGARCH_HW_BREAK
+    macro_value: '0xa05'
+  - macro_name: NT_LOONGARCH_HW_WATCH
+    macro_value: '0xa06'
+  - macro_name: NT_VERSION
+    macro_value: '1'
+  - macro_name: DTF_1_PARINIT
+    macro_value: '0x00000001'
+  - macro_name: DTF_1_CONFEXP
+    macro_value: '0x00000002'
+  - macro_name: DF_P1_LAZYLOAD
+    macro_value: '0x00000001'
+  - macro_name: DF_P1_GROUPPERM
+    macro_value: '0x00000002'
+  - macro_name: VER_NEED_NONE
+    macro_value: '0'
+  - macro_name: VER_NEED_CURRENT
+    macro_value: '1'
+  - macro_name: ELF_NOTE_PAGESIZE_HINT
+    macro_value: '1'
+  - macro_name: ELF_NOTE_OS_LINUX
+    macro_value: '0'
+  - macro_name: ELF_NOTE_OS_GNU
+    macro_value: '1'
+  - macro_name: ELF_NOTE_OS_SOLARIS2
+    macro_value: '2'
+  - macro_name: ELF_NOTE_OS_FREEBSD
+    macro_value: '3'
+  - macro_name: NT_FDO_PACKAGING_METADATA
+    macro_value: '0xcafe1a7e'
+  - macro_name: NT_FDO_DLOPEN_METADATA
+    macro_value: '0x407c0c0a'
+  - macro_name: LL_NONE
+    macro_value: '0'
+  - macro_name: LL_EXACT_MATCH
+    macro_value: '(1 << 0)'
+  - macro_name: LL_IGNORE_INT_VER
+    macro_value: '(1 << 1)'
+  - macro_name: LL_REQUIRE_MINOR
+    macro_value: '(1 << 2)'
+  - macro_name: LL_EXPORTS
+    macro_value: '(1 << 3)'
+  - macro_name: LL_DELAY_LOAD
+    macro_value: '(1 << 4)'
+  - macro_name: LL_DELTA
+    macro_value: '(1 << 5)'
+  - macro_name: SHT_CSKY_ATTRIBUTES
+    macro_value: '(SHT_LOPROC + 1)'
+  - macro_name: DT_NIOS2_GP
+    macro_value: '0x70000002'
+  - macro_name: SHT_ARC_ATTRIBUTES
+    macro_value: '(SHT_LOPROC + 1)'
 types:
   - type_name: Elf32_Addr
   - type_name: Elf32_Chdr
   - type_name: Elf32_Dyn
   - type_name: Elf32_Ehdr
   - type_name: Elf32_Half
+  - type_name: Elf32_Section
+  - type_name: Elf32_Move
+  - type_name: Elf32_Lib
+  - type_name: Elf32_Syminfo
   - type_name: Elf32_Lword
   - type_name: Elf32_Nhdr
   - type_name: Elf32_Off
   - type_name: Elf32_Phdr
   - type_name: Elf32_Rel
   - type_name: Elf32_Rela
+  - type_name: Elf32_Relr
   - type_name: Elf32_Shdr
   - type_name: Elf32_Sword
   - type_name: Elf32_Sym
@@ -650,12 +1423,17 @@ types:
   - type_name: Elf64_Dyn
   - type_name: Elf64_Ehdr
   - type_name: Elf64_Half
+  - type_name: Elf64_Section
+  - type_name: Elf64_Move
+  - type_name: Elf64_Lib
+  - type_name: Elf64_Syminfo
   - type_name: Elf64_Lword
   - type_name: Elf64_Nhdr
   - type_name: Elf64_Off
   - type_name: Elf64_Phdr
   - type_name: Elf64_Rel
   - type_name: Elf64_Rela
+  - type_name: Elf64_Relr
   - type_name: Elf64_Shdr
   - type_name: Elf64_Sword
   - type_name: Elf64_Sxword

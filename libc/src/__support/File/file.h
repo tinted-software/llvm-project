@@ -70,6 +70,11 @@ public:
   LIBC_INLINE SeekFunc *get_seek_func() const { return platform_seek; }
   LIBC_INLINE CloseFunc *get_close_func() const { return platform_close; }
 
+  // Whether the descriptor behind the stream is a terminal. It is used once,
+  // to settle how stdout is buffered; a stream over something else has no
+  // need of it and leaves it null.
+  using IsattyFunc = bool(File *);
+
   // This is a convenience RAII class to lock and unlock file objects.
   class FileLock {
     File *file;
@@ -93,6 +98,7 @@ private:
   ReadFunc *platform_read;
   SeekFunc *platform_seek;
   CloseFunc *platform_close;
+  IsattyFunc *platform_isatty;
 
   uint8_t *buf;   // Pointer to the stream buffer for buffered streams
   size_t bufsize; // Size of the buffer pointed to by |buf|.
@@ -127,9 +133,28 @@ private:
   FileOp prev_op : 2;
   Orientation orientation : 2;
 
+  // C leaves stdout fully buffered unless it is over an interactive device,
+  // which cannot be known before the program runs. Asking at startup would
+  // cost every program a call, including those that never print, so the
+  // question is put off until the first write and this records that it is
+  // still owed.
+  bool bufmode_unsettled;
+
   // If own_buf is true, the |buf| is owned by the stream and will be
   // free-ed when close method is called on the stream.
   bool own_buf : 1;
+
+  // Whether the caller has said it will take the lock itself, which is what
+  // __fsetlocking asks for. A stream in that state does not lock on every
+  // call, which is the whole point of asking.
+  bool caller_locking = false;
+
+  // True when the File object itself has static storage, as the standard
+  // streams do. Closing one must not hand it to the deallocator.
+  bool static_storage : 1;
+
+  // True when the stream is over something the system gave a descriptor for.
+  bool has_descriptor_ : 1;
   bool eof : 1;
   bool err : 1;
 
@@ -164,16 +189,82 @@ public:
   // the set_buffer method and allocate a buffer.
   LIBC_INLINE constexpr File(WriteFunc *wf, ReadFunc *rf, SeekFunc *sf,
                              CloseFunc *cf, uint8_t *buffer, size_t buffer_size,
-                             int buffer_mode, bool owned, FileMode mode)
+                             int buffer_mode, bool owned, FileMode mode,
+                             bool static_stream = false,
+                             bool has_file_descriptor = false,
+                             IsattyFunc *tf = nullptr,
+                             bool settle_buffer_mode = false)
       : platform_write(wf), platform_read(rf), platform_seek(sf),
-        platform_close(cf), buf(buffer), bufsize(buffer_size), pos(0),
-        read_limit(0), prev(nullptr), next(nullptr), mbstate(), mode(mode),
-        ungetc_buf{}, mutex(/*timed=*/false, /*recursive=*/true,
-                            /*robust=*/false, /*pshared=*/false),
+        platform_close(cf), platform_isatty(tf), buf(buffer),
+        bufsize(buffer_size), pos(0), read_limit(0), prev(nullptr),
+        next(nullptr), mbstate(), mode(mode), ungetc_buf{},
+        // POSIX requires the lock a stream is held under to be recursive:
+        // flockfile may be called more than once by the same thread, and
+        // anything called while it is held takes it again.
+        mutex(/*timed=*/false, /*recursive=*/true,
+              /*robust=*/false, /*pshared=*/false),
         bufmode(static_cast<int8_t>(buffer_mode)), prev_op(FileOp::NONE),
-        orientation(Orientation::UNORIENTED), own_buf(owned), eof(false),
-        err(false) {
+        orientation(Orientation::UNORIENTED),
+        bufmode_unsettled(settle_buffer_mode), own_buf(owned),
+        static_storage(static_stream), has_descriptor_(has_file_descriptor),
+        eof(false), err(false) {
     adjust_buf();
+  }
+
+  LIBC_INLINE constexpr bool has_static_storage() const {
+    return static_storage;
+  }
+
+  // Whether the stream is over something the system gave a descriptor for. A
+  // stream over memory is not, and has no descriptor to report.
+  LIBC_INLINE constexpr bool has_descriptor() const { return has_descriptor_; }
+
+  // Bytes written to the stream but not yet handed to the system. The buffer
+  // position only counts as pending output when the last operation was a
+  // write; after a read it is a position within buffered input instead.
+  LIBC_INLINE size_t pending_write_bytes() {
+    FileLock lock(this);
+    return prev_op == FileOp::WRITE ? pos : 0;
+  }
+
+  // The accessors <stdio_ext.h> exposes. They exist so that code which would
+  // otherwise reach into FILE, gnulib above all, can ask instead.
+  LIBC_INLINE size_t buffer_size() const { return bufsize; }
+  LIBC_INLINE bool last_op_was_read() {
+    FileLock lock(this);
+    return prev_op == FileOp::READ;
+  }
+  LIBC_INLINE bool last_op_was_write() {
+    FileLock lock(this);
+    return prev_op == FileOp::WRITE;
+  }
+  LIBC_INLINE bool is_readable() const { return read_allowed(); }
+  LIBC_INLINE bool is_writable() const { return write_allowed(); }
+  LIBC_INLINE bool is_line_buffered() const { return bufmode == _IOLBF; }
+
+  // Bytes already read into the buffer that the caller has not consumed yet.
+  // Code that mixes buffered reads with the underlying descriptor needs it to
+  // know how far the file position has really advanced.
+  LIBC_INLINE size_t unread_buffered_bytes() {
+    FileLock lock(this);
+    return prev_op == FileOp::READ && read_limit > pos ? read_limit - pos : 0;
+  }
+
+  // Sets the error indicator. There is no standard way to do this, and code
+  // that wraps a stream needs it to report a failure of its own through the
+  // stream the caller is holding.
+  LIBC_INLINE void set_error() {
+    FileLock lock(this);
+    err = true;
+  }
+
+  // Throws away whatever is buffered without writing it out, which is the
+  // point: callers use it to abandon output rather than flush it.
+  LIBC_INLINE void discard_buffer() {
+    FileLock lock(this);
+    pos = 0;
+    read_limit = 0;
+    prev_op = FileOp::NONE;
   }
 
   // Buffered write of |len| bytes from |data| without the file lock.
@@ -283,8 +374,26 @@ public:
   // is ENOMEM.
   int set_buffer(void *buffer, size_t size, int buffer_mode);
 
-  LIBC_INLINE void lock() { mutex.lock(); }
-  LIBC_INLINE void unlock() { mutex.unlock(); }
+  LIBC_INLINE void lock() {
+    if (!caller_locking)
+      mutex.lock();
+  }
+  LIBC_INLINE void unlock() {
+    if (!caller_locking)
+      mutex.unlock();
+  }
+  // Zero if the lock was taken, non-zero if another thread holds it. A stream
+  // whose caller has asked to do its own locking is always available.
+  int try_lock() {
+    if (caller_locking)
+      return 0;
+    return mutex.try_lock() == MutexError::NONE ? 0 : 1;
+  }
+
+  // What __fsetlocking reads and writes. These are only called with the
+  // stream not otherwise in use.
+  LIBC_INLINE bool has_caller_locking() const { return caller_locking; }
+  LIBC_INLINE void set_caller_locking(bool value) { caller_locking = value; }
 
   LIBC_INLINE bool error_unlocked() const { return err; }
 
@@ -344,6 +453,23 @@ private:
   FileIOResult write_unlocked_lbf(const uint8_t *data, size_t len);
   FileIOResult write_unlocked_fbf(const uint8_t *data, size_t len);
   FileIOResult write_unlocked_nbf(const uint8_t *data, size_t len);
+
+  // Hands the whole of |data| over, asking the platform again for as long as
+  // it keeps taking some. A write to a pipe, a socket or a terminal takes only
+  // what it has room for at that moment, and Linux stops a single write at
+  // 0x7ffff000 bytes however much was asked of it. Neither is a failure, so
+  // stopping at the first short write would throw the rest away.
+  LIBC_INLINE FileIOResult write_all(const uint8_t *data, size_t len) {
+    size_t written = 0;
+    while (written < len) {
+      FileIOResult result = platform_write(this, data + written, len - written);
+      // A platform may take part of the data and report why it stopped.
+      written += result.value;
+      if (result.has_error() || result.value == 0)
+        return {written, result.error};
+    }
+    return written;
+  }
 
   FileIOResult read_unlocked_fbf(uint8_t *data, size_t len);
   FileIOResult read_unlocked_nbf(uint8_t *data, size_t len);

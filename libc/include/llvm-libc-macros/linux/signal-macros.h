@@ -29,6 +29,7 @@
 #define SIGTERM 15
 #define SIGSTKFLT 16
 #define SIGCHLD 17
+#define SIGCLD SIGCHLD
 #define SIGCONT 18
 #define SIGSTOP 19
 #define SIGTSTP 20
@@ -49,19 +50,56 @@
 #define NSIG 65
 #define _NSIG NSIG
 
-// SIGRTMIN is current set to the minimum usable from user mode programs. If
-// the libc itself uses some of these signal numbers for private operations,
-// then it has to be adjusted in future to reflect that.
-#define SIGRTMIN 32
+// The first two real time signals are kept for the library: the thread
+// cancellation request, and the request each thread is sent to change its
+// credentials along with the rest of the process. glibc keeps the same two.
+#define SIGRTMIN 34
 // SIGRTMAX is the largest allowed value for the runtime signal.
 #define SIGRTMAX (NSIG - 1)
 
-// The kernel sigset is stored as an array of long values. Each bit of this
-// array corresponds to a signal, adjusted by 1. That is, bit 0 corresponds
-// to signal number 1, bit 1 corresponds to signal number 2 and so on. The
-// below macro denotes the size of that array (in number of long words and
-// not bytes).
-#define __NSIGSET_WORDS ((NSIG - 1) / (sizeof(unsigned long) * 8))
+#ifdef __ANDROID__
+// The kernel's range of real time signals, which the platform's own code
+// counts from rather than from SIGRTMIN. The uapi headers define the same.
+#define __SIGRTMIN 32
+#define __SIGRTMAX 64
+
+// The sigaction flag that leaves the tag bits of a fault address in si_addr,
+// which the crash handler sets. The uapi headers define it.
+#define SA_EXPOSE_TAGBITS 0x00000800
+
+// The names the uapi headers give the si_code values: the tests for a code
+// from the kernel or from a process, the highest value for each signal, and
+// the codes particular to one architecture.
+#define SI_FROMUSER(siptr) ((siptr)->si_code <= 0)
+#define SI_FROMKERNEL(siptr) ((siptr)->si_code > 0)
+#define __ILL_BREAK 10
+#define __ILL_BNDMOD 11
+#define NSIGILL 11
+#define __FPE_DECOVF 9
+#define __FPE_DECDIV 10
+#define __FPE_DECERR 11
+#define __FPE_INVASC 12
+#define __FPE_INVDEC 13
+#define NSIGFPE 15
+#define NSIGSEGV 10
+#define NSIGBUS 5
+#define NSIGTRAP 6
+#define NSIGCHLD 6
+#define NSIGPOLL 6
+#define NSIGSYS 2
+#endif // __ANDROID__
+
+// The size of a buffer which holds any name sig2str gives, with its null.
+#define SIG2STR_MAX 32
+
+// A sigset_t is an array of long values. Each bit of it corresponds to a
+// signal, adjusted by 1. That is, bit 0 corresponds to signal number 1, bit 1
+// to signal number 2 and so on. It holds 1024 bits, as glibc's and musl's do,
+// of which the kernel reads the first NSIG - 1. The first macro is the size
+// of the array in long words, the second what the kernel is told the size of
+// a signal set is, in bytes.
+#define __NSIGSET_WORDS (1024 / (sizeof(unsigned long) * 8))
+#define __KERNEL_SIGSET_BYTES ((NSIG - 1) / 8)
 
 #define SIG_BLOCK 0   // For blocking signals
 #define SIG_UNBLOCK 1 // For unblocking signals
@@ -91,10 +129,14 @@
 #error "Signal stack sizes not defined for your platform."
 #endif
 
-#define SIG_ERR __LLVM_LIBC_CAST(reinterpret_cast, void (*)(int), -1)
-#define SIG_DFL __LLVM_LIBC_CAST(reinterpret_cast, void (*)(int), 0)
-#define SIG_IGN __LLVM_LIBC_CAST(reinterpret_cast, void (*)(int), 1)
-#define SIG_HOLD __LLVM_LIBC_CAST(reinterpret_cast, void (*)(int), 2)
+// Plain casts, as glibc spells these, rather than reinterpret_cast in C++:
+// the compiler folds a plain cast of zero into a constant, so SIG_DFL can
+// appear in a static_assert, which programs that check it against the
+// kernel's value rely on.
+#define SIG_ERR ((void (*)(int)) - 1)
+#define SIG_DFL ((void (*)(int))0)
+#define SIG_IGN ((void (*)(int))1)
+#define SIG_HOLD ((void (*)(int))2)
 
 // SIGILL si_codes
 #define ILL_ILLOPC 1 // Illegal opcode
@@ -105,6 +147,7 @@
 #define ILL_PRVREG 6 // Privileged register
 #define ILL_COPROC 7 // Coprocessor error
 #define ILL_BADSTK 8 // Internal stack error
+#define ILL_BADIADDR 9 // Unimplemented instruction address
 
 // SIGFPE si_codes
 #define FPE_INTDIV 1 // Integer divide by zero
@@ -115,19 +158,35 @@
 #define FPE_FLTRES 6 // Floating-point inexact result
 #define FPE_FLTINV 7 // Invalid floating-point operation
 #define FPE_FLTSUB 8 // Subscript out of range
+#define FPE_FLTUNK 14   // Undiagnosed floating-point exception
+#define FPE_CONDTRAP 15 // Trap on condition
 
 // SIGSEGV si_codes
 #define SEGV_MAPERR 1 // Address not mapped to object
 #define SEGV_ACCERR 2 // Invalid permissions for mapped object
+#define SEGV_BNDERR 3 // Failed address bound check
+#define SEGV_PKUERR 4 // Failed protection key check
+#define SEGV_ACCADI 5 // Memory disambiguation not on for the mapping
+#define SEGV_ADIDERR 6 // Disrupting memory corruption error
+#define SEGV_ADIPERR 7 // Precise memory corruption error
+#define SEGV_MTEAERR 8 // Memory tagging fault reported later
+#define SEGV_MTESERR 9 // Memory tagging fault reported at once
+#define SEGV_CPERR 10  // Control flow protection fault
 
 // SIGBUS si_codes
 #define BUS_ADRALN 1 // Invalid address alignment
 #define BUS_ADRERR 2 // Non-existent physical address
 #define BUS_OBJERR 3 // Object-specific hardware error
+#define BUS_MCEERR_AR 4 // Hardware memory error, action required
+#define BUS_MCEERR_AO 5 // Hardware memory error, action optional
 
 // SIGTRAP si_codes
 #define TRAP_BRKPT 1 // Process breakpoint
 #define TRAP_TRACE 2 // Process trace trap
+#define TRAP_BRANCH 3 // Process taken a branch trap
+#define TRAP_HWBKPT 4 // Hardware breakpoint or watchpoint
+#define TRAP_UNK 5    // Undiagnosed trap
+#define TRAP_PERF 6   // Performance monitoring counter overflow
 
 // SIGCHLD si_codes
 #define CLD_EXITED 1    // child has exited
@@ -145,6 +204,10 @@
 #define POLL_PRI 5 // High priority input available
 #define POLL_HUP 6 // Device disconnected
 
+// `si_code` values for SIGSYS.
+#define SYS_SECCOMP 1       // Seccomp triggered
+#define SYS_USER_DISPATCH 2 // Syscall user dispatch triggered
+
 // Other si_codes.
 #define SI_USER 0       // Sent by kill()
 #define SI_QUEUE (-1)   // Sent by sigqueue()
@@ -153,6 +216,7 @@
 #define SI_MESGQ (-3)   // Arrival of a message on an empty message queue
 #define SI_SIGIO (-5)   // Queued SIGIO, on older versions of Linux
 #define SI_TKILL (-6)   // Sent by tkill or tgkill
+#define SI_DETHREAD (-7) // Sent by execve killing the other threads
 #define SI_ASYNCNL (-60) // Async name lookup completion
 #define SI_KERNEL 128    // Sent by the kernel
 
@@ -161,5 +225,8 @@
 #define SIGEV_NONE 1
 #define SIGEV_THREAD 2
 #define SIGEV_THREAD_ID 4
+
+// The name SA_NODEFER had before POSIX, still used by a good deal of code.
+#define SA_NOMASK SA_NODEFER
 
 #endif // LLVM_LIBC_MACROS_LINUX_SIGNAL_MACROS_H

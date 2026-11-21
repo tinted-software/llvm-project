@@ -1,9 +1,14 @@
-//===--- Futex Wrapper ------------------------------------------*- C++ -*-===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// Wrapper around a futex word.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIBC_SRC___SUPPORT_THREADS_LINUX_FUTEX_UTILS_H
@@ -34,6 +39,9 @@ static_assert(
     "with 64-bit tv_nsec.");
 #endif
 
+// What wait() does when a signal handler interrupts the futex wait.
+enum class FutexSigAction { Restart, Exit };
+
 class Futex : public cpp::Atomic<FutexWordType> {
 public:
   using Timeout = internal::AbsTimeout;
@@ -43,9 +51,10 @@ public:
     cpp::Atomic<FutexWordType>::store(value);
     return *this;
   }
-  LIBC_INLINE ErrorOr<int> wait(FutexWordType expected,
-                                cpp::optional<Timeout> timeout = cpp::nullopt,
-                                bool is_shared = false) {
+  LIBC_INLINE ErrorOr<int>
+  wait(FutexWordType expected, cpp::optional<Timeout> timeout = cpp::nullopt,
+       bool is_shared = false,
+       FutexSigAction sig_action = FutexSigAction::Restart) {
     // use bitset variants to enforce abs_time
     uint32_t op = is_shared ? FUTEX_WAIT_BITSET : FUTEX_WAIT_BITSET_PRIVATE;
     if (timeout && timeout->is_realtime()) {
@@ -89,10 +98,13 @@ public:
           /*ignored=*/nullptr,
           /*bitset=*/FUTEX_BITSET_MATCH_ANY);
 
-      // continue waiting if interrupted; otherwise return the result
-      // which should normally be 0 or -ETIMEOUT.
-      if (ret == -EINTR)
-        continue;
+      // continue waiting if interrupted, unless the caller asks to be notified;
+      // otherwise return the result which should normally be 0 or -ETIMEOUT.
+      if (ret == -EINTR) {
+        if (sig_action == FutexSigAction::Restart)
+          continue;
+        return cpp::unexpected(EINTR);
+      }
 
       // EAGAIN and EWOULDBLOCK will be treated as a normal finish, as the value
       // has changed.
@@ -177,6 +189,69 @@ public:
     if (ret < 0)
       return cpp::unexpected<int>(-ret);
     return static_cast<int>(ret);
+  }
+
+  // A priority-inheriting lock holds its owner's thread id, which the kernel
+  // reads to lend the owner the priority of whoever waits. These take the
+  // lock through the kernel once taking it in place has failed, and give it
+  // back through the kernel when there are waiters. A timeout is absolute.
+  LIBC_INLINE ErrorOr<int> lock_pi(cpp::optional<Timeout> timeout,
+                                   bool is_shared = false) {
+    // FUTEX_LOCK_PI only measures against the realtime clock. FUTEX_LOCK_PI2
+    // measures against either, but needs Linux 5.14.
+    uint32_t op = FUTEX_LOCK_PI;
+    if (timeout && !timeout->is_realtime())
+      op = FUTEX_LOCK_PI2;
+    if (!is_shared)
+      op |= FUTEX_PRIVATE_FLAG;
+
+    void *timeout_ptr = nullptr;
+#if defined(SYS_futex_time64)
+    __kernel_timespec ts64;
+    if (timeout) {
+      ts64.tv_sec = timeout->get_timespec().tv_sec;
+      ts64.tv_nsec = timeout->get_timespec().tv_nsec;
+      timeout_ptr = &ts64;
+    }
+#else
+    timespec ts;
+    if (timeout) {
+      ts = timeout->get_timespec();
+      timeout_ptr = &ts;
+    }
+#endif
+    for (;;) {
+      int ret = syscall_impl<int>(FUTEX_SYSCALL_ID, this, op, 0, timeout_ptr,
+                                  nullptr, 0);
+      if (ret == -EINTR)
+        continue;
+      if (ret < 0)
+        return cpp::unexpected(-ret);
+      return ret;
+    }
+  }
+
+  // Takes the lock if that can be done without waiting, which takes the
+  // kernel when the word names no owner but is not zero, as it is after the
+  // owner of a robust lock exited. Fails with EAGAIN when it is held.
+  LIBC_INLINE ErrorOr<int> trylock_pi(bool is_shared = false) {
+    int ret = syscall_impl<int>(
+        FUTEX_SYSCALL_ID, this,
+        is_shared ? FUTEX_TRYLOCK_PI : FUTEX_TRYLOCK_PI | FUTEX_PRIVATE_FLAG, 0,
+        nullptr, nullptr, 0);
+    if (ret < 0)
+      return cpp::unexpected(-ret);
+    return ret;
+  }
+
+  LIBC_INLINE ErrorOr<int> unlock_pi(bool is_shared = false) {
+    int ret =
+        syscall_impl<int>(FUTEX_SYSCALL_ID, this,
+                          is_shared ? FUTEX_UNLOCK_PI : FUTEX_UNLOCK_PI_PRIVATE,
+                          0, nullptr, nullptr, 0);
+    if (ret < 0)
+      return cpp::unexpected(-ret);
+    return ret;
   }
 };
 

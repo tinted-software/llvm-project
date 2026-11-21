@@ -38,7 +38,9 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.grp.getgrouplist
     libc.src.grp.getgrnam
     libc.src.grp.getgrnam_r
+    libc.src.grp.initgroups
     libc.src.grp.setgrent
+    libc.src.grp.setgroups
 
     # poll.h entrypoints
     libc.src.poll.poll
@@ -72,6 +74,7 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.string.strcat
     libc.src.string.strchr
     libc.src.string.strchrnul
+    libc.src.string.basename
     libc.src.string.strcmp
     libc.src.string.strcpy
     libc.src.string.strcspn
@@ -90,6 +93,7 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.string.strstr
     libc.src.string.strtok
     libc.src.string.strtok_r
+    libc.src.string.strverscmp
 
     # strings.h entrypoints
     libc.src.strings.bcmp
@@ -107,7 +111,7 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.inttypes.strtoumax
 
     # libgen.h entrypoints
-    libc.src.libgen.basename
+    libc.src.libgen.__xpg_basename
     libc.src.libgen.dirname
 
     # stdbit.h entrypoints
@@ -269,9 +273,14 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.sys.time.setitimer
     libc.src.sys.time.getitimer
 
+    # utime.h entrypoints
+    libc.src.utime.utime
+
     # unistd.h entrypoints
     libc.src.unistd.alarm
+    libc.src.unistd.ualarm
     libc.src.unistd.access
+    libc.src.unistd.brk
     libc.src.unistd.chdir
     libc.src.unistd.chown
     libc.src.unistd.chroot
@@ -296,6 +305,8 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.unistd.geteuid
     libc.src.unistd.getgroups
     libc.src.unistd.gethostname
+    libc.src.unistd.getlogin
+    libc.src.unistd.getlogin_r
     libc.src.unistd.getpagesize
     libc.src.unistd.getpgid
     libc.src.unistd.getpgrp
@@ -308,6 +319,7 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.unistd.getgid
     libc.src.unistd.getuid
     libc.src.unistd.isatty
+    libc.src.unistd.issetugid
     libc.src.unistd.lchown
     libc.src.unistd.link
     libc.src.unistd.linkat
@@ -322,8 +334,17 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.unistd.readlink
     libc.src.unistd.readlinkat
     libc.src.unistd.rmdir
+    libc.src.unistd.sbrk
+    libc.src.unistd.setegid
+    libc.src.unistd.seteuid
+    libc.src.unistd.setgid
     libc.src.unistd.setpgid
+    libc.src.unistd.setregid
+    libc.src.unistd.setresgid
+    libc.src.unistd.setresuid
+    libc.src.unistd.setreuid
     libc.src.unistd.setsid
+    libc.src.unistd.setuid
     libc.src.unistd.symlink
     libc.src.unistd.symlinkat
     libc.src.unistd.sync
@@ -332,6 +353,8 @@ set(TARGET_LIBC_ENTRYPOINTS
     libc.src.unistd.tcgetpgrp
     libc.src.unistd.tcsetpgrp
     libc.src.unistd.truncate
+    libc.src.unistd.ttyname
+    libc.src.unistd.ttyname_r
     libc.src.unistd.unlink
     libc.src.unistd.unlinkat
     libc.src.unistd.write
@@ -371,6 +394,11 @@ if(LLVM_LIBC_FULL_BUILD)
     libc.src.dirent.opendir
     libc.src.dirent.readdir
     libc.src.dirent.fdopendir
+    libc.src.dirent.rewinddir
+    libc.src.dirent.scandir
+    libc.src.dirent.seekdir
+    libc.src.dirent.telldir
+    libc.src.dirent.versionsort
 
     # langinfo.h entrypoints
     libc.src.langinfo.nl_langinfo
@@ -801,10 +829,6 @@ list(APPEND TARGET_LIBM_ENTRYPOINTS
 if(LLVM_LIBC_ENABLE_EXPERIMENTAL_ENTRYPOINTS)
   if(LLVM_LIBC_FULL_BUILD)
     list(APPEND TARGET_LIBC_ENTRYPOINTS
-      # grp.h entrypoints
-      libc.src.grp.initgroups
-      libc.src.grp.setgroups
-
       # libintl.h entrypoints
       libc.src.libintl.bind_textdomain_codeset
       libc.src.libintl.bindtextdomain
@@ -831,15 +855,6 @@ if(LLVM_LIBC_ENABLE_EXPERIMENTAL_ENTRYPOINTS)
       # sys/ptrace.h entrypoints
       libc.src.sys.ptrace.ptrace
 
-      # unistd.h entrypoints
-      libc.src.unistd.setegid
-      libc.src.unistd.seteuid
-      libc.src.unistd.setgid
-      libc.src.unistd.setregid
-      libc.src.unistd.setresgid
-      libc.src.unistd.setresuid
-      libc.src.unistd.setreuid
-      libc.src.unistd.setuid
     )
   endif()
 endif()

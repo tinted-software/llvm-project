@@ -1,17 +1,11 @@
 header: sys/timerfd.h
+# The interface takes a clock, so the names of the clocks come with it, the
+# way the GNU library hands them over here too.
+public_includes:
+  - time.h
 standards:
   - linux
 macros:
-  - macro_name: CLOCK_BOOTTIME
-    macro_header: time-macros.h
-  - macro_name: CLOCK_BOOTTIME_ALARM
-    macro_header: time-macros.h
-  - macro_name: CLOCK_MONOTONIC
-    macro_header: time-macros.h
-  - macro_name: CLOCK_REALTIME
-    macro_header: time-macros.h
-  - macro_name: CLOCK_REALTIME_ALARM
-    macro_header: time-macros.h
   - macro_name: TFD_CLOEXEC
     macro_header: sys-timerfd-macros.h
   - macro_name: TFD_NONBLOCK
@@ -22,6 +16,7 @@ macros:
     macro_header: sys-timerfd-macros.h
 types:
   - type_name: struct_itimerspec
+  - type_name: clockid_t
 enums: []
 objects: []
 functions:

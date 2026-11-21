@@ -31,6 +31,13 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  cfsetspeed
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.cfsetspeed
+)
+
+add_entrypoint_object(
   tcgetsid
   ALIAS
   DEPENDS
@@ -91,4 +98,11 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.tcsetwinsize
+)
+
+add_entrypoint_object(
+  cfmakeraw
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.cfmakeraw
 )

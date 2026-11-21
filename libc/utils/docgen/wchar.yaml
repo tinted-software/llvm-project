@@ -118,6 +118,8 @@ functions:
     c-definition: 7.31.4.4.1
   wcschr:
     c-definition: 7.31.4.6.2
+  wcscasecmp:
+    in-latest-posix: ''
   wcscmp:
     c-definition: 7.31.4.5.2
   wcscasecmp:
@@ -137,6 +139,8 @@ functions:
     c-definition: 7.31.4.7.1
   wcsncat:
     c-definition: 7.31.4.4.2
+  wcsncasecmp:
+    in-latest-posix: ''
   wcsncmp:
     c-definition: 7.31.4.5.4
   wcsncpy:
@@ -181,11 +185,15 @@ functions:
   wcstoull:
     c-definition: 7.31.4.2.4
     c-reference: string/wide/wcstoul
+  wcswidth:
+    in-latest-posix: ''
   wcsxfrm:
     c-definition: 7.31.4.5.5
   wctob:
     c-definition: 7.31.6.2.2
     c-reference: string/multibyte/wctob
+  wcwidth:
+    in-latest-posix: ''
   wmemchr:
     c-definition: 7.31.4.6.9
   wmemcmp:

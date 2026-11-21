@@ -1,0 +1,431 @@
+//===----------------------------------------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// Finding a shared object by name
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_LIBC_SRC___SUPPORT_ELF_SEARCH_H
+#define LLVM_LIBC_SRC___SUPPORT_ELF_SEARCH_H
+
+#include "hdr/elf_macros.h"
+#include "hdr/fcntl_macros.h"
+#include "hdr/link_macros.h"
+#include "hdr/types/size_t.h"
+#include "src/__support/CPP/optional.h"
+#include "hdr/sys_stat_macros.h"
+#include "hdr/types/struct_stat.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/close.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/newfstatat.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/open.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/read.h"
+#include "src/__support/elf/load_module.h"
+#include "src/__support/elf/module.h"
+#include "src/__support/elf/run_path.h"
+#include "src/__support/macros/attributes.h"
+#include "src/__support/macros/config.h"
+#include "src/__support/macros/properties/architectures.h"
+
+namespace LIBC_NAMESPACE_DECL {
+namespace elf {
+
+// Where a bare soname is looked for once nothing else has it. There is no
+// cache of what is installed: musl manages without one and a format compatible
+// with glibc's would buy nothing here.
+constexpr const char *DEFAULT_SEARCH_PATHS[] = {"/lib", "/usr/lib"};
+
+// Where a system lists the other directories it keeps libraries in, looked at
+// before the default ones. It is named after the loader, as musl names its
+// own, and a system that already keeps glibc's ld.so.conf can make it a link
+// to that.
+#if defined(LIBC_TARGET_ARCH_IS_X86_64)
+constexpr const char *SYSTEM_PATH_FILE = "/etc/ld-llvm-libc-x86_64.path";
+#elif defined(LIBC_TARGET_ARCH_IS_AARCH64)
+constexpr const char *SYSTEM_PATH_FILE = "/etc/ld-llvm-libc-aarch64.path";
+#elif defined(LIBC_TARGET_ARCH_IS_ANY_RISCV)
+constexpr const char *SYSTEM_PATH_FILE = "/etc/ld-llvm-libc-riscv.path";
+#elif defined(LIBC_TARGET_ARCH_IS_ARM)
+constexpr const char *SYSTEM_PATH_FILE = "/etc/ld-llvm-libc-arm.path";
+#else
+constexpr const char *SYSTEM_PATH_FILE = nullptr;
+#endif
+
+// How much of that file is read, and how long the list made from it may be.
+constexpr size_t MAX_SYSTEM_PATHS = 4096;
+
+// The longest path this will build. A name longer than this is one nothing
+// can open anyway.
+constexpr size_t MAX_SEARCH_PATH = 256;
+
+// Joins a directory and a name with a separator between them. Returns false
+// if the result would not fit.
+LIBC_INLINE bool join_path(const char *dir, const char *name, char *out,
+                           size_t capacity) {
+  size_t n = 0;
+  for (const char *p = dir; *p != '\0'; ++p) {
+    if (n + 2 >= capacity)
+      return false;
+    out[n++] = *p;
+  }
+  out[n++] = '/';
+  for (const char *p = name; *p != '\0'; ++p) {
+    if (n + 1 >= capacity)
+      return false;
+    out[n++] = *p;
+  }
+  out[n] = '\0';
+  return true;
+}
+
+// Turns the text of a path file into a colon separated list. Directories are
+// separated by newlines or colons, and a # starts a comment that runs to the
+// end of its line, which lets the file be glibc's ld.so.conf as well as one
+// written the way musl's is. Blanks around a directory are dropped. Returns
+// the length of the list, which ends at the last whole directory that fits.
+LIBC_INLINE size_t path_list_from_text(const char *text, size_t length,
+                                       char *out, size_t capacity) {
+  if (capacity == 0)
+    return 0;
+  size_t n = 0;
+  size_t i = 0;
+  while (i < length) {
+    const char c = text[i];
+    if (c == '\n' || c == ':' || c == ' ' || c == '\t' || c == '\r') {
+      ++i;
+      continue;
+    }
+    if (c == '#') {
+      while (i < length && text[i] != '\n')
+        ++i;
+      continue;
+    }
+    const size_t start = i;
+    while (i < length && text[i] != '\n' && text[i] != ':' && text[i] != '#')
+      ++i;
+    size_t end = i;
+    while (end > start && (text[end - 1] == ' ' || text[end - 1] == '\t' ||
+                           text[end - 1] == '\r'))
+      --end;
+    const size_t separator = n > 0 ? 1 : 0;
+    if (n + separator + (end - start) + 1 > capacity)
+      break;
+    if (separator)
+      out[n++] = ':';
+    for (size_t k = start; k < end; ++k)
+      out[n++] = text[k];
+  }
+  out[n] = '\0';
+  return n;
+}
+
+// The directories a system's path file lists. The file is read the first time
+// a search gets as far as needing them, so a process whose libraries are all
+// found sooner never opens it.
+class SystemPaths {
+public:
+  LIBC_INLINE SystemPaths(const char *file = SYSTEM_PATH_FILE) : file_(file) {}
+
+  // The list, or null where there is no file or nothing in it.
+  LIBC_INLINE const char *list() {
+    if (!read_) {
+      read_ = true;
+      load();
+    }
+    return length_ == 0 ? nullptr : list_;
+  }
+
+private:
+  LIBC_INLINE void load() {
+    if (file_ == nullptr)
+      return;
+    auto fd = linux_syscalls::open(file_, O_RDONLY | O_CLOEXEC, 0);
+    if (!fd.has_value())
+      return;
+    char text[MAX_SYSTEM_PATHS];
+    size_t got = 0;
+    while (got < sizeof(text)) {
+      auto n = linux_syscalls::read(fd.value(), text + got, sizeof(text) - got);
+      if (!n.has_value() || n.value() <= 0)
+        break;
+      got += static_cast<size_t>(n.value());
+    }
+    linux_syscalls::close(fd.value());
+    // A file longer than was read is cut at its last whole line, so that no
+    // directory is taken from the part of a name that fitted.
+    if (got == sizeof(text))
+      while (got > 0 && text[got - 1] != '\n')
+        --got;
+    length_ = path_list_from_text(text, got, list_, sizeof(list_));
+  }
+
+  const char *file_;
+  bool read_ = false;
+  size_t length_ = 0;
+  char list_[MAX_SYSTEM_PATHS];
+};
+
+// The older DT_RPATH, which is looked at before LD_LIBRARY_PATH and so cannot
+// be overridden. A module carrying DT_RUNPATH is not using DT_RPATH at all,
+// even where both are present, so the newer one turns the older one off.
+LIBC_INLINE const char *rpath_of(const Module &module) {
+  const char *strings = module.strtab();
+  if (strings == nullptr)
+    return nullptr;
+  if (module.dynamic().value(DT_RUNPATH))
+    return nullptr;
+  if (auto offset = module.dynamic().value(DT_RPATH))
+    return strings + *offset;
+  return nullptr;
+}
+
+// DT_RUNPATH, which is looked at after LD_LIBRARY_PATH. Being overridable is
+// the whole reason it was added: a program built against libraries that are
+// not installed yet is run with LD_LIBRARY_PATH naming where they actually
+// are, and that has to win over the path recorded for where they will end up.
+LIBC_INLINE const char *runpath_of(const Module &module) {
+  const char *strings = module.strtab();
+  if (strings == nullptr)
+    return nullptr;
+  if (auto offset = module.dynamic().value(DT_RUNPATH))
+    return strings + *offset;
+  return nullptr;
+}
+
+// Calls `visit` with `name` under each colon separated directory in `list`,
+// until it returns true. `origin` is what $ORIGIN in that list stands for, and
+// is null where the list may not use it.
+template <typename Visit>
+LIBC_INLINE bool visit_path_list(const char *list, const char *name,
+                                 const char *origin, Visit &&visit) {
+  if (list == nullptr)
+    return false;
+  for (const char *segment = list; segment != nullptr;) {
+    const char *end = segment;
+    while (*end != '\0' && *end != ':')
+      ++end;
+    char dir[MAX_SEARCH_PATH];
+    const size_t length = static_cast<size_t>(end - segment);
+    if (length > 0 &&
+        expand_run_path(segment, length, origin, dir, sizeof(dir))) {
+      char path[MAX_SEARCH_PATH];
+      if (join_path(dir, name, path, sizeof(path)) && visit(path))
+        return true;
+    }
+    segment = (*end == '\0') ? nullptr : end + 1;
+  }
+  return false;
+}
+
+// Calls `visit` with each path the object `name` stands for could be at, in
+// the order a loader is expected to look, until it returns true: a name with a
+// directory in it is taken as it is, and a bare one is looked for under the
+// asking object's DT_RPATH, then under `library_path`, then under its
+// DT_RUNPATH, then under what the system's path file lists, then under the
+// default directories. The two run paths sit on either side of
+// LD_LIBRARY_PATH, which is what tells them apart.
+//
+// `requester` is the module whose run path applies, or null where none does.
+// `origin` is what $ORIGIN in that run path stands for, or null for the
+// directory of the requester's own name. `system_paths` is null where no path
+// file is to be read.
+template <typename Visit>
+LIBC_INLINE bool visit_candidates(const char *name, const Module *requester,
+                                  const char *origin, const char *library_path,
+                                  SystemPaths *system_paths, Visit &&visit) {
+  if (name == nullptr)
+    return false;
+
+  for (const char *p = name; *p != '\0'; ++p)
+    if (*p == '/')
+      return visit(name);
+
+  if (requester != nullptr && origin == nullptr)
+    origin = requester->name();
+  if (requester != nullptr &&
+      visit_path_list(rpath_of(*requester), name, origin, visit))
+    return true;
+  if (visit_path_list(library_path, name, nullptr, visit))
+    return true;
+  if (requester != nullptr &&
+      visit_path_list(runpath_of(*requester), name, origin, visit))
+    return true;
+  if (system_paths != nullptr &&
+      visit_path_list(system_paths->list(), name, nullptr, visit))
+    return true;
+  for (const char *dir : DEFAULT_SEARCH_PATHS) {
+    char path[MAX_SEARCH_PATH];
+    if (join_path(dir, name, path, sizeof(path)) && visit(path))
+      return true;
+  }
+  return false;
+}
+
+// Loads the object `name` stands for, from the first place it can be loaded
+// from. See visit_candidates for where that looks.
+LIBC_INLINE cpp::optional<LoadedModule>
+find_and_load(const char *name, const Module *requester, const char *origin,
+              const char *library_path, SystemPaths *system_paths,
+              size_t page_size) {
+  LoadedModule found;
+  const bool ok = visit_candidates(
+      name, requester, origin, library_path, system_paths,
+      [&](const char *path) {
+        auto loaded = load_module(path, page_size);
+        if (!loaded.has_value())
+          return false;
+        found = loaded.value();
+        return true;
+      });
+  if (!ok)
+    return cpp::nullopt;
+  return found;
+}
+
+// The file `name` would be loaded from, as a device and an inode, without
+// loading it: the first candidate that is there. Two names that come to the
+// same device and inode are one object, whatever they are called, which is
+// how a symbolic link to a library already in the process, or a second name
+// for it, is told from a different library.
+LIBC_INLINE bool locate_file(const char *name, const Module *requester,
+                             const char *origin, const char *library_path,
+                             SystemPaths *system_paths, dev_t &device,
+                             ino_t &inode) {
+  return visit_candidates(
+      name, requester, origin, library_path, system_paths,
+      [&](const char *path) {
+        struct stat found;
+        if (!linux_syscalls::newfstatat(AT_FDCWD, path, &found, 0) ||
+            (found.st_mode & S_IFMT) != S_IFREG)
+          return false;
+        device = found.st_dev;
+        inode = found.st_ino;
+        return true;
+      });
+}
+
+// LD_LIBRARY_PATH, without the value being copied anywhere: the environment
+// outlives whoever looks at it.
+LIBC_INLINE const char *value_of(char **envp, const char *key) {
+  if (envp == nullptr)
+    return nullptr;
+  for (char **e = envp; *e != nullptr; ++e) {
+    const char *p = *e;
+    size_t i = 0;
+    for (; key[i] != '\0' && p[i] == key[i]; ++i)
+      ;
+    if (key[i] == '\0')
+      return p + i;
+  }
+  return nullptr;
+}
+
+LIBC_INLINE const char *library_path_from(char **envp) {
+  return value_of(envp, "LD_LIBRARY_PATH=");
+}
+
+// Whether a needed library is the program interpreter of glibc, which a
+// program built for glibc names as a dependency for the sake of its
+// __tls_get_addr and _dl_* entry points. This libc is the loader and has
+// those, so loading glibc's own loader beside it would put a second set of
+// them first in the search order and leave the program calling into one that
+// was never started.
+LIBC_INLINE bool is_glibc_interpreter(const char *name) {
+  constexpr const char *NAMES[] = {
+      "ld-linux-x86-64.so.2", "ld-linux-aarch64.so.1",
+      "ld-linux-riscv64-lp64d.so.1", "ld-linux-armhf.so.3"};
+  for (const char *candidate : NAMES) {
+    const char *a = candidate;
+    const char *b = name;
+    for (; *a == *b; ++a, ++b)
+      if (*a == '\0')
+        return true;
+  }
+  return false;
+}
+
+// A list of objects LD_PRELOAD is not to load, by file name, one to a line,
+// read from the file the loader is given. Some programs are made to be
+// preloaded into a glibc process and look inside glibc's threads and loader
+// as they do; loading one here can only end in the program stopping itself.
+class PreloadIgnoreList {
+public:
+  LIBC_INLINE explicit PreloadIgnoreList(
+      const char *file = "/etc/ld-llvm-libc-preload-ignore")
+      : file_(file) {}
+
+  // Whether the preload's own file name, the part after the last slash, is
+  // on the list.
+  LIBC_INLINE bool contains(const char *path) {
+    if (!read_) {
+      read_ = true;
+      load();
+    }
+    const char *base = path;
+    for (const char *p = path; *p != '\0'; ++p)
+      if (*p == '/')
+        base = p + 1;
+    size_t i = 0;
+    while (i < length_) {
+      size_t start = i;
+      while (i < length_ && text_[i] != '\n')
+        ++i;
+      size_t end = i;
+      ++i;
+      while (end > start && (text_[end - 1] == ' ' || text_[end - 1] == '\t' ||
+                             text_[end - 1] == '\r'))
+        --end;
+      if (end == start || text_[start] == '#')
+        continue;
+      size_t n = 0;
+      while (base[n] != '\0')
+        ++n;
+      if (n != end - start)
+        continue;
+      bool same = true;
+      for (size_t k = 0; k < n && same; ++k)
+        same = base[k] == text_[start + k];
+      if (same)
+        return true;
+    }
+    return false;
+  }
+
+private:
+  LIBC_INLINE void load() {
+    if (file_ == nullptr)
+      return;
+    auto fd = linux_syscalls::open(file_, O_RDONLY | O_CLOEXEC, 0);
+    if (!fd.has_value())
+      return;
+    while (length_ < sizeof(text_)) {
+      auto n = linux_syscalls::read(fd.value(), text_ + length_,
+                                    sizeof(text_) - length_);
+      if (!n.has_value() || n.value() <= 0)
+        break;
+      length_ += static_cast<size_t>(n.value());
+    }
+    linux_syscalls::close(fd.value());
+  }
+
+  const char *file_;
+  bool read_ = false;
+  size_t length_ = 0;
+  char text_[1024];
+};
+
+// LD_PRELOAD, the objects to load before anything the program asked for so
+// that what they define is found first.
+LIBC_INLINE const char *preload_list_from(char **envp) {
+  return value_of(envp, "LD_PRELOAD=");
+}
+
+} // namespace elf
+} // namespace LIBC_NAMESPACE_DECL
+
+#endif // LLVM_LIBC_SRC___SUPPORT_ELF_SEARCH_H

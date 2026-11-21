@@ -1,4 +1,46 @@
 add_entrypoint_object(
+  futimes
+  SRCS
+    futimes.cpp
+  HDRS
+    ../futimes.h
+  DEPENDS
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.struct_timeval
+    libc.src.__support.OSUtil.linux.syscall_wrappers.utimensat
+    libc.src.__support.libc_errno
+)
+
+add_entrypoint_object(
+  futimesat
+  SRCS
+    futimesat.cpp
+  HDRS
+    ../futimesat.h
+  DEPENDS
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.struct_timeval
+    libc.src.__support.OSUtil.linux.syscall_wrappers.utimensat
+    libc.src.__support.libc_errno
+)
+
+add_entrypoint_object(
+  lutimes
+  SRCS
+    lutimes.cpp
+  HDRS
+    ../lutimes.h
+  DEPENDS
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.struct_timeval
+    libc.hdr.fcntl_macros
+    libc.src.__support.OSUtil.linux.syscall_wrappers.utimensat
+    libc.include.sys_stat
+    libc.include.fcntl
+    libc.src.__support.libc_errno
+)
+
+add_entrypoint_object(
   utimes
   SRCS
     utimes.cpp
@@ -54,6 +96,24 @@ add_entrypoint_object(
     libc.hdr.time_macros
     libc.hdr.types.suseconds_t
     libc.src.__support.time.clock_gettime
+    libc.src.__support.time.units
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  settimeofday
+  SRCS
+    settimeofday.cpp
+  HDRS
+    ../settimeofday.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.time_macros
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.struct_timeval
+    libc.hdr.types.struct_timezone
+    libc.src.__support.error_or
+    libc.src.__support.time.clock_settime
     libc.src.__support.time.units
     libc.src.errno.errno
 )

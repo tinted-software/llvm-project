@@ -18,10 +18,20 @@
 
 namespace LIBC_NAMESPACE_DECL {
 
-static_assert(sizeof(Mutex) == sizeof(pthread_mutex_t) &&
-                  alignof(Mutex) == alignof(pthread_mutex_t),
-              "The public pthread_mutex_t type must exactly match the internal "
-              "mutex type.");
+static_assert(
+    sizeof(Mutex) <= sizeof(pthread_mutex_t) &&
+        alignof(Mutex) <= alignof(pthread_mutex_t),
+    "The public pthread_mutex_t type must be at least as large and as aligned "
+    "as the internal mutex type.");
+
+// The kernel finds the futex word of a robust mutex from its list node, at a
+// fixed distance. The node is the second of the two words in the reserved
+// bytes, the first being what leads to it.
+static_assert(__builtin_offsetof(__mutex_type, __reserved) +
+                      sizeof(robust::Node *) ==
+                  -robust::FUTEX_OFFSET,
+              "The list node of a robust mutex is not where the kernel looks "
+              "for the futex word relative to it.");
 
 LLVM_LIBC_FUNCTION(int, pthread_mutex_init,
                    (pthread_mutex_t * m,
@@ -46,8 +56,11 @@ LLVM_LIBC_FUNCTION(int, pthread_mutex_init,
 
   bool is_pshared = get_mutexattr_pshared(mutexattr) == PTHREAD_PROCESS_SHARED;
 
-  new (m) Mutex(/*is_priority_inherit=*/false, is_recursive, is_robust,
-                is_pshared, is_error_checking);
+  bool is_priority_inherit =
+      get_mutexattr_protocol(mutexattr) == PTHREAD_PRIO_INHERIT;
+
+  new (m) Mutex(is_priority_inherit, is_recursive, is_robust, is_pshared,
+                is_error_checking);
   return 0;
 }
 

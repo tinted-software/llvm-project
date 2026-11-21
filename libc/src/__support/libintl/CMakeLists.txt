@@ -1,0 +1,20 @@
+add_header_library(
+  plural
+  HDRS
+    plural.h
+  DEPENDS
+    libc.src.__support.CPP.string_view
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_header_library(
+  catalog
+  HDRS
+    catalog.h
+  DEPENDS
+    .plural
+    libc.src.__support.CPP.string_view
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)

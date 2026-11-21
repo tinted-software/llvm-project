@@ -45,6 +45,20 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  readahead
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.readahead
+)
+
+add_entrypoint_object(
+  sync_file_range
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.sync_file_range
+)
+
+add_entrypoint_object(
   posix_fadvise64
   ALIAS
   DEPENDS
@@ -56,4 +70,39 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.posix_fallocate
+)
+
+add_entrypoint_object(
+  splice
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.splice
+)
+
+add_entrypoint_object(
+  vmsplice
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.vmsplice
+)
+
+add_entrypoint_object(
+  tee
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.tee
+)
+
+add_entrypoint_object(
+  name_to_handle_at
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.name_to_handle_at
+)
+
+add_entrypoint_object(
+  open_by_handle_at
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.open_by_handle_at
 )

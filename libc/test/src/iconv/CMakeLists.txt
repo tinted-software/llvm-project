@@ -1,0 +1,21 @@
+add_libc_testsuite(libc-iconv-tests)
+
+add_libc_test(
+  iconv_test
+  SUITE
+    libc-iconv-tests
+  SRCS
+    iconv_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.locale_macros
+    libc.hdr.types.iconv_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.common
+    libc.src.errno.errno
+    libc.src.iconv.iconv
+    libc.src.iconv.iconv_close
+    libc.src.iconv.iconv_open
+    libc.src.locale.setlocale
+    libc.test.UnitTest.ErrnoCheckingTest
+)

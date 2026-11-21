@@ -1,4 +1,5 @@
 header: arpa/nameser.h
+header_template: nameser.h.def
 standards:
   - bsd
 macros:
@@ -28,14 +29,241 @@ macros:
     macro_header: arpa-nameser-macros.h
   - macro_name: NS_IN6ADDRSZ
     macro_header: arpa-nameser-macros.h
+  - macro_name: NS_OPT_DNSSEC_OK
+    macro_header: arpa-nameser-macros.h
+  - macro_name: NS_OPT_NSID
+    macro_header: arpa-nameser-macros.h
+  - macro_name: NS_OPT_PADDING
+    macro_header: arpa-nameser-macros.h
   - macro_name: NS_CMPRSFLGS
     macro_header: arpa-nameser-macros.h
   - macro_name: NS_DEFAULTPORT
     macro_header: arpa-nameser-macros.h
 types:
+  - type_name: HEADER
   - type_name: ns_class
+  - type_name: ns_flag
+  - type_name: ns_msg
+  - type_name: ns_rr
   - type_name: ns_sect
   - type_name: ns_type
-enums: []
+  - type_name: size_t
+enums:
+  - name: ns_s_qd
+    value: 0
+  - name: ns_s_zn
+    value: 0
+  - name: ns_s_an
+    value: 1
+  - name: ns_s_pr
+    value: 1
+  - name: ns_s_ns
+    value: 2
+  - name: ns_s_ud
+    value: 2
+  - name: ns_s_ar
+    value: 3
+  - name: ns_s_max
+    value: 4
+  - name: ns_o_query
+    value: 0
+  - name: ns_o_iquery
+    value: 1
+  - name: ns_o_status
+    value: 2
+  - name: ns_o_notify
+    value: 4
+  - name: ns_o_update
+    value: 5
+  - name: ns_o_max
+    value: 6
+  - name: ns_r_noerror
+    value: 0
+  - name: ns_r_formerr
+    value: 1
+  - name: ns_r_servfail
+    value: 2
+  - name: ns_r_nxdomain
+    value: 3
+  - name: ns_r_notimpl
+    value: 4
+  - name: ns_r_refused
+    value: 5
+  - name: ns_r_yxdomain
+    value: 6
+  - name: ns_r_yxrrset
+    value: 7
+  - name: ns_r_nxrrset
+    value: 8
+  - name: ns_r_notauth
+    value: 9
+  - name: ns_r_notzone
+    value: 10
+  - name: ns_r_max
+    value: 11
+  - name: ns_r_badvers
+    value: 16
+  - name: ns_r_badsig
+    value: 16
+  - name: ns_r_badkey
+    value: 17
+  - name: ns_r_badtime
+    value: 18
 objects: []
-functions: []
+functions:
+  - name: ns_get16
+    standards:
+      - bsd
+    return_type: unsigned int
+    arguments:
+      - type: const unsigned char *
+  - name: ns_get32
+    standards:
+      - bsd
+    return_type: unsigned long
+    arguments:
+      - type: const unsigned char *
+  - name: ns_put16
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: unsigned int
+      - type: unsigned char *
+  - name: ns_put32
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: unsigned long
+      - type: unsigned char *
+  - name: ns_initparse
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: int
+      - type: ns_msg *
+  - name: ns_skiprr
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: ns_sect
+      - type: int
+  - name: ns_parserr
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: ns_msg *
+      - type: ns_sect
+      - type: int
+      - type: ns_rr *
+  - name: ns_name_uncompress
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: char *
+      - type: size_t
+  - name: ns_msg_getflag
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: ns_msg
+      - type: int
+  - name: ns_name_ntop
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: char *
+      - type: size_t
+  - name: ns_name_pton
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: unsigned char *
+      - type: size_t
+  - name: ns_name_unpack
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: unsigned char *
+      - type: size_t
+  - name: ns_name_pack
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: unsigned char *
+      - type: int
+      - type: const unsigned char **
+      - type: const unsigned char **
+  - name: ns_name_compress
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: unsigned char *
+      - type: size_t
+      - type: const unsigned char **
+      - type: const unsigned char **
+  - name: ns_name_skip
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char **
+      - type: const unsigned char *
+  - name: ns_name_rollback
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: const unsigned char *
+      - type: const unsigned char **
+      - type: const unsigned char **
+  - name: ns_makecanon
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: char *
+      - type: size_t
+  - name: ns_samename
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: const char *
+  - name: ns_sprintrr
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const ns_msg *
+      - type: const ns_rr *
+      - type: const char *
+      - type: const char *
+      - type: char *
+      - type: size_t

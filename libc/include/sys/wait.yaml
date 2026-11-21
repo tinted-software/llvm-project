@@ -1,4 +1,12 @@
 header: sys/wait.h
+public_includes:
+  # glibc's <sys/wait.h> pulls in all of <signal.h>: waiting on a child
+  # reports how a signal ended it, and callers name and send those signals
+  # without including anything further.
+  - signal.h
+  # POSIX lets <sys/wait.h> make <sys/resource.h> visible; waiting reports
+  # the resources a child used.
+  - sys/resource.h
 standards:
   - posix
 macros:
@@ -19,6 +27,14 @@ functions:
     return_type: pid_t
     arguments:
       - type: int *
+  - name: wait3
+    standards:
+      - bsd
+    return_type: pid_t
+    arguments:
+      - type: int *
+      - type: int
+      - type: struct rusage *
   - name: wait4
     standards:
       - bsd

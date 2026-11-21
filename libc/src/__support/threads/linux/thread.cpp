@@ -26,31 +26,46 @@
 #include "src/__support/OSUtil/linux/syscall_wrappers/mprotect.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/munmap.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/open.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/prlimit.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/read.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/sched_getparam.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/sched_getscheduler.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/sched_setparam.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/sched_setscheduler.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/tgkill.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/write.h"
 #include "src/__support/OSUtil/syscall.h" // For syscall functions.
 #include "src/__support/common.h"
+#include "src/__support/elf/dynamic_blocks.h"
 #include "src/__support/error_or.h"
 #include "src/__support/macros/config.h"
+#include "src/__support/threads/cancel.h"
 #include "src/__support/threads/linux/futex_utils.h" // For FutexWordType
 #include "src/__support/threads/linux/futex_word.h"
+#include "src/__support/threads/linux/setxid.h"
+#include "src/__support/threads/robust_list.h"
 #include "src/__support/threads/thread_attributes.h"
 #include "src/__support/time/linux/cpu_clock.h"
+#include "src/sys/single_threaded/__libc_single_threaded.h"
 
 #include "hdr/errno_macros.h"
 #include "hdr/fcntl_macros.h"
 #include "hdr/sched_macros.h" // For CLONE_* flags.
 #include "hdr/stdint_proxy.h"
 #include "hdr/sys_mman_macros.h" // For PROT_* and MAP_* definitions.
+#include "hdr/sys_resource_macros.h"
 #include <linux/param.h> // For EXEC_PAGESIZE.
 #include <linux/prctl.h> // For PR_SET_NAME
 #include <sys/syscall.h> // For syscall numbers.
 
 namespace LIBC_NAMESPACE_DECL {
+
+namespace internal {
+// Defined below, beside the rest of the cancellation machinery.
+static bool cancel_pending();
+
+RawMutex thread_creation_lock;
+} // namespace internal
 
 static constexpr size_t NAME_SIZE_MAX = 16; // Includes the null terminator
 static constexpr unsigned CLONE_SYSCALL_FLAGS =
@@ -161,10 +176,38 @@ enum class ClearTidState : uint8_t {
   ABORT,      // Initialization failed.
 };
 
+// Detached threads which have finished but whose stacks are still to be given
+// back. They are linked through `joiner`, which nothing reads once a thread is
+// detached, and the list takes no lock so that a fork cannot leave one held.
+static cpp::Atomic<ThreadAttributes *> unreaped(nullptr);
+
+static void push_unreaped(ThreadAttributes *attrib) {
+  ThreadAttributes *head = unreaped.load(cpp::MemoryOrder::RELAXED);
+  do {
+    attrib->joiner.store(head, cpp::MemoryOrder::RELAXED);
+  } while (!unreaped.compare_exchange_strong(
+      head, attrib, cpp::MemoryOrder::RELEASE, cpp::MemoryOrder::RELAXED));
+}
+
+static void reap_detached_threads() {
+  ThreadAttributes *list =
+      unreaped.exchange(nullptr, cpp::MemoryOrder::ACQUIRE);
+  while (list != nullptr) {
+    ThreadAttributes *next = list->joiner.load(cpp::MemoryOrder::RELAXED);
+    auto *clear_tid = reinterpret_cast<Futex *>(list->platform_data);
+    if (clear_tid->load(cpp::MemoryOrder::ACQUIRE) == 0)
+      cleanup_thread_resources(list);
+    else
+      push_unreaped(list);
+    list = next;
+  }
+}
+
 static int start_thread(void *arg) {
   auto *start_args = reinterpret_cast<StartArgs *>(arg);
   auto *attrib = start_args->thread_attrib;
   auto *clear_tid = static_cast<Futex *>(attrib->platform_data);
+  robust::register_list(attrib);
 
   // If explicit scheduling parameters were requested, wait for the parent to
   // apply them via setschedparam. If setschedparam fails, the parent signals
@@ -186,15 +229,51 @@ static int start_thread(void *arg) {
   return 0;
 }
 
+int Thread::stack_limit(unsigned long *soft) {
+  // Unread, read, or failed to read.
+  static cpp::Atomic<int> state(0);
+  static cpp::Atomic<unsigned long> value(0);
+  static cpp::Atomic<int> error(0);
+
+  if (state.load(cpp::MemoryOrder::ACQUIRE) == 0) {
+    rlimit limit;
+    auto result = linux_syscalls::getrlimit(RLIMIT_STACK, &limit);
+    if (result.has_value()) {
+      value.store(limit.rlim_cur, cpp::MemoryOrder::RELAXED);
+      state.store(1, cpp::MemoryOrder::RELEASE);
+    } else {
+      error.store(static_cast<int>(result.error()), cpp::MemoryOrder::RELAXED);
+      state.store(2, cpp::MemoryOrder::RELEASE);
+    }
+  }
+  if (state.load(cpp::MemoryOrder::ACQUIRE) == 2)
+    return error.load(cpp::MemoryOrder::RELAXED);
+  *soft = value.load(cpp::MemoryOrder::RELAXED);
+  return 0;
+}
+
+size_t Thread::default_stacksize() {
+  // The limit set on the process is what glibc gives a thread that asks for
+  // no particular size, so it is what is given here.
+  size_t size = FALLBACK_STACKSIZE;
+  unsigned long soft = 0;
+  if (stack_limit(&soft) == 0 && soft != RLIM_INFINITY && soft != 0)
+    size = static_cast<size_t>(soft);
+  if (size < MINIMUM_STACKSIZE)
+    size = MINIMUM_STACKSIZE;
+  return size;
+}
+
 int Thread::run(ThreadStyle style, ThreadRunner runner, void *arg, void *stack,
                 size_t stacksize, size_t guardsize, bool detached,
                 cpp::optional<SchedParameters> sched_params) {
+  reap_detached_threads();
   bool owned_stack = false;
   if (stack == nullptr) {
     // TODO: Should we return EINVAL here? Should we have a generic concept of a
     //       minimum stacksize (like 16384 for pthread).
     if (stacksize == 0)
-      stacksize = DEFAULT_STACKSIZE;
+      stacksize = default_stacksize();
     // Roundup stacksize/guardsize to page size.
     // TODO: Should be also add sizeof(ThreadAttribute) and other internal
     //       meta data?
@@ -231,6 +310,12 @@ int Thread::run(ThreadStyle style, ThreadRunner runner, void *arg, void *stack,
 
   TLSDescriptor tls;
   init_tls(tls);
+#ifdef LIBC_TARGET_ARCH_IS_X86_64
+  // A function compiled with a stack protector can return on another thread
+  // than it was entered on when a fiber library moves a stack, so every thread
+  // carries the one guard of the process, as with glibc.
+  get_tcb(tls.tp)->stack_guard = get_tcb()->stack_guard;
+#endif
 
   // When the new thread is spawned by the kernel, the new thread gets the
   // stack we pass to the clone syscall. Thread initialization structures
@@ -289,11 +374,15 @@ int Thread::run(ThreadStyle style, ThreadRunner runner, void *arg, void *stack,
   start_args->runner = runner;
   start_args->arg = arg;
 
+  __libc_single_threaded = 0;
+
+  internal::thread_creation_lock.lock();
   auto clone_result = linux_syscalls::clone(
       start_thread, reinterpret_cast<void *>(adjusted_stack),
       CLONE_SYSCALL_FLAGS, start_args, &attrib->tid,
       reinterpret_cast<void *>(tls.tp),
       reinterpret_cast<pid_t *>(&clear_tid->val));
+  internal::thread_creation_lock.unlock();
 
   if (!clone_result.has_value()) {
     cleanup_thread_resources(attrib);
@@ -324,36 +413,80 @@ int Thread::run(ThreadStyle style, ThreadRunner runner, void *arg, void *stack,
   return sched_result;
 }
 
-int Thread::join(ThreadReturnValue &retval) {
-  if (current_thread().attrib) {
-    // Reject self join.
-    if (current_thread().attrib == attrib)
-      return EDEADLK;
+// Take the exclusive right to join |attrib|, or return the error which stops
+// the caller from taking it.
+static int claim_joiner(ThreadAttributes *attrib) {
+  if (current_thread().attrib == nullptr)
+    return 0;
 
-    // Do a best-effort check of concurrent/repeated join.
-    // This cmpxchg establishes exclusive joiner role by setting the joiner
-    // field iff there is no previous joiner
-    ThreadAttributes *expected = nullptr;
-    if (!attrib->joiner.compare_exchange_strong(
-            expected, current_thread().attrib, cpp::MemoryOrder::ACQ_REL))
-      return EINVAL;
+  // Reject self join.
+  if (current_thread().attrib == attrib)
+    return EDEADLK;
 
-    // Reject mutual join.
-    if (current_thread().attrib->joiner.load(cpp::MemoryOrder::ACQUIRE) ==
-        attrib) {
-      attrib->joiner.store(nullptr, cpp::MemoryOrder::RELEASE);
-      return EDEADLK;
-    }
+  // Do a best-effort check of concurrent/repeated join.
+  // This cmpxchg establishes exclusive joiner role by setting the joiner
+  // field iff there is no previous joiner
+  ThreadAttributes *expected = nullptr;
+  if (!attrib->joiner.compare_exchange_strong(expected, current_thread().attrib,
+                                              cpp::MemoryOrder::ACQ_REL))
+    return EINVAL;
+
+  // Reject mutual join.
+  if (current_thread().attrib->joiner.load(cpp::MemoryOrder::ACQUIRE) ==
+      attrib) {
+    attrib->joiner.store(nullptr, cpp::MemoryOrder::RELEASE);
+    return EDEADLK;
   }
 
-  wait();
+  return 0;
+}
 
+// Collect what a finished thread left behind: its return value goes to the
+// joiner and the stack and TLS it held go back.
+[[gnu::always_inline]] LIBC_INLINE void
+collect_finished_thread(ThreadAttributes *attrib, ThreadReturnValue &retval) {
   if (attrib->style == ThreadStyle::POSIX)
     retval.posix_retval = attrib->retval.posix_retval;
   else
     retval.stdc_retval = attrib->retval.stdc_retval;
 
   cleanup_thread_resources(attrib);
+}
+
+int Thread::join(ThreadReturnValue &retval) {
+  if (int err = claim_joiner(attrib); err != 0)
+    return err;
+
+  // Joining waits without limit, so POSIX has it be a cancellation point. A
+  // joiner that stops here has to give up the role first, or nothing could
+  // ever join the thread afterwards.
+  while (true) {
+    internal::cancel_point();
+    if (!wait_once())
+      break;
+    if (internal::cancel_pending())
+      attrib->joiner.store(nullptr, cpp::MemoryOrder::RELEASE);
+  }
+
+  collect_finished_thread(attrib, retval);
+
+  return 0;
+}
+
+int Thread::try_join(ThreadReturnValue &retval) {
+  if (int err = claim_joiner(attrib); err != 0)
+    return err;
+
+  // Nothing here waits, so unlike join this is not a cancellation point. A
+  // thread that has not finished is left as it was found, joinable and
+  // unclaimed.
+  auto *clear_tid = reinterpret_cast<Futex *>(attrib->platform_data);
+  if (clear_tid->load() != 0) {
+    attrib->joiner.store(nullptr, cpp::MemoryOrder::RELEASE);
+    return EBUSY;
+  }
+
+  collect_finished_thread(attrib, retval);
 
   return 0;
 }
@@ -376,15 +509,24 @@ int Thread::detach() {
 }
 
 void Thread::wait() {
+  while (wait_once())
+    ;
+}
+
+// One turn of the wait, so a caller which has something to do between them
+// gets the chance. Returns false once the thread has gone.
+bool Thread::wait_once() {
   // The kernel should set the value at the clear tid address to zero.
   // If not, it is a spurious wake and we should continue to wait on
   // the futex.
   auto *clear_tid = static_cast<Futex *>(attrib->platform_data);
+  FutexWordType clear_tid_value = clear_tid->load();
+  if (clear_tid_value == 0)
+    return false;
   // We cannot do a FUTEX_WAIT_PRIVATE here as the kernel does a
   // FUTEX_WAKE and not a FUTEX_WAKE_PRIVATE.
-  FutexWordType clear_tid_value;
-  while ((clear_tid_value = clear_tid->load()) != 0)
-    clear_tid->wait(clear_tid_value, cpp::nullopt, true);
+  clear_tid->wait(clear_tid_value, cpp::nullopt, true);
+  return true;
 }
 
 static constexpr cpp::string_view THREAD_NAME_PATH_PREFIX("/proc/self/task/");
@@ -482,6 +624,15 @@ int Thread::setschedparam(SchedParameters params) {
   return 0;
 }
 
+int Thread::setschedprio(int prio) {
+  struct sched_param param = {};
+  param.sched_priority = prio;
+  auto result = linux_syscalls::sched_setparam(attrib->tid, &param);
+  if (!result.has_value())
+    return result.error();
+  return 0;
+}
+
 ErrorOr<SchedParameters> Thread::getschedparam() const {
   auto pol_result = linux_syscalls::sched_getscheduler(attrib->tid);
   if (!pol_result.has_value())
@@ -540,6 +691,40 @@ ErrorOr<void> Thread::kill(int sig) {
   return {};
 }
 
+namespace internal {
+
+// True if the calling thread has been asked to stop and is willing to.
+static bool cancel_pending() {
+  ThreadAttributes *attrib = current_thread().attrib;
+  return attrib != nullptr &&
+         attrib->cancel_state.load() == uint32_t(CancelState::ENABLE) &&
+         attrib->cancel_requested.load() != 0;
+}
+
+// Ends the calling thread because it was asked to. Exiting runs the cleanup
+// handlers, innermost first, which is what lets a thread holding a lock or a
+// buffer give it up before it goes.
+[[noreturn]] void cancel_self() {
+  ThreadAttributes *attrib = current_thread().attrib;
+  // Further requests are of no interest, and a handler that reaches a
+  // cancellation point of its own must not start this again.
+  attrib->cancel_state.store(uint32_t(CancelState::DISABLE));
+  // What joining gives back has to be stored where join reads it, the same
+  // way an ordinary return from the thread's function is.
+  attrib->retval.posix_retval = canceled();
+  thread_exit(ThreadReturnValue(canceled()), ThreadStyle::POSIX);
+}
+
+// What a cancellation point calls once the thread machinery is in the link.
+// Declared weak where the cancellation points are, so that this definition is
+// found only by a program which has threads in it.
+void reach_cancel_point() {
+  if (cancel_pending())
+    cancel_self();
+}
+
+} // namespace internal
+
 void thread_exit(ThreadReturnValue retval, ThreadStyle style) {
   auto attrib = current_thread().attrib;
   attrib->retval = retval;
@@ -554,22 +739,18 @@ void thread_exit(ThreadReturnValue retval, ThreadStyle style) {
   // be called by the thread which owns them.
   internal::call_atexit_callbacks();
 
+  // Anything this thread allocated for a module opened after it started is
+  // its own, so it goes back now. The callbacks above may have touched such a
+  // module's thread locals, so this comes after them.
+  elf::release_dynamic_thread_blocks();
+
   uint32_t joinable_state = uint32_t(DetachState::JOINABLE);
   if (!attrib->detach_state.compare_exchange_strong(
           joinable_state, uint32_t(DetachState::EXITING))) {
-    // Thread is detached so cleanup the resources.
-    // Signals must be blocked before unmapping the stack to prevent any signal
-    // handler from running without a stack.
-    (void)signals::block_all();
-
-    cleanup_thread_resources(attrib);
-
-    // Set the CLEAR_TID address to nullptr to prevent the kernel
-    // from signalling at a non-existent futex location.
-    LIBC_NAMESPACE::syscall_impl<long>(SYS_set_tid_address, 0);
-    // Return value for detached thread should be unused. We need to avoid
-    // referencing `style` or `retval.*` because they may be stored on the stack
-    // and we have deallocated our stack!
+    // Thread is detached. It cannot give back the stack it is running on,
+    // so the next thread to be created does, once the kernel has cleared the
+    // tid to say this one is gone.
+    push_unreaped(attrib);
     linux_syscalls::exit(0);
   }
 

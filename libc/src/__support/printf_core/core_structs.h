@@ -61,9 +61,9 @@ enum FormatFlags : uint8_t {
   SPACE_PREFIX = 0x04,   // space
   ALTERNATE_FORM = 0x08, // #
   LEADING_ZEROES = 0x10, // 0
+  GROUP_DECIMALS = 0x20, // '
 
-  // These flags come from the GNU extensions which aren't yet implemented.
-  //  group_decimals = 0x20, // '
+  // This flag comes from the GNU extensions which aren't yet implemented.
   //  locale_digits = 0x40,  // I
 };
 
@@ -163,6 +163,8 @@ constexpr int ALLOCATION_ERROR = -1006;
 constexpr int OVERFLOW_ERROR = -1007;
 constexpr int ILLEGAL_WIDE_CHAR = -1008;
 constexpr int MB_CONVERSION_ERROR = -1009;
+// The format ended inside a conversion specification.
+constexpr int INCOMPLETE_FORMAT = -1010;
 
 } // namespace printf_core
 } // namespace LIBC_NAMESPACE_DECL

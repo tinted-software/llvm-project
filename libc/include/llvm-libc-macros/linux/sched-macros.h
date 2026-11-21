@@ -14,6 +14,11 @@
 
 // Posix required
 #define SCHED_OTHER 0
+#ifdef __ANDROID__
+// bionic's name for it, spelled as <linux/sched.h> does so that a program
+// which includes both has no redefinition.
+#define SCHED_NORMAL 0
+#endif
 #define SCHED_FIFO 1
 #define SCHED_RR 2
 
@@ -22,17 +27,23 @@
 #define SCHED_ISO 4 // Not yet implemented, reserved.
 #define SCHED_IDLE 5
 #define SCHED_DEADLINE 6
+#define SCHED_EXT 7
+
+// Asked for alongside a policy, to say that a child should not inherit
+// the elevated one. The kernel reads it from the same word.
+#define SCHED_RESET_ON_FORK 0x40000000
 
 // Linux-specific flags for clone.
 #define CLONE_CHILD_CLEARTID 0x00200000
 #define CLONE_CHILD_SETTID 0x01000000
-#define CLONE_CLEAR_SIGHAND 0x100000000
+#define CLONE_CLEAR_SIGHAND 0x100000000ULL
 #define CLONE_DETACHED 0x00400000
 #define CLONE_FILES 0x00000400
 #define CLONE_FS 0x00000200
-#define CLONE_INTO_CGROUP 0x200000000
+#define CLONE_INTO_CGROUP 0x200000000ULL
 #define CLONE_IO 0x80000000
 #define CLONE_NEWCGROUP 0x02000000
+#define CLONE_NEWTIME 0x00000080
 #define CLONE_NEWIPC 0x08000000
 #define CLONE_NEWNET 0x40000000
 #define CLONE_NEWNS 0x00020000
@@ -50,6 +61,10 @@
 #define CLONE_UNTRACED 0x00800000
 #define CLONE_VFORK 0x00004000
 #define CLONE_VM 0x00000100
+
+// The low byte of the flags given to clone is the signal sent to the parent
+// when the child exits.
+#define CSIGNAL 0x000000ff
 
 #define CPU_SETSIZE __CPU_SETSIZE
 #define NCPUBITS __NCPUBITS

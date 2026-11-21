@@ -1,0 +1,33 @@
+add_libc_testsuite(libc-uchar-tests)
+
+add_libc_test(
+  mbrtoc32_test
+  SUITE
+    libc-uchar-tests
+  SRCS
+    mbrtoc32_test.cpp
+  DEPENDS
+    libc.test.UnitTest.Utf8Locale
+    libc.hdr.types.char32_t
+    libc.hdr.types.mbstate_t
+    libc.src.errno.errno
+    libc.src.uchar.c32rtomb
+    libc.src.uchar.mbrtoc32
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  mbrtoc16_test
+  SUITE
+    libc-uchar-tests
+  SRCS
+    mbrtoc16_test.cpp
+  DEPENDS
+    libc.test.UnitTest.Utf8Locale
+    libc.hdr.types.char16_t
+    libc.hdr.types.mbstate_t
+    libc.src.errno.errno
+    libc.src.uchar.c16rtomb
+    libc.src.uchar.mbrtoc16
+    libc.test.UnitTest.ErrnoCheckingTest
+)

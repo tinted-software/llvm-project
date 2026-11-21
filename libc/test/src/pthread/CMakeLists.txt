@@ -42,13 +42,63 @@ add_libc_test(
     libc.include.pthread
     libc.src.pthread.pthread_mutexattr_destroy
     libc.src.pthread.pthread_mutexattr_init
+    libc.src.pthread.pthread_mutexattr_getprotocol
     libc.src.pthread.pthread_mutexattr_getpshared
     libc.src.pthread.pthread_mutexattr_getrobust
     libc.src.pthread.pthread_mutexattr_gettype
+    libc.src.pthread.pthread_mutexattr_setprotocol
     libc.src.pthread.pthread_mutexattr_setpshared
     libc.src.pthread.pthread_mutexattr_setrobust
     libc.src.pthread.pthread_mutexattr_settype
     libc.hdr.errno_macros
+)
+
+add_libc_test(
+  pthread_barrierattr_test
+  SUITE
+    libc-pthread-tests
+  SRCS
+    pthread_barrierattr_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.include.pthread
+    libc.src.pthread.pthread_barrierattr_destroy
+    libc.src.pthread.pthread_barrierattr_getpshared
+    libc.src.pthread.pthread_barrierattr_init
+    libc.src.pthread.pthread_barrierattr_setpshared
+)
+
+add_libc_test(
+  pthread_monotonic_np_test
+  SUITE
+    libc-pthread-tests
+  SRCS
+    pthread_monotonic_np_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.time_macros
+    libc.hdr.types.struct_timespec
+    libc.include.pthread
+    libc.src.pthread.pthread_cond_destroy
+    libc.src.pthread.pthread_cond_init
+    libc.src.pthread.pthread_cond_timedwait_monotonic_np
+    libc.src.pthread.pthread_mutex_clocklock
+    libc.src.pthread.pthread_mutex_destroy
+    libc.src.pthread.pthread_mutex_init
+    libc.src.pthread.pthread_mutex_lock
+    libc.src.pthread.pthread_mutex_timedlock_monotonic_np
+    libc.src.pthread.pthread_mutex_unlock
+    libc.src.pthread.pthread_rwlock_destroy
+    libc.src.pthread.pthread_rwlock_init
+    libc.src.pthread.pthread_rwlock_timedrdlock_monotonic_np
+    libc.src.pthread.pthread_rwlock_timedwrlock_monotonic_np
+    libc.src.pthread.pthread_rwlock_unlock
+    libc.src.semaphore.sem_destroy
+    libc.src.semaphore.sem_init
+    libc.src.semaphore.sem_post
+    libc.src.semaphore.sem_timedwait_monotonic_np
+    libc.src.time.clock_gettime
+    libc.test.UnitTest.ErrnoCheckingTest
 )
 
 add_libc_test(
@@ -83,4 +133,59 @@ add_libc_test(
     libc.src.pthread.pthread_rwlockattr_init
     libc.src.pthread.pthread_rwlockattr_setkind_np
     libc.src.pthread.pthread_rwlockattr_setpshared
+)
+
+add_libc_test(
+  pthread_cancel_test
+  SUITE
+    libc-pthread-tests
+  SRCS
+    pthread_cancel_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.include.pthread
+    libc.src.__support.CPP.atomic
+    libc.src.pthread.pthread_cancel
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.pthread.pthread_setcancelstate
+    libc.src.pthread.pthread_setcanceltype
+    libc.src.pthread.pthread_testcancel
+    libc.src.pthread.__pthread_cleanup_pop
+    libc.src.pthread.__pthread_cleanup_push
+    libc.src.unistd.close
+    libc.src.unistd.pipe
+    libc.src.unistd.read
+    libc.src.unistd.write
+)
+
+add_libc_test(
+  pthread_affinity_test
+  SUITE
+    libc-pthread-tests
+  SRCS
+    pthread_affinity_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.cpu_set_t
+    libc.include.pthread
+    libc.src.pthread.pthread_getaffinity_np
+    libc.src.pthread.pthread_self
+    libc.src.pthread.pthread_setaffinity_np
+    libc.src.sched.__sched_getcpucount
+    libc.src.sched.__sched_getcpuisset
+    libc.src.sched.__sched_setcpuset
+    libc.src.string.memset
+)
+
+add_libc_test(
+  pthread_gettid_np_test
+  SUITE
+    libc-pthread-tests
+  SRCS
+    pthread_gettid_np_test.cpp
+  DEPENDS
+    libc.src.pthread.pthread_gettid_np
+    libc.src.pthread.pthread_self
+    libc.src.unistd.gettid
 )

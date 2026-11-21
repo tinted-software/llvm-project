@@ -37,6 +37,12 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_OS})
 endif()
 
 add_macro_header(
+  uapi_compat_macros
+  HDR
+    uapi-compat-macros.h
+)
+
+add_macro_header(
   annex_k_macros
   HDR
     annex-k-macros.h
@@ -73,21 +79,85 @@ add_macro_header(
 )
 
 add_macro_header(
+  access_mode_macros
+  HDR
+    access-mode-macros.h
+)
+
+add_macro_header(
+  resolv_macros
+  HDR
+    resolv-macros.h
+)
+
+add_macro_header(
   null_macro
   HDR
     null-macro.h
 )
 
 add_macro_header(
+  lfs64_macros
+  HDR
+    lfs64-macros.h
+)
+
+add_macro_header(
+  shadow_macros
+  HDR
+    shadow-macros.h
+)
+
+add_macro_header(
+  gshadow_macros
+  HDR
+    gshadow-macros.h
+)
+
+add_macro_header(
   dirent_macros
   HDR
     dirent-macros.h
+  DEPENDS
+    .lfs64_macros
+)
+
+add_macro_header(
+  system_properties_macros
+  HDR
+    system-properties-macros.h
+)
+
+add_macro_header(
+  fts_macros
+  HDR
+    fts-macros.h
+)
+
+add_macro_header(
+  ftw_macros
+  HDR
+    ftw-macros.h
+)
+
+add_macro_header(
+  spawn_macros
+  HDR
+    spawn-macros.h
+)
+
+add_macro_header(
+  getopt_macros
+  HDR
+    getopt-macros.h
 )
 
 add_macro_header(
   fcntl_macros
   HDR
     fcntl-macros.h
+  DEPENDS
+    .access_mode_macros
 )
 
 add_macro_header(
@@ -133,6 +203,18 @@ add_macro_header(
   glob_macros
   HDR
     glob-macros.h
+)
+
+add_macro_header(
+  wordexp_macros
+  HDR
+    wordexp-macros.h
+)
+
+add_macro_header(
+  setjmp_macros
+  HDR
+    setjmp-macros.h
 )
 
 add_macro_header(
@@ -214,6 +296,8 @@ add_macro_header(
   netinet_in_macros
   HDR
     netinet-in-macros.h
+  DEPENDS
+    .uapi_compat_macros
 )
 
 add_macro_header(
@@ -299,6 +383,12 @@ add_macro_header(
 )
 
 add_macro_header(
+  sys_pidfd_macros
+  HDR
+    sys-pidfd-macros.h
+)
+
+add_macro_header(
   sys_file_macros
   HDR
     sys-file-macros.h
@@ -361,15 +451,23 @@ add_macro_header(
 )
 
 add_macro_header(
-  sys_mount_macros
+  sys_uio_macros
   HDR
-    sys-mount-macros.h
+    sys-uio-macros.h
 )
 
 add_macro_header(
   sys_personality_macros
   HDR
     sys-personality-macros.h
+)
+
+add_macro_header(
+  sys_limits_macros
+  HDR
+    sys-limits-macros.h
+  DEPENDS
+    .limits_macros
 )
 
 add_macro_header(
@@ -408,6 +506,12 @@ add_macro_header(
 )
 
 add_macro_header(
+  sys_un_macros
+  HDR
+    sys-un-macros.h
+)
+
+add_macro_header(
   sys_socket_macros
   HDR
     sys-socket-macros.h
@@ -417,6 +521,30 @@ add_macro_header(
   net_if_macros
   HDR
     net-if-macros.h
+)
+
+add_macro_header(
+  net_if_arp_macros
+  HDR
+    net-if-arp-macros.h
+)
+
+add_macro_header(
+  net_route_macros
+  HDR
+    net-route-macros.h
+)
+
+add_macro_header(
+  netinet_ip_icmp_macros
+  HDR
+    netinet-ip-icmp-macros.h
+)
+
+add_macro_header(
+  netinet_igmp_macros
+  HDR
+    netinet-igmp-macros.h
 )
 
 add_macro_header(
@@ -450,6 +578,30 @@ add_macro_header(
 )
 
 add_macro_header(
+  sys_signalfd_macros
+  HDR
+    sys-signalfd-macros.h
+)
+
+add_macro_header(
+  sys_statvfs_macros
+  HDR
+    sys-statvfs-macros.h
+)
+
+add_macro_header(
+  sys_fanotify_macros
+  HDR
+    sys-fanotify-macros.h
+)
+
+add_macro_header(
+  packet_macros
+  HDR
+    packet-macros.h
+)
+
+add_macro_header(
   sys_sysmacros_macros
   HDR
     sys-sysmacros-macros.h
@@ -462,15 +614,121 @@ add_macro_header(
 )
 
 add_macro_header(
+  net_ethernet_macros
+  HDR
+    net-ethernet-macros.h
+  DEPENDS
+    .uapi_compat_macros
+)
+
+add_macro_header(
+  netinet_if_ether_macros
+  HDR
+    netinet-if-ether-macros.h
+)
+
+add_macro_header(
+  netinet_ip_macros
+  HDR
+    netinet-ip-macros.h
+)
+
+add_macro_header(
+  sys_timex_macros
+  HDR
+    sys-timex-macros.h
+)
+
+add_macro_header(
+  sys_quota_macros
+  HDR
+    sys-quota-macros.h
+)
+
+add_macro_header(
+  string_macros
+  HDR
+    string-macros.h
+)
+
+add_macro_header(
+  utmp_macros
+  HDR
+    utmp-macros.h
+)
+
+add_macro_header(
+  utmpx_macros
+  HDR
+    utmpx-macros.h
+)
+
+add_macro_header(
+  scsi_scsi_macros
+  HDR
+    scsi-scsi-macros.h
+)
+
+add_macro_header(
+  scsi_scsi_ioctl_macros
+  HDR
+    scsi-scsi-ioctl-macros.h
+)
+
+add_macro_header(
+  scsi_sg_macros
+  HDR
+    scsi-sg-macros.h
+)
+
+add_macro_header(
+  printf_macros
+  HDR
+    printf-macros.h
+)
+
+add_macro_header(
+  sys_reboot_macros
+  HDR
+    sys-reboot-macros.h
+)
+
+add_macro_header(
+  sys_mtio_macros
+  HDR
+    sys-mtio-macros.h
+)
+
+add_macro_header(
+  ar_macros
+  HDR
+    ar-macros.h
+)
+
+add_macro_header(
+  stdio_ext_macros
+  HDR
+    stdio-ext-macros.h
+)
+
+add_macro_header(
   time_macros
   HDR
     time-macros.h
 )
 
 add_macro_header(
+  values_macros
+  HDR
+    values-macros.h
+)
+
+add_macro_header(
   unistd_macros
   HDR
     unistd-macros.h
+  DEPENDS
+    .access_mode_macros
 )
 
 add_macro_header(
@@ -504,12 +762,6 @@ add_macro_header(
 )
 
 add_macro_header(
-  dlfcn_macros
-  HDR
-    dlfcn-macros.h
-)
-
-add_macro_header(
   elf_macros
   HDR
     elf-macros.h
@@ -524,6 +776,22 @@ add_macro_header(
 )
 
 add_macro_header(
+  sys_endian_macros
+  HDR
+    sys-endian-macros.h
+  DEPENDS
+    .endian_macros
+)
+
+add_macro_header(
+  netinet_icmp6_macros
+  HDR
+    netinet-icmp6-macros.h
+  DEPENDS
+    .endian_macros
+)
+
+add_macro_header(
   locale_macros
   HDR
     locale-macros.h
@@ -535,6 +803,24 @@ add_macro_header(
     langinfo-macros.h
   DEPENDS
     .locale_macros
+)
+
+add_macro_header(
+  sys_kd_macros
+  HDR
+    sys-kd-macros.h
+)
+
+add_macro_header(
+  sys_ttydefaults_macros
+  HDR
+    sys-ttydefaults-macros.h
+)
+
+add_macro_header(
+  sys_vt_macros
+  HDR
+    sys-vt-macros.h
 )
 
 add_macro_header(
@@ -575,6 +861,18 @@ add_macro_header(
     sysexits-macros.h
 )
 
+add_macro_header(
+  _LIBC_FORMAT_ARG
+  HDR
+    _LIBC_FORMAT_ARG.h
+)
+
+add_macro_header(
+  _LIBC_WEAK
+  HDR
+    _LIBC_WEAK.h
+)
+
 if(LIBC_CONF_PRINTF_MODULAR)
   add_macro_header(
     _LIBC_MODULAR_FORMAT_PRINTF
@@ -601,4 +899,40 @@ add_macro_header(
   syslog_macros
   HDR
     syslog-macros.h
+)
+
+add_macro_header(
+  mntent_macros
+  HDR
+    mntent-macros.h
+)
+
+add_macro_header(
+  sys_mount_macros
+  HDR
+    sys-mount-macros.h
+)
+
+add_macro_header(
+  paths_macros
+  HDR
+    paths-macros.h
+)
+
+add_macro_header(
+  sys_msg_macros
+  HDR
+    sys-msg-macros.h
+)
+
+add_macro_header(
+  android_api_level_macros
+  HDR
+    android-api-level-macros.h
+)
+
+add_macro_header(
+  android_dlext_macros
+  HDR
+    android-dlext-macros.h
 )

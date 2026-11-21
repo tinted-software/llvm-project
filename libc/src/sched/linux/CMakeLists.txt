@@ -1,3 +1,7 @@
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${LIBC_TARGET_ARCHITECTURE})
+  add_subdirectory(${LIBC_TARGET_ARCHITECTURE})
+endif()
+
 add_entrypoint_object(
   clone
   SRCS
@@ -9,11 +13,14 @@ add_entrypoint_object(
     libc.hdr.sched_macros
     libc.hdr.types.pid_t
     libc.src.__support.OSUtil.linux.syscall_wrappers.clone
+    libc.src.__support.OSUtil.osutil
     libc.src.__support.common
     libc.src.__support.libc_errno
     libc.src.__support.macros.config
+    libc.src.__support.macros.properties.architectures
     libc.src.__support.threads.identifier
     libc.src.errno.errno
+    libc.include.sys_syscall
 )
 
 add_entrypoint_object(
@@ -371,4 +378,15 @@ add_entrypoint_object(
     libc.src.__support.macros.null_check
     libc.hdr.types.cpu_set_t
     libc.hdr.types.size_t
+)
+
+add_entrypoint_object(
+  setns
+  SRCS
+    setns.cpp
+  HDRS
+    ../setns.h
+  DEPENDS
+    libc.src.__support.OSUtil.linux.syscall_wrappers.setns
+    libc.src.errno.errno
 )

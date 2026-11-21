@@ -59,6 +59,9 @@ add_header_library(
   HDRS
     scanf_main.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.libc_errno
+    libc.hdr.stdio_macros
     .parser
     .reader
     .converter
@@ -72,6 +75,7 @@ add_header_library(
   HDRS
     reader.h
   DEPENDS
+    libc.src.__support.ctype_utils
     libc.src.__support.macros.attributes
 )
 
@@ -95,8 +99,11 @@ add_header_library(
     current_pos_converter.h
     ptr_converter.h
   DEPENDS
+    libc.hdr.func.free
+    libc.hdr.func.realloc
     .reader
     .core_structs
+    libc.src.__support.wchar.mbrtowc
     libc.include.inttypes
     libc.src.__support.common
     libc.src.__support.ctype_utils

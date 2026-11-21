@@ -110,6 +110,16 @@ add_libc_test(
 )
 
 add_libc_test(
+  basename_test
+  SUITE
+    libc-string-tests
+  SRCS
+    basename_test.cpp
+  DEPENDS
+    libc.src.string.basename
+)
+
+add_libc_test(
   strcmp_test
   SUITE
     libc-string-tests
@@ -179,6 +189,7 @@ if(NOT LIBC_TARGET_ARCHITECTURE_IS_NVPTX)
     SRCS
       strerror_test.cpp
     DEPENDS
+      libc.src.__support.StringUtil.error_to_string
       libc.src.string.strerror
   )
 endif()
@@ -190,6 +201,7 @@ add_libc_test(
   SRCS
     strerror_r_test.cpp
   DEPENDS
+    libc.hdr.errno_macros
     libc.src.string.strerror_r
 )
 
@@ -388,3 +400,59 @@ add_libc_multi_impl_test(memcmp libc-string-tests SRCS memcmp_test.cpp)
 add_libc_multi_impl_test(memcpy libc-string-tests SRCS memcpy_test.cpp)
 add_libc_multi_impl_test(memmove libc-string-tests SRCS memmove_test.cpp)
 add_libc_multi_impl_test(memset libc-string-tests SRCS memset_test.cpp)
+
+add_libc_test(
+  strverscmp_test
+  SUITE
+    libc-string-tests
+  SRCS
+    strverscmp_test.cpp
+  DEPENDS
+    libc.src.string.strverscmp
+)
+
+add_libc_test(
+  strerror_l_test
+  SUITE
+    libc-string-tests
+  SRCS
+    strerror_l_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.locale_macros
+    libc.src.string.strerror
+    libc.src.string.strerror_l
+    libc.src.string.strcmp
+)
+
+
+add_libc_test(
+  strerrorname_np_test
+  SUITE
+    libc-string-tests
+  SRCS
+    strerrorname_np_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.string.strerrorname_np
+)
+
+add_libc_test(
+  explicit_bzero_test
+  SUITE
+    libc-string-tests
+  SRCS
+    explicit_bzero_test.cpp
+  DEPENDS
+    libc.src.string.explicit_bzero
+)
+
+add_libc_test(
+  inline_strlen_test
+  SUITE
+    libc-string-tests
+  SRCS
+    inline_strlen_test.cpp
+  DEPENDS
+    libc.src.string.string_utils
+)

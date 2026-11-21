@@ -1,14 +1,29 @@
 add_libc_testsuite(libc-netdb-tests)
 
 add_libc_test(
+  getservbyname_r_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    getservbyname_r_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.types.struct_servent
+    libc.src.netdb.getservbyname_r
+    libc.src.netdb.getservbyport_r
+)
+
+add_libc_test(
   gai_strerror_test
   SUITE
     libc-netdb-tests
   SRCS
     gai_strerror_test.cpp
   DEPENDS
+    libc.src.netdb.__h_errno_location
     libc.hdr.netdb_macros
     libc.src.netdb.gai_strerror
+    libc.src.netdb.herror
 )
 
 add_libc_test(
@@ -18,12 +33,167 @@ add_libc_test(
   SRCS
     getaddrinfo_test.cpp
   DEPENDS
-    libc.hdr.errno_macros
     libc.hdr.netdb_macros
     libc.hdr.sys_socket_macros
     libc.hdr.types.struct_addrinfo
+    libc.src.net.if.if_nametoindex
     libc.src.netdb.freeaddrinfo
     libc.src.netdb.getaddrinfo
     libc.test.UnitTest.ErrnoCheckingTest
-    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  getprotoent_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    getprotoent_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_protoent
+    libc.src.netdb.endprotoent
+    libc.src.netdb.getprotobyname
+    libc.src.netdb.getprotobynumber
+    libc.src.netdb.getprotoent
+    libc.src.netdb.setprotoent
+    libc.src.string.strcmp
+)
+
+add_libc_test(
+  getnameinfo_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    getnameinfo_test.cpp
+  DEPENDS
+    libc.hdr.netdb_macros
+    libc.hdr.types.struct_sockaddr
+    libc.hdr.types.struct_sockaddr_in
+    libc.hdr.types.struct_sockaddr_in6
+    libc.include.sys_socket
+    libc.src.__support.CPP.string_view
+    libc.src.arpa.inet.htons
+    libc.src.net.if.if_nametoindex
+    libc.src.netdb.getnameinfo
+)
+
+add_libc_test(
+  h_errno_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    h_errno_test.cpp
+  DEPENDS
+    libc.src.netdb.__h_errno_location
+)
+
+add_libc_test(
+  gethostbyname_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    gethostbyname_test.cpp
+  DEPENDS
+    libc.hdr.netdb_macros
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.struct_hostent
+    libc.hdr.types.struct_servent
+    libc.src.netdb.__h_errno_location
+    libc.src.netdb.gethostbyname
+    libc.src.netdb.gethostbyname2
+    libc.src.netdb.getservbyname
+    libc.src.string.strcmp
+)
+
+add_subdirectory(resolv)
+
+add_libc_test(
+  hstrerror_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    hstrerror_test.cpp
+  DEPENDS
+    libc.hdr.netdb_macros
+    libc.src.netdb.hstrerror
+)
+
+add_libc_test(
+  gethostent_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    gethostent_test.cpp
+  DEPENDS
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.struct_hostent
+    libc.src.netdb.endhostent
+    libc.src.netdb.gethostent
+    libc.src.netdb.sethostent
+)
+
+add_libc_test(
+  getnetent_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    getnetent_test.cpp
+  DEPENDS
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.struct_netent
+    libc.src.netdb.endnetent
+    libc.src.netdb.getnetbyaddr
+    libc.src.netdb.getnetbyname
+    libc.src.netdb.getnetent
+    libc.src.netdb.setnetent
+)
+
+add_libc_test(
+  gethostbyaddr_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    gethostbyaddr_test.cpp
+  DEPENDS
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.struct_hostent
+    libc.src.netdb.gethostbyaddr
+)
+
+add_libc_test(
+  getservent_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    getservent_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_servent
+    libc.src.netdb.endservent
+    libc.src.netdb.getservbyname
+    libc.src.netdb.getservbyport
+    libc.src.netdb.getservent
+    libc.src.netdb.setservent
+)
+
+add_libc_test(
+  netgroup_test
+  SUITE
+    libc-netdb-tests
+  SRCS
+    netgroup_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.__support.CPP.string_view
+    libc.src.fcntl.open
+    libc.src.netdb.endnetgrent
+    libc.src.netdb.getnetgrent
+    libc.src.netdb.getnetgrent_r
+    libc.src.netdb.innetgr
+    libc.src.netdb.netgroup_utils
+    libc.src.netdb.setnetgrent
+    libc.src.stdio.remove
+    libc.src.unistd.close
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
 )

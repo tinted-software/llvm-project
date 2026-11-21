@@ -272,6 +272,16 @@ add_libc_test(
 )
 
 add_libc_test(
+  shared_internal_test
+  SUITE
+    libc-support-tests
+  SRCS
+    shared_internal_test.cpp
+  DEPENDS
+    libc.src.__support.macros.config
+)
+
+add_libc_test(
   fixedvector_test
   SUITE
     libc-support-tests
@@ -381,11 +391,15 @@ add_libc_test(
     libc.src.__support.macros.properties.os
 )
 
+if(LIBC_TARGET_OS_IS_LINUX)
+  add_subdirectory(elf)
+endif()
 add_subdirectory(CPP)
 add_subdirectory(File)
 add_subdirectory(pwd)
 add_subdirectory(printf_core)
 add_subdirectory(RPC)
+add_subdirectory(StringUtil)
 add_subdirectory(OSUtil)
 add_subdirectory(FPUtil)
 add_subdirectory(fixed_point)
@@ -393,6 +407,8 @@ add_subdirectory(HashTable)
 add_subdirectory(net)
 add_subdirectory(time)
 add_subdirectory(threads)
+add_subdirectory(libintl)
+add_subdirectory(nss)
 add_subdirectory(wchar)
 add_subdirectory(wctype)
 if(LLVM_LIBC_FULL_BUILD)

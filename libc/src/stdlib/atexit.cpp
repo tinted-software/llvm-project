@@ -19,18 +19,29 @@ LIBC_CONSTINIT ExitCallbackList atexit_callbacks;
 Mutex handler_list_mtx(/*is_priority_inherit=*/false, /*is_recursive=*/false,
                        /*is_robust=*/false, /*is_pshared=*/false);
 
+// These two are what a C++ runtime calls to register the destructor of an
+// object with static storage and to run them, so they have to be visible from
+// outside the library rather than hidden with the rest of it.
 extern "C" {
 
-int __cxa_atexit(AtExitCallback *callback, void *payload, void *) {
-  return add_atexit_unit(atexit_callbacks, {callback, payload});
+LIBC_SHARED_INTERNAL int __cxa_atexit(AtExitCallback *callback, void *payload,
+                                      void *dso) {
+  return add_atexit_unit(atexit_callbacks, {callback, payload, dso});
 }
 
-void __cxa_finalize(void *dso) {
+LIBC_SHARED_INTERNAL void __cxa_finalize(void *dso) {
   if (!dso)
     call_exit_callbacks(atexit_callbacks);
+  else
+    call_dso_exit_callbacks(atexit_callbacks, dso);
 }
 
 } // extern "C"
+
+void call_exit_callbacks_in(const void *begin, size_t size) {
+  uintptr_t start = reinterpret_cast<uintptr_t>(begin);
+  call_range_exit_callbacks(atexit_callbacks, start, start + size);
+}
 
 LLVM_LIBC_FUNCTION(int, atexit, (__atexithandler_t callback)) {
   return add_atexit_unit(

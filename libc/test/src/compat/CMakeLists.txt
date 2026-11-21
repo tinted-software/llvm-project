@@ -1,0 +1,73 @@
+add_libc_testsuite(libc-compat-tests)
+
+add_libc_test(
+  rt_signals_test
+  SUITE
+    libc-compat-tests
+  SRCS
+    rt_signals_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.src.compat.__ctype_get_mb_cur_max
+    libc.src.compat.__libc_current_sigrtmax
+    libc.src.compat.__libc_current_sigrtmin
+)
+
+add_libc_test(
+  init_main_thread_test
+  SUITE
+    libc-compat-tests
+  SRCS
+    init_main_thread_test.cpp
+  DEPENDS
+    libc.hdr.pthread_macros
+    libc.src.__support.OSUtil.linux.syscall_wrappers.gettid
+    libc.src.__support.threads.thread
+    libc.src.compat.__llvm_libc_init_main_thread
+    libc.src.pthread.pthread_equal
+    libc.src.pthread.pthread_self
+)
+
+add_libc_test(
+  cpucount_test
+  SUITE
+    libc-compat-tests
+  SRCS
+    cpucount_test.cpp
+  DEPENDS
+    libc.hdr.math_macros
+    libc.hdr.types.cpu_set_t
+    libc.src.compat.__fpclassifyf
+    libc.src.compat.__sched_cpucount
+    libc.src.string.memset
+)
+
+add_libc_test(
+  compat_test
+  SUITE
+    libc-compat-tests
+  SRCS
+    compat_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.libc_errno
+    libc.src.compat.__gnu_strerror_r
+    libc.src.compat.__xpg_strerror_r
+    libc.src.compat.gnu_get_libc_release
+    libc.src.compat.gnu_get_libc_version
+    libc.src.string.strlen
+)
+
+add_libc_test(
+  early_init_test
+  SUITE
+    libc-compat-tests
+  SRCS
+    early_init_test.cpp
+  DEPENDS
+    libc.src.compat.__llvm_libc_early_init
+    libc.src.errno.program_invocation_name
+    libc.src.errno.program_invocation_short_name
+    libc.src.pthread.pthread_self
+    libc.src.unistd.environ
+)

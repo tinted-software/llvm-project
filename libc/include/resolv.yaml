@@ -1,0 +1,179 @@
+header: resolv.h
+standards:
+  - bsd
+public_includes:
+  # Where the message format these read and write is defined.
+  - arpa/nameser.h
+macros:
+  - macro_name: MAXNS
+    macro_header: resolv-macros.h
+  - macro_name: RES_INIT
+    macro_header: resolv-macros.h
+  - macro_name: RES_DEFAULT
+    macro_header: resolv-macros.h
+  - macro_name: _res
+    macro_header: resolv-macros.h
+types:
+  - type_name: size_t
+  - type_name: struct___res_state
+  - type_name: res_state
+enums: []
+objects: []
+functions:
+  - name: dn_expand
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: const unsigned char *
+      - type: char *
+      - type: int
+  - name: b64_ntop
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: size_t
+      - type: char *
+      - type: size_t
+  - name: b64_pton
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: unsigned char *
+      - type: size_t
+  - name: dn_comp
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: unsigned char *
+      - type: int
+      - type: unsigned char **
+      - type: unsigned char **
+  - name: __res_state
+    standards:
+      - bsd
+    return_type: struct __res_state *
+    arguments:
+      - type: void
+  - name: res_init
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: void
+  - name: res_ninit
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: res_state
+  - name: res_close
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: void
+  - name: res_nclose
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: res_state
+  - name: res_mkquery
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: int
+      - type: int
+      - type: const unsigned char *
+      - type: int
+      - type: const unsigned char *
+      - type: unsigned char *
+      - type: int
+  - name: res_nmkquery
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: res_state
+      - type: int
+      - type: const char *
+      - type: int
+      - type: int
+      - type: const unsigned char *
+      - type: int
+      - type: const unsigned char *
+      - type: unsigned char *
+      - type: int
+  - name: res_query
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: int
+      - type: int
+      - type: unsigned char *
+      - type: int
+  - name: res_nquery
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: res_state
+      - type: const char *
+      - type: int
+      - type: int
+      - type: unsigned char *
+      - type: int
+  - name: res_search
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: int
+      - type: int
+      - type: unsigned char *
+      - type: int
+  - name: res_nsearch
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: res_state
+      - type: const char *
+      - type: int
+      - type: int
+      - type: unsigned char *
+      - type: int
+  - name: res_send
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const unsigned char *
+      - type: int
+      - type: unsigned char *
+      - type: int
+  - name: res_nsend
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: res_state
+      - type: const unsigned char *
+      - type: int
+      - type: unsigned char *
+      - type: int

@@ -1,3 +1,4 @@
+header_template: string.h.def
 header: string.h
 public_includes:
   # Needed for compatibility with glibc which provides these symbols by default.
@@ -9,6 +10,10 @@ macros:
     macro_header: null-macro.h
   - macro_name: LIBC_HAS_ANNEX_K
     macro_header: annex-k-macros.h
+  - macro_name: strdupa
+    macro_header: string-macros.h
+  - macro_name: strndupa
+    macro_header: string-macros.h
 types:
   - type_name: errno_t
   - type_name: locale_t
@@ -83,6 +88,13 @@ functions:
       - type: const void *
       - type: int
       - type: size_t
+  - name: explicit_bzero
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: void *
+      - type: size_t
   - name: memset
     standards:
       - stdc
@@ -135,6 +147,13 @@ functions:
     arguments:
       - type: const char *
       - type: int
+  - name: basename
+    standards:
+      - gnu
+    guard: "!basename"
+    return_type: char *
+    arguments:
+      - type: const char *
   - name: strchrnul
     standards:
       - gnu
@@ -188,10 +207,32 @@ functions:
     return_type: char *
     arguments:
       - type: int
+  - name: strerror_l
+    standards:
+      - posix
+    return_type: char *
+    arguments:
+      - type: int
+      - type: locale_t
+  - name: strerrorname_np
+    standards:
+      - gnu
+    return_type: const char *
+    arguments:
+      - type: int
   - name: strerror_r
     standards:
       - gnu
+    guard: _GNU_SOURCE
     return_type: char *
+    arguments:
+      - type: int
+      - type: char *
+      - type: size_t
+  - name: __xpg_strerror_r
+    standards:
+      - posix
+    return_type: int
     arguments:
       - type: int
       - type: char *
@@ -302,6 +343,13 @@ functions:
     standards:
       - stdc
     return_type: char *
+    arguments:
+      - type: const char *
+      - type: const char *
+  - name: strverscmp
+    standards:
+      - gnu
+    return_type: int
     arguments:
       - type: const char *
       - type: const char *

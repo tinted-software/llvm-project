@@ -63,6 +63,15 @@ add_proxy_header_library(
 
 add_header_library(fcntl_overlay HDRS fcntl_overlay.h)
 add_proxy_header_library(
+  getopt_macros
+  HDRS
+    getopt_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.getopt_macros
+    libc.include.getopt
+)
+
+add_proxy_header_library(
   fcntl_macros
   HDRS
     fcntl_macros.h
@@ -70,6 +79,30 @@ add_proxy_header_library(
     .fcntl_overlay
   FULL_BUILD_DEPENDS
     libc.include.llvm-libc-macros.fcntl_macros
+)
+
+add_proxy_header_library(
+  system_properties_macros
+  HDRS
+    system_properties_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.system_properties_macros
+)
+
+add_proxy_header_library(
+  fts_macros
+  HDRS
+    fts_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.fts_macros
+)
+
+add_proxy_header_library(
+  ftw_macros
+  HDRS
+    ftw_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.ftw_macros
 )
 
 add_proxy_header_library(
@@ -94,6 +127,14 @@ add_proxy_header_library(
     glob_macros.h
   FULL_BUILD_DEPENDS
     libc.include.llvm-libc-macros.glob_macros
+)
+
+add_proxy_header_library(
+  wordexp_macros
+  HDRS
+    wordexp_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.wordexp_macros
 )
 
 add_proxy_header_library(
@@ -164,11 +205,43 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  printf_macros
+  HDRS
+    printf_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.printf_macros
+)
+
+add_proxy_header_library(
+  sys_reboot_macros
+  HDRS
+    sys_reboot_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.sys_reboot_macros
+)
+
+add_proxy_header_library(
+  utmpx_macros
+  HDRS
+    utmpx_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.utmpx_macros
+)
+
+add_proxy_header_library(
   semaphore_macros
   HDRS
     semaphore_macros.h
   FULL_BUILD_DEPENDS
     libc.include.llvm-libc-macros.semaphore_macros
+)
+
+add_proxy_header_library(
+  spawn_macros
+  HDRS
+    spawn_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.spawn_macros
 )
 
 add_proxy_header_library(
@@ -193,6 +266,14 @@ add_proxy_header_library(
 
 add_header_library(dirent_overlay HDRS dirent_overlay.h)
 add_header_library(stdio_overlay HDRS stdio_overlay.h)
+
+add_proxy_header_library(
+  stdio_ext_macros
+  HDRS
+    stdio_ext_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.stdio_ext_macros
+)
 
 add_proxy_header_library(
   stdio_macros
@@ -429,6 +510,14 @@ add_proxy_header_library(
 )
 
 add_proxy_header_library(
+  android_api_level_macros
+  HDRS
+    android_api_level_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.android_api_level_macros
+)
+
+add_proxy_header_library(
   sys_auxv_macros
   HDRS
     sys_auxv_macros.h
@@ -502,3 +591,35 @@ add_proxy_header_library(
 
 add_subdirectory(types)
 add_subdirectory(func)
+
+add_proxy_header_library(
+  sys_swap_macros
+  HDRS
+    sys_swap_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.sys_swap_macros
+)
+
+add_proxy_header_library(
+  sys_mount_macros
+  HDRS
+    sys_mount_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.sys_mount_macros
+)
+
+add_proxy_header_library(
+  sys_msg_macros
+  HDRS
+    sys_msg_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.sys_msg_macros
+)
+
+add_proxy_header_library(
+  sys_signalfd_macros
+  HDRS
+    sys_signalfd_macros.h
+  FULL_BUILD_DEPENDS
+    libc.include.llvm-libc-macros.sys_signalfd_macros
+)

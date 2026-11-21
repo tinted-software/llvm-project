@@ -19,6 +19,8 @@ macros:
     macro_header: netdb-macros.h
   - macro_name: AI_ADDRCONFIG
     macro_header: netdb-macros.h
+  - macro_name: AI_MASK
+    macro_header: netdb-macros.h
   - macro_name: EAI_AGAIN
     macro_header: netdb-macros.h
   - macro_name: EAI_BADFLAGS
@@ -39,11 +41,381 @@ macros:
     macro_header: netdb-macros.h
   - macro_name: EAI_OVERFLOW
     macro_header: netdb-macros.h
+  - macro_name: EAI_BADHINTS
+    macro_header: netdb-macros.h
+  - macro_name: EAI_PROTOCOL
+    macro_header: netdb-macros.h
+  - macro_name: EAI_NODATA
+    macro_header: netdb-macros.h
+  - macro_name: EAI_ADDRFAMILY
+    macro_header: netdb-macros.h
+  - macro_name: EAI_MAX
+    macro_header: netdb-macros.h
+  - macro_name: NETDB_INTERNAL
+    macro_header: netdb-macros.h
+  - macro_name: NETDB_SUCCESS
+    macro_header: netdb-macros.h
+  - macro_name: SCOPE_DELIMITER
+    macro_header: netdb-macros.h
+  - macro_name: _PATH_HOSTS
+    macro_header: netdb-macros.h
+  - macro_name: NI_NUMERICHOST
+    macro_header: netdb-macros.h
+  - macro_name: NI_NUMERICSERV
+    macro_header: netdb-macros.h
+  - macro_name: NI_NOFQDN
+    macro_header: netdb-macros.h
+  - macro_name: NI_NAMEREQD
+    macro_header: netdb-macros.h
+  - macro_name: NI_DGRAM
+    macro_header: netdb-macros.h
+  - macro_name: NI_NUMERICSCOPE
+    macro_header: netdb-macros.h
+  - macro_name: NI_MAXHOST
+    macro_header: netdb-macros.h
+  - macro_name: NI_MAXSERV
+    macro_header: netdb-macros.h
+  - macro_name: h_errno
+    macro_header: netdb-macros.h
+  - macro_name: HOST_NOT_FOUND
+    macro_header: netdb-macros.h
+  - macro_name: TRY_AGAIN
+    macro_header: netdb-macros.h
+  - macro_name: NO_RECOVERY
+    macro_header: netdb-macros.h
+  - macro_name: NO_DATA
+    macro_header: netdb-macros.h
+  - macro_name: NO_ADDRESS
+    macro_header: netdb-macros.h
 types:
+  - type_name: struct_netent
+  - type_name: struct_protoent
+  - type_name: struct_hostent
+  - type_name: struct_servent
+  - type_name: struct_sockaddr
+  - type_name: socklen_t
   - type_name: struct_addrinfo
 enums: []
 objects: []
 functions:
+  - name: gethostbyname
+    standards:
+      - posix
+    return_type: struct hostent *
+    arguments:
+      - type: const char *
+  - name: gethostbyname2
+    standards:
+      - gnu
+    return_type: struct hostent *
+    arguments:
+      - type: const char *
+      - type: int
+  - name: getprotobyname_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: struct protoent *
+      - type: char *
+      - type: size_t
+      - type: struct protoent **
+  - name: getprotobynumber_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: int
+      - type: struct protoent *
+      - type: char *
+      - type: size_t
+      - type: struct protoent **
+  - name: getprotoent_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: struct protoent *
+      - type: char *
+      - type: size_t
+      - type: struct protoent **
+  - name: getnetbyname_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: struct netent *
+      - type: char *
+      - type: size_t
+      - type: struct netent **
+      - type: int *
+  - name: getnetbyaddr_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: uint32_t
+      - type: int
+      - type: struct netent *
+      - type: char *
+      - type: size_t
+      - type: struct netent **
+      - type: int *
+  - name: getnetent_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: struct netent *
+      - type: char *
+      - type: size_t
+      - type: struct netent **
+      - type: int *
+  - name: getservent_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: struct servent *
+      - type: char *
+      - type: size_t
+      - type: struct servent **
+  - name: gethostent_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: struct hostent *
+      - type: char *
+      - type: size_t
+      - type: struct hostent **
+      - type: int *
+  - name: gethostbyname_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: struct hostent *
+      - type: char *
+      - type: size_t
+      - type: struct hostent **
+      - type: int *
+  - name: gethostbyname2_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: int
+      - type: struct hostent *
+      - type: char *
+      - type: size_t
+      - type: struct hostent **
+      - type: int *
+  - name: gethostbyaddr_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const void *
+      - type: socklen_t
+      - type: int
+      - type: struct hostent *
+      - type: char *
+      - type: size_t
+      - type: struct hostent **
+      - type: int *
+  - name: endnetgrent
+    standards:
+      - gnu
+    return_type: void
+    arguments:
+      - type: void
+  - name: getnetgrent
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: char **
+      - type: char **
+      - type: char **
+  - name: getnetgrent_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: char **
+      - type: char **
+      - type: char **
+      - type: char *
+      - type: size_t
+  - name: innetgr
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: const char *
+      - type: const char *
+      - type: const char *
+  - name: setnetgrent
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const char *
+  - name: herror
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: const char *
+  - name: hstrerror
+    standards:
+      - bsd
+    return_type: const char *
+    arguments:
+      - type: int
+  - name: gethostbyaddr
+    standards:
+      - posix
+    return_type: struct hostent *
+    arguments:
+      - type: const void *
+      - type: socklen_t
+      - type: int
+  - name: getnetbyname
+    standards:
+      - posix
+    return_type: struct netent *
+    arguments:
+      - type: const char *
+  - name: getnetbyaddr
+    standards:
+      - posix
+    return_type: struct netent *
+    arguments:
+      - type: uint32_t
+      - type: int
+  - name: getnetent
+    standards:
+      - posix
+    return_type: struct netent *
+    arguments:
+      - type: void
+  - name: setnetent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: int
+  - name: endnetent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: void
+  - name: getprotobyname
+    standards:
+      - posix
+    return_type: struct protoent *
+    arguments:
+      - type: const char *
+  - name: getprotobynumber
+    standards:
+      - posix
+    return_type: struct protoent *
+    arguments:
+      - type: int
+  - name: getprotoent
+    standards:
+      - posix
+    return_type: struct protoent *
+    arguments:
+      - type: void
+  - name: sethostent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: int
+  - name: endhostent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: void
+  - name: gethostent
+    standards:
+      - posix
+    return_type: struct hostent *
+    arguments:
+      - type: void
+  - name: setprotoent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: int
+  - name: endprotoent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: void
+  - name: getservbyport
+    standards:
+      - posix
+    return_type: struct servent *
+    arguments:
+      - type: int
+      - type: const char *
+  - name: getservent
+    standards:
+      - posix
+    return_type: struct servent *
+    arguments:
+      - type: void
+  - name: setservent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: int
+  - name: endservent
+    standards:
+      - posix
+    return_type: void
+    arguments:
+      - type: void
+  - name: getservbyname
+    standards:
+      - posix
+    return_type: struct servent *
+    arguments:
+      - type: const char *
+      - type: const char *
+  - name: __h_errno_location
+    standards:
+      - gnu
+    return_type: int *
+    arguments:
+      - type: void
+  - name: getnameinfo
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: const struct sockaddr *__restrict
+      - type: socklen_t
+      - type: char *__restrict
+      - type: socklen_t
+      - type: char *__restrict
+      - type: socklen_t
+      - type: int
   - name: freeaddrinfo
     standards:
       - posix
@@ -65,3 +437,25 @@ functions:
       - type: const char *__restrict
       - type: const struct addrinfo *__restrict
       - type: struct addrinfo **__restrict
+  - name: getservbyname_r
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: const char *
+      - type: const char *
+      - type: struct servent *
+      - type: char *
+      - type: size_t
+      - type: struct servent **
+  - name: getservbyport_r
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: struct servent *
+      - type: char *
+      - type: size_t
+      - type: struct servent **

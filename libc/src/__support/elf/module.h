@@ -1,0 +1,281 @@
+//===----------------------------------------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// Description of one loaded ELF module
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_LIBC_SRC___SUPPORT_ELF_MODULE_H
+#define LLVM_LIBC_SRC___SUPPORT_ELF_MODULE_H
+
+#include "hdr/elf_macros.h"
+#include "hdr/elf_proxy.h"
+#include "hdr/link_macros.h"
+#include "hdr/stdint_proxy.h"
+#include "hdr/types/size_t.h"
+#include "src/__support/elf/dynamic.h"
+#include "src/__support/elf/elf_types.h"
+#include "src/__support/elf/relocation.h"
+#include "src/__support/elf/symbol.h"
+#include "src/__support/macros/attributes.h"
+#include "src/__support/macros/config.h"
+
+namespace LIBC_NAMESPACE_DECL {
+namespace elf {
+
+// Everything about one loaded ELF object that a consumer needs in order to
+// resolve a symbol in it or to describe it to a debugger.
+//
+// This is deliberately plain data with no ownership and no mutable state. It
+// is built once from a module's program headers and then only read, so it can
+// be published to libdl and to a debugger without any of them needing to call
+// back into the code that produced it.
+class Module {
+public:
+  LIBC_INLINE constexpr Module() = default;
+
+  // Builds the description from a module's program headers. `load_bias` is the
+  // distance between where the module was linked and where it was mapped.
+  LIBC_INLINE Module(const ElfW(Phdr) * phdrs, ElfW(Half) phnum,
+                     ElfW(Addr) load_bias, const char *name)
+      : phdrs_(phdrs), phnum_(phnum), load_bias_(load_bias), name_(name) {
+    for (ElfW(Half) i = 0; i < phnum; ++i) {
+      switch (phdrs[i].p_type) {
+      case PT_DYNAMIC:
+        dynamic_ = DynamicTable(
+            reinterpret_cast<const ElfW(Dyn) *>(load_bias + phdrs[i].p_vaddr),
+            load_bias);
+        break;
+      case PT_TLS:
+        tls_ = &phdrs[i];
+        break;
+      default:
+        break;
+      }
+    }
+  }
+
+  // Whether the given address falls in one of the module's mapped segments,
+  // which is how the module some code belongs to is found from a return
+  // address.
+  LIBC_INLINE bool contains(ElfW(Addr) address) const {
+    for (ElfW(Half) i = 0; i < phnum_; ++i) {
+      if (phdrs_[i].p_type != PT_LOAD)
+        continue;
+      const ElfW(Addr) start = load_bias_ + phdrs_[i].p_vaddr;
+      if (address >= start && address < start + phdrs_[i].p_memsz)
+        return true;
+    }
+    return false;
+  }
+
+  LIBC_INLINE constexpr const char *name() const { return name_; }
+  LIBC_INLINE constexpr ElfW(Addr) load_bias() const { return load_bias_; }
+  LIBC_INLINE constexpr const ElfW(Phdr) * phdrs() const { return phdrs_; }
+  LIBC_INLINE constexpr ElfW(Half) phnum() const { return phnum_; }
+  LIBC_INLINE constexpr const DynamicTable &dynamic() const { return dynamic_; }
+
+  // The PT_TLS header, or null if the module has no thread local storage.
+  // A loader has to size the thread block from every module's PT_TLS, which
+  // is why this is exposed rather than kept private.
+  LIBC_INLINE constexpr const ElfW(Phdr) * tls() const { return tls_; }
+
+  LIBC_INLINE const char *strtab() const {
+    if (auto addr = dynamic_.address(DT_STRTAB))
+      return reinterpret_cast<const char *>(*addr);
+    return nullptr;
+  }
+
+  LIBC_INLINE const ElfW(Sym) * symtab() const {
+    if (auto addr = dynamic_.address(DT_SYMTAB))
+      return reinterpret_cast<const ElfW(Sym) *>(*addr);
+    return nullptr;
+  }
+
+  // The module's SONAME, or null if it has none. An executable normally does
+  // not carry one.
+  LIBC_INLINE const char *soname() const {
+    const char *strings = strtab();
+    auto offset = dynamic_.value(DT_SONAME);
+    if (strings == nullptr || !offset)
+      return nullptr;
+    return strings + *offset;
+  }
+
+  LIBC_INLINE GnuSymbolTable symbols() const {
+    auto hash = dynamic_.address(DT_GNU_HASH);
+    if (!hash)
+      return GnuSymbolTable();
+    const uint16_t *versym = nullptr;
+    if (auto addr = dynamic_.address(DT_VERSYM))
+      versym = reinterpret_cast<const uint16_t *>(*addr);
+    const ElfW(Verdef) *verdef = nullptr;
+    if (auto addr = dynamic_.address(DT_VERDEF))
+      verdef = reinterpret_cast<const ElfW(Verdef) *>(*addr);
+    return GnuSymbolTable(reinterpret_cast<const void *>(*hash), symtab(),
+                          strtab(), versym, verdef);
+  }
+
+  // The version this module's reference to symbol `index` asks for, as the
+  // library's own name for it, or null when it asks for none. The linker
+  // numbers each version a module needs in DT_VERNEED and records the number
+  // against every versioned reference in DT_VERSYM.
+  LIBC_INLINE const char *symbol_version(uint32_t index) const {
+    auto versym = dynamic_.address(DT_VERSYM);
+    auto need = dynamic_.address(DT_VERNEED);
+    const char *strings = strtab();
+    if (!versym || !need || strings == nullptr)
+      return nullptr;
+    const uint16_t ndx = reinterpret_cast<const uint16_t *>(*versym)[index] &
+                         static_cast<uint16_t>(~VERSYM_HIDDEN);
+    if (ndx < 2)
+      return nullptr;
+    const auto *file = reinterpret_cast<const ElfW(Verneed) *>(*need);
+    for (;;) {
+      const auto *aux = reinterpret_cast<const ElfW(Vernaux) *>(
+          reinterpret_cast<const char *>(file) + file->vn_aux);
+      for (ElfW(Half) i = 0; i < file->vn_cnt; ++i) {
+        if (aux->vna_other == ndx)
+          return strings + aux->vna_name;
+        if (aux->vna_next == 0)
+          break;
+        aux = reinterpret_cast<const ElfW(Vernaux) *>(
+            reinterpret_cast<const char *>(aux) + aux->vna_next);
+      }
+      if (file->vn_next == 0)
+        return nullptr;
+      file = reinterpret_cast<const ElfW(Verneed) *>(
+          reinterpret_cast<const char *>(file) + file->vn_next);
+    }
+  }
+
+  // The DT_RELA table. DT_JMPREL is kept separate because a loader may bind
+  // it lazily while the rest has to be applied up front.
+  LIBC_INLINE RelaTable relocations() const {
+    auto addr = dynamic_.address(DT_RELA);
+    auto size = dynamic_.value(DT_RELASZ);
+    if (!addr || !size)
+      return RelaTable();
+    return RelaTable(reinterpret_cast<const ElfW(Rela) *>(*addr), *size);
+  }
+
+  // The DT_RELR table, which holds relative relocations a linker packed with
+  // -z pack-relative-relocs. It does not replace DT_RELA: a module can have
+  // both, and both have to be applied.
+  LIBC_INLINE RelrTable relr_relocations() const {
+    auto addr = dynamic_.address(DT_RELR);
+    auto size = dynamic_.value(DT_RELRSZ);
+    if (!addr || !size)
+      return RelrTable();
+    return RelrTable(reinterpret_cast<const ElfW(Addr) *>(*addr), *size);
+  }
+
+  LIBC_INLINE RelaTable plt_relocations() const {
+    auto addr = dynamic_.address(DT_JMPREL);
+    auto size = dynamic_.value(DT_PLTRELSZ);
+    // DT_PLTREL says which form DT_JMPREL takes; only RELA is supported.
+    auto form = dynamic_.value(DT_PLTREL);
+    if (!addr || !size || !form || *form != Xword(DT_RELA))
+      return RelaTable();
+    return RelaTable(reinterpret_cast<const ElfW(Rela) *>(*addr), *size);
+  }
+
+  // Calls callback(const char *) for each DT_NEEDED name, in the order the
+  // linker recorded them, which is the order they must be loaded in.
+  template <typename F> LIBC_INLINE void for_each_needed(F callback) const {
+    const char *strings = strtab();
+    if (strings == nullptr)
+      return;
+    dynamic_.for_each(DT_NEEDED, [strings, &callback](const ElfW(Dyn) &entry) {
+      callback(strings + entry.d_un.d_val);
+    });
+  }
+
+private:
+  const ElfW(Phdr) *phdrs_ = nullptr;
+  ElfW(Half) phnum_ = 0;
+  ElfW(Addr) load_bias_ = 0;
+  const char *name_ = nullptr;
+  const ElfW(Phdr) *tls_ = nullptr;
+  DynamicTable dynamic_;
+};
+
+namespace init_order_internal {
+
+LIBC_INLINE bool names(const char *have, const char *want) {
+  if (have == nullptr)
+    return false;
+  for (; *have == *want; ++have, ++want)
+    if (*have == '\0')
+      return true;
+  return false;
+}
+
+LIBC_INLINE void visit(const Module *modules, size_t first, size_t count,
+                       size_t index, size_t *order, bool *visited,
+                       size_t &emitted) {
+  visited[index - first] = true;
+  modules[index].for_each_needed([&](const char *needed) {
+    for (size_t i = first; i < count; ++i) {
+      if (!names(modules[i].soname(), needed) &&
+          !names(modules[i].name(), needed))
+        continue;
+      if (!visited[i - first])
+        visit(modules, first, count, i, order, visited, emitted);
+      return;
+    }
+  });
+  order[emitted++] = index;
+}
+
+} // namespace init_order_internal
+
+// The order to initialise modules[first, count) in: each after every module
+// in that range it names in DT_NEEDED, found by walking the dependencies
+// depth first from each module in turn and emitting a module once all it
+// needs has been. A cycle is broken where the walk meets it, as glibc breaks
+// it. Finalisers run in the reverse of the same order. order and visited
+// need room for count - first entries each.
+LIBC_INLINE void init_order(const Module *modules, size_t first, size_t count,
+                            size_t *order, bool *visited) {
+  for (size_t i = first; i < count; ++i)
+    visited[i - first] = false;
+  size_t emitted = 0;
+  for (size_t i = first; i < count; ++i)
+    if (!visited[i - first])
+      init_order_internal::visit(modules, first, count, i, order, visited,
+                                 emitted);
+}
+
+// Runs a module's DT_INIT, the single initialiser that came before
+// DT_INIT_ARRAY. It runs first, as it does with glibc.
+LIBC_INLINE void run_init_function(const Module &module) {
+  if (auto init = module.dynamic().address(DT_INIT))
+    reinterpret_cast<void (*)()>(*init)();
+}
+
+// Runs a module's DT_FINI_ARRAY, in reverse of the order it was built, which
+// is what the ABI requires, and then its DT_FINI.
+LIBC_INLINE void run_fini_array(const Module &module) {
+  auto array = module.dynamic().address(DT_FINI_ARRAY);
+  auto size = module.dynamic().value(DT_FINI_ARRAYSZ);
+  if (array && size) {
+    auto **functions = reinterpret_cast<void (**)()>(*array);
+    for (size_t i = *size / sizeof(void *); i > 0; --i)
+      if (functions[i - 1] != nullptr)
+        functions[i - 1]();
+  }
+  if (auto fini = module.dynamic().address(DT_FINI))
+    reinterpret_cast<void (*)()>(*fini)();
+}
+
+} // namespace elf
+} // namespace LIBC_NAMESPACE_DECL
+
+#endif // LLVM_LIBC_SRC___SUPPORT_ELF_MODULE_H

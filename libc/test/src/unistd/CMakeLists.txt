@@ -1,5 +1,19 @@
 add_libc_testsuite(libc-unistd-tests)
 
+add_libc_test(
+  acct_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    acct_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.unistd.acct
+    libc.src.unistd.geteuid
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
 add_subdirectory(testdata)
 
 add_libc_test(
@@ -15,6 +29,22 @@ add_libc_test(
     libc.src.signal.signal
     libc.src.time.nanosleep
     libc.src.unistd.alarm
+)
+
+add_libc_test(
+  ualarm_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    ualarm_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.struct_timespec
+    libc.hdr.types.useconds_t
+    libc.include.unistd
+    libc.src.signal.signal
+    libc.src.time.nanosleep
+    libc.src.unistd.ualarm
 )
 
 add_libc_test(
@@ -357,6 +387,22 @@ add_libc_test(
 )
 
 add_libc_test(
+  read_chk_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    read_chk_test.cpp
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.src.unistd.__read_chk
+    libc.src.unistd.close
+    libc.src.unistd.pipe
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
   lchown_test
   SUITE
     libc-unistd-tests
@@ -597,6 +643,20 @@ add_libc_test(
   DEPENDS
     libc.hdr.errno_macros
     libc.src.unistd.setpgid
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  setpgrp_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    setpgrp_test.cpp
+  DEPENDS
+    libc.src.unistd.getpgrp
+    libc.src.unistd.getpid
+    libc.src.unistd.setpgrp
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
@@ -866,6 +926,20 @@ add_libc_test(
 )
 
 add_libc_test(
+  getdomainname_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    getdomainname_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.libc_errno
+    libc.src.unistd.getdomainname
+    libc.src.unistd.setdomainname
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
   gethostname_test
   SUITE
     libc-unistd-tests
@@ -1035,6 +1109,17 @@ add_libc_test(
 )
 
 add_libc_test(
+  issetugid_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    issetugid_test.cpp
+  DEPENDS
+    libc.src.unistd.issetugid
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
   geteuid_test
   SUITE
     libc-unistd-tests
@@ -1085,7 +1170,11 @@ add_libc_test(
   DEPENDS
     libc.hdr.errno_macros
     libc.hdr.limits_macros
+    libc.hdr.signal_macros
+    libc.hdr.sys_resource_macros
+    libc.hdr.types.struct_rlimit
     libc.hdr.unistd_macros
+    libc.src.sys.resource.getrlimit
     libc.src.unistd.sysconf
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
@@ -1147,6 +1236,29 @@ add_libc_test(
 )
 
 add_libc_test(
+  getpass_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    getpass_test.cpp
+  DEPENDS
+    libc.hdr.termios_macros
+    libc.hdr.types.struct_termios
+    libc.include.sys_wait
+    libc.src.__support.libc_errno
+    libc.src.pty.forkpty
+    libc.src.stdlib._Exit
+    libc.src.string.strcmp
+    libc.src.sys.wait.waitpid
+    libc.src.termios.tcgetattr
+    libc.src.unistd.close
+    libc.src.unistd.getpass
+    libc.src.unistd.usleep
+    libc.src.unistd.write
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
   getopt_test
   SUITE
     libc-unistd-tests
@@ -1157,6 +1269,21 @@ add_libc_test(
     libc.src.__support.CPP.array
     libc.src.stdio.fopencookie
     libc.src.stdio.fflush
+)
+
+add_libc_test(
+  getopt_long_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    getopt_long_test.cpp
+  DEPENDS
+    libc.hdr.getopt_macros
+    libc.src.__support.CPP.array
+    libc.src.string.strcmp
+    libc.src.unistd.getopt
+    libc.src.unistd.getopt_long
+    libc.src.unistd.getopt_long_only
 )
 
 add_libc_test(
@@ -1202,3 +1329,129 @@ if(LLVM_LIBC_FULL_BUILD)
       libc.src.unistd._exit
   )
 endif()
+
+add_libc_test(
+  ttyname_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    ttyname_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.src.__support.CPP.string_view
+    libc.src.errno.errno
+    libc.src.fcntl.open
+    libc.src.unistd.close
+    libc.src.unistd.isatty
+    libc.src.unistd.pipe
+    libc.src.unistd.ttyname
+    libc.src.unistd.ttyname_r
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  getdtablesize_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    getdtablesize_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_rlimit
+    libc.include.sys_resource
+    libc.src.sys.resource.getrlimit
+    libc.src.unistd.getdtablesize
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  sethostname_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    sethostname_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.include.sys_utsname
+    libc.src.__support.libc_errno
+    libc.src.string.strlen
+    libc.src.sys.utsname.uname
+    libc.src.unistd.sethostname
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  vhangup_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    vhangup_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.unistd.geteuid
+    libc.src.unistd.vhangup
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  sbrk_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    sbrk_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.stdint_proxy
+    libc.src.errno.errno
+    libc.src.unistd.brk
+    libc.src.unistd.sbrk
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  gethostid_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    gethostid_test.cpp
+  DEPENDS
+    libc.src.unistd.gethostid
+)
+
+
+add_libc_test(
+  getlogin_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    getlogin_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.CPP.string_view
+    libc.src.errno.errno
+    libc.src.stdlib.setenv
+    libc.src.stdlib.unsetenv
+    libc.src.unistd.getlogin
+    libc.src.unistd.getlogin_r
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  usershell_test
+  SUITE
+    libc-unistd-tests
+  SRCS
+    usershell_test.cpp
+  DEPENDS
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.fcntl.open
+    libc.src.stdio.remove
+    libc.src.unistd.close
+    libc.src.unistd.endusershell
+    libc.src.unistd.getusershell
+    libc.src.unistd.setusershell
+    libc.src.unistd.usershell
+    libc.src.unistd.write
+)

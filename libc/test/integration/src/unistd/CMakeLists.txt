@@ -1,5 +1,43 @@
 add_libc_testsuite(libc-unistd-integration-tests PARENT libc-integration-tests)
 
+add_integration_test(
+  daemon_test
+  SUITE
+    libc-unistd-integration-tests
+  SRCS
+    daemon_test.cpp
+  DEPENDS
+    libc.include.sys_wait
+    libc.include.unistd
+    libc.src.string.strcmp
+    libc.src.sys.wait.waitpid
+    libc.src.unistd._exit
+    libc.src.unistd.close
+    libc.src.unistd.daemon
+    libc.src.unistd.fork
+    libc.src.unistd.getcwd
+    libc.src.unistd.getpid
+    libc.src.unistd.getsid
+    libc.src.unistd.pipe
+    libc.src.unistd.read
+    libc.src.unistd.write
+)
+
+add_integration_test(
+  fork_raw_test
+  SUITE
+    libc-unistd-integration-tests
+  SRCS
+    fork_raw_test.cpp
+  DEPENDS
+    libc.include.sys_wait
+    libc.include.unistd
+    libc.src.sys.wait.waitpid
+    libc.src.unistd._Fork
+    libc.src.unistd._exit
+    libc.src.unistd.getpid
+)
+
 add_subdirectory(testdata)
 
 add_integration_test(
@@ -15,6 +53,28 @@ add_integration_test(
 )
 
 add_integration_test(
+  setxid_test
+  SUITE
+    libc-unistd-integration-tests
+  SRCS
+    setxid_test.cpp
+  DEPENDS
+    libc.include.pthread
+    libc.include.signal
+    libc.include.sys_syscall
+    libc.src.__support.CPP.atomic
+    libc.src.__support.OSUtil.osutil
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+    libc.src.signal.pthread_sigmask
+    libc.src.signal.sigfillset
+    libc.src.unistd.geteuid
+    libc.src.unistd.setresgid
+    libc.src.unistd.setresuid
+    libc.src.unistd.setreuid
+)
+
+add_integration_test(
   fork_test
   SUITE
     libc-unistd-integration-tests
@@ -25,6 +85,8 @@ add_integration_test(
     libc.include.sys_wait
     libc.include.unistd
     libc.src.pthread.pthread_atfork
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
     libc.src.signal.raise
     libc.src.sys.wait.wait
     libc.src.sys.wait.wait4
@@ -80,6 +142,21 @@ add_integration_test(
     libc.src.unistd.unlink
 )
 
+add_integration_test(
+  vfork_test
+  SUITE
+    libc-unistd-integration-tests
+  SRCS
+    vfork_test.cpp
+  DEPENDS
+    libc.include.sys_wait
+    libc.include.unistd
+    libc.src.sys.wait.waitpid
+    libc.src.unistd._exit
+    libc.src.unistd.getpid
+    libc.src.unistd.vfork
+)
+
 if((${LIBC_TARGET_OS} STREQUAL "linux") AND (${LIBC_TARGET_ARCHITECTURE_IS_X86}))
   add_integration_test(
     stack_smashing_test
@@ -103,52 +180,28 @@ if((${LIBC_TARGET_OS} STREQUAL "linux") AND (${LIBC_TARGET_ARCHITECTURE_IS_X86})
   )
 endif()
 
-add_executable(
+add_libc_test_helper(
   libc_exec_test_signal_exit
-  EXCLUDE_FROM_ALL
+  SRCS
   exec_test_signal_exit.cpp
 )
-set_target_properties(
-  libc_exec_test_signal_exit
-  PROPERTIES
-    OUTPUT_NAME libc_exec_test_signal_exit
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
-add_executable(
+add_libc_test_helper(
   libc_execv_test_normal_exit
-  EXCLUDE_FROM_ALL
+  SRCS
   execv_test_normal_exit.cpp
 )
-set_target_properties(
-  libc_execv_test_normal_exit
-  PROPERTIES
-    OUTPUT_NAME libc_execv_test_normal_exit
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
-add_executable(
+add_libc_test_helper(
   libc_execl_test_normal_exit
-  EXCLUDE_FROM_ALL
+  SRCS
   execl_test_normal_exit.cpp
 )
-set_target_properties(
-  libc_execl_test_normal_exit
-  PROPERTIES
-    OUTPUT_NAME libc_execl_test_normal_exit
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
-add_executable(
+add_libc_test_helper(
   libc_execle_test_normal_exit
-  EXCLUDE_FROM_ALL
+  SRCS
   execle_test_normal_exit.cpp
-)
-set_target_properties(
-  libc_execle_test_normal_exit
-  PROPERTIES
-    OUTPUT_NAME libc_execle_test_normal_exit
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 add_integration_test(
@@ -300,4 +353,18 @@ add_integration_test(
     libc.src.unistd.fork
   ENV
     EXECV_TEST=PASS
+)
+
+add_integration_test(
+  get_current_dir_name_test
+  SUITE
+    libc-unistd-integration-tests
+  SRCS
+    get_current_dir_name_test.cpp
+  DEPENDS
+    libc.src.errno.errno
+    libc.src.stdlib.setenv
+    libc.src.stdlib.unsetenv
+    libc.src.sys.stat.stat
+    libc.src.unistd.get_current_dir_name
 )

@@ -1,4 +1,13 @@
 add_libc_testsuite(libc-stdlib-tests)
+add_libc_test(
+  getsubopt_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    getsubopt_test.cpp
+  DEPENDS
+    libc.src.stdlib.getsubopt
+)
 
 add_libc_test(
   atof_test
@@ -383,6 +392,35 @@ add_libc_test(
 )
 
 add_libc_test(
+  rand48_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    rand48_test.cpp
+  DEPENDS
+    libc.src.stdlib.drand48
+    libc.src.stdlib.erand48
+    libc.src.stdlib.jrand48
+    libc.src.stdlib.lcong48
+    libc.src.stdlib.lrand48
+    libc.src.stdlib.mrand48
+    libc.src.stdlib.nrand48
+    libc.src.stdlib.seed48
+    libc.src.stdlib.srand48
+)
+
+add_libc_test(
+  rand_r_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    rand_r_test.cpp
+  DEPENDS
+    libc.hdr.stdlib_macros
+    libc.src.stdlib.rand_r
+)
+
+add_libc_test(
   rand_test
   SUITE
     libc-stdlib-tests
@@ -518,12 +556,34 @@ add_libc_test(
 )
 
 add_libc_test(
+  mkstemps_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    mkstemps_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.unistd_macros
+    libc.src.stdlib.mkostemps
+    libc.src.stdlib.mkstemps
+    libc.src.string.strdup
+    libc.src.string.strlen
+    libc.src.unistd.access
+    libc.src.unistd.close
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+
+add_libc_test(
   mbtowc_test
   SUITE
     libc-stdlib-tests
   SRCS
     mbtowc_test.cpp
   DEPENDS
+    libc.test.UnitTest.Utf8Locale
     libc.hdr.errno_macros
     libc.src.stdlib.mbtowc
     libc.hdr.types.wchar_t
@@ -537,6 +597,7 @@ add_libc_test(
   SRCS
     mblen_test.cpp
   DEPENDS
+    libc.test.UnitTest.Utf8Locale
     libc.hdr.errno_macros
     libc.src.stdlib.mblen
     libc.test.UnitTest.ErrnoCheckingTest
@@ -549,6 +610,7 @@ add_libc_test(
   SRCS
     mbstowcs_test.cpp
   DEPENDS
+    libc.test.UnitTest.Utf8Locale
     libc.hdr.errno_macros
     libc.src.stdlib.mbstowcs
     libc.hdr.types.wchar_t
@@ -562,6 +624,7 @@ add_libc_test(
   SRCS
     wctomb_test.cpp
   DEPENDS
+    libc.test.UnitTest.Utf8Locale
     libc.hdr.errno_macros
     libc.src.stdlib.wctomb
     libc.hdr.types.wchar_t
@@ -574,6 +637,7 @@ add_libc_test(
   SRCS
     wcstombs_test.cpp
   DEPENDS
+    libc.test.UnitTest.Utf8Locale
     libc.src.stdlib.wcstombs
     libc.test.UnitTest.ErrnoCheckingTest
     libc.hdr.types.wchar_t
@@ -689,6 +753,21 @@ if(LLVM_LIBC_FULL_BUILD AND LIBC_TEST_SUBPROCESS_TESTS)
       libc.src.stdlib.system
       libc.test.UnitTest.ErrnoCheckingTest
   )
+
+  add_libc_test(
+    system_seccomp_test
+    SUITE
+      libc-stdlib-tests
+    SRCS
+      system_seccomp_test.cpp
+    DEPENDS
+      libc.hdr.sys_wait_macros
+      libc.src.__support.OSUtil.osutil
+      libc.src.stdlib._Exit
+      libc.src.stdlib.system
+      libc.src.sys.wait.waitpid
+      libc.src.unistd.fork
+  )
 endif()
 
 # Only baremetal and GPU has an in-tree 'malloc' implementation.
@@ -717,4 +796,111 @@ add_libc_test(
     libc.src.stdlib.getloadavg
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  mktemp_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    mktemp_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.sys_stat_macros
+    libc.hdr.types.struct_stat
+    libc.src.__support.CPP.string_view
+    libc.src.errno.errno
+    libc.src.stdlib.mkdtemp
+    libc.src.stdlib.mktemp
+    libc.src.sys.stat.stat
+    libc.src.unistd.rmdir
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  random_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    random_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.errno.errno
+    libc.src.stdlib.initstate
+    libc.src.stdlib.random
+    libc.src.stdlib.setstate
+    libc.src.stdlib.srandom
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  pty_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    pty_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.src.__support.libc_errno
+    libc.src.stdlib.grantpt
+    libc.src.stdlib.posix_openpt
+    libc.src.stdlib.ptsname
+    libc.src.stdlib.ptsname_r
+    libc.src.stdlib.unlockpt
+    libc.src.string.strlen
+    libc.src.string.strncmp
+    libc.src.unistd.close
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  malloc_trim_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    malloc_trim_test.cpp
+  DEPENDS
+    libc.hdr.func.mallopt
+    libc.src.stdlib.malloc_trim
+)
+
+add_libc_test(
+  free_sized_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    free_sized_test.cpp
+  DEPENDS
+    libc.src.stdlib.aligned_alloc
+    libc.src.stdlib.free_aligned_sized
+    libc.src.stdlib.free_sized
+    libc.src.stdlib.malloc
+)
+
+
+add_libc_test(
+  arc4random_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    arc4random_test.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.stdlib.arc4random
+    libc.src.stdlib.arc4random_buf
+    libc.src.stdlib.arc4random_uniform
+)
+
+add_libc_test(
+  progname_test
+  SUITE
+    libc-stdlib-tests
+  SRCS
+    progname_test.cpp
+  DEPENDS
+    libc.src.compat.progname
+    libc.src.stdlib.getprogname
+    libc.src.stdlib.setprogname
 )

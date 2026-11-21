@@ -99,11 +99,24 @@ FileIOResult File::write_unlocked_impl(const void *data, size_t len) {
     prev_op = FileOp::WRITE;
   }
 
+  // C leaves a standard stream fully buffered unless it is over an
+  // interactive device. Which it is over is settled here, on the first write,
+  // rather than at startup, where the call would be made by every program
+  // including those that never print.
+  if (bufmode_unsettled) {
+    bufmode_unsettled = false;
+    if (platform_isatty != nullptr && platform_isatty(this))
+      bufmode = _IOLBF;
+  }
+
   if (bufmode == _IONBF) { // unbuffered.
-    size_t ret_val =
+    // The whole result is kept rather than just the count: narrowing it to a
+    // size_t here threw the error away, so a write that failed came back
+    // looking like a short one with nothing said about why.
+    FileIOResult result =
         write_unlocked_nbf(static_cast<const uint8_t *>(data), len);
     flush_unlocked();
-    return ret_val;
+    return result;
   }
   if (bufmode == _IOFBF) // fully buffered
     return write_unlocked_fbf(static_cast<const uint8_t *>(data), len);
@@ -115,7 +128,8 @@ FileIOResult File::write_unlocked_nbf(const uint8_t *data, size_t len) {
   if (pos > 0) { // If the buffer is not empty
     // Flush the buffer
     const size_t write_size = pos;
-    FileIOResult write_result = platform_write(this, buf, write_size);
+    FileIOResult write_result =
+        write_all(static_cast<const uint8_t *>(buf), write_size);
     pos = 0; // Buffer is now empty so reset pos to the beginning.
     // If less bytes were written than expected, then an error occurred.
     if (write_result < write_size) {
@@ -125,7 +139,7 @@ FileIOResult File::write_unlocked_nbf(const uint8_t *data, size_t len) {
     }
   }
 
-  FileIOResult write_result = platform_write(this, data, len);
+  FileIOResult write_result = write_all(data, len);
   if (write_result < len)
     err = true;
   return write_result;
@@ -170,7 +184,8 @@ FileIOResult File::write_unlocked_fbf(const uint8_t *data, size_t len) {
   // is full.
   const size_t write_size = pos;
 
-  FileIOResult buf_result = platform_write(this, buf, write_size);
+  FileIOResult buf_result =
+      write_all(static_cast<const uint8_t *>(buf), write_size);
   size_t bytes_written = buf_result.value;
 
   pos = 0; // Buffer is now empty so reset pos to the beginning.
@@ -190,8 +205,7 @@ FileIOResult File::write_unlocked_fbf(const uint8_t *data, size_t len) {
     pos = remainder.size();
   } else {
 
-    FileIOResult result =
-        platform_write(this, remainder.data(), remainder.size());
+    FileIOResult result = write_all(remainder.data(), remainder.size());
     bytes_written = result.value;
 
     // If less bytes were written than expected, then an error occurred. Return
@@ -235,10 +249,30 @@ FileIOResult File::write_unlocked_lbf(const uint8_t *data, size_t len) {
 
   size_t written = 0;
 
-  written = write_unlocked_nbf(primary.data(), primary.size());
-  if (written < primary.size()) {
-    err = true;
-    return written;
+  // A line that fits beside what is already buffered joins it, so the whole
+  // line reaches the platform in one write. Lines that several processes write
+  // to one pipe then arrive whole instead of interleaved.
+  if (primary.size() <= bufsize - pos) {
+    const size_t init_pos = pos;
+    inline_memcpy(static_cast<uint8_t *>(buf) + pos, primary.data(),
+                  primary.size());
+    pos += primary.size();
+    const size_t write_size = pos;
+    FileIOResult buf_result =
+        write_all(static_cast<const uint8_t *>(buf), write_size);
+    pos = 0;
+    if (buf_result.has_error() || buf_result.value < write_size) {
+      err = true;
+      return {buf_result.value <= init_pos ? 0 : buf_result.value - init_pos,
+              buf_result.error};
+    }
+    written = primary.size();
+  } else {
+    written = write_unlocked_nbf(primary.data(), primary.size());
+    if (written < primary.size()) {
+      err = true;
+      return written;
+    }
   }
 
   flush_unlocked();
@@ -416,7 +450,7 @@ int File::ungetc_unlocked(int c) {
 
 ErrorOr<int> File::seek_unlocked(off_t offset, int whence) {
   if (prev_op == FileOp::WRITE && pos > 0) {
-    FileIOResult buf_result = platform_write(this, buf, pos);
+    FileIOResult buf_result = write_all(static_cast<const uint8_t *>(buf), pos);
     if (buf_result.has_error() || buf_result.value < pos) {
       err = true;
       return Error(buf_result.error);
@@ -483,9 +517,13 @@ ErrorOr<int> File::set_pos_unlocked(const Position &fpos) {
 
 int File::flush_unlocked() {
   if (prev_op == FileOp::WRITE && pos > 0) {
-    FileIOResult buf_result = platform_write(this, buf, pos);
+    FileIOResult buf_result = write_all(static_cast<const uint8_t *>(buf), pos);
     if (buf_result.has_error() || buf_result.value < pos) {
       err = true;
+      // What could not be written is let go of rather than kept to be tried
+      // again. A second attempt would write whatever the first one did manage
+      // a second time, and the error is already recorded for the caller.
+      pos = 0;
       return buf_result.error;
     }
     pos = 0;
@@ -510,7 +548,7 @@ int File::close() {
   {
     FileLock lock(this);
     if (prev_op == FileOp::WRITE && pos > 0) {
-      auto buf_result = platform_write(this, buf, pos);
+      auto buf_result = write_all(static_cast<const uint8_t *>(buf), pos);
       if (buf_result.has_error() || buf_result.value < pos) {
         err = true;
         return buf_result.error;
@@ -544,6 +582,16 @@ int File::set_buffer(void *buffer, size_t size, int buffer_mode) {
     break;
   default:
     return EINVAL;
+  }
+
+  // Whatever is waiting in the old buffer has to go out before the buffer
+  // under it is replaced, or it is lost. The standard says to call this
+  // before anything else is done with the stream, but a caller which does
+  // not should not silently lose what it already wrote.
+  if (buf != nullptr && pos > 0) {
+    int flush_result = flush_unlocked();
+    if (flush_result != 0)
+      return flush_result;
   }
 
   // A buffer of no size cannot hold anything, so the stream is unbuffered
@@ -583,6 +631,8 @@ int File::set_buffer(void *buffer, size_t size, int buffer_mode) {
     own_buf = false;
   }
   bufmode = static_cast<int8_t>(buffer_mode);
+  // A caller who says how the stream is to be buffered has settled it.
+  bufmode_unsettled = false;
   adjust_buf();
   return 0;
 }

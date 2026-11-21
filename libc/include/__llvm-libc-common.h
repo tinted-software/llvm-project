@@ -11,6 +11,41 @@
 
 #define __LLVM_LIBC__ 1
 
+// wchar_t holds a Unicode code point here, which is what this says. A
+// program which needs to know reads it rather than guessing from the
+// width of the type, and a fair amount of code refuses to build without
+// it. glibc names the same revision of the standard.
+#define __STDC_ISO_10646__ 201706L
+
+// Feature test macros. An application selects a view of the library by
+// defining one of these before including anything; where it has not, or
+// where it asked for all of them at once, the rest of the set is settled
+// here so that a program reading them back sees a consistent answer.
+#ifdef _GNU_SOURCE
+#undef _POSIX_SOURCE
+#define _POSIX_SOURCE 1
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 202405L
+#undef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 800
+#undef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE 1
+#endif
+
+#if defined _DEFAULT_SOURCE ||                                                 \
+    (!defined __STRICT_ANSI__ && !defined _ISOC95_SOURCE &&                    \
+     !defined _ISOC99_SOURCE && !defined _ISOC11_SOURCE &&                     \
+     !defined _ISOC23_SOURCE && !defined _ISOC2X_SOURCE &&                     \
+     !defined _POSIX_SOURCE && !defined _POSIX_C_SOURCE &&                     \
+     !defined _XOPEN_SOURCE)
+#undef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE 1
+#undef _POSIX_SOURCE
+#define _POSIX_SOURCE 1
+#undef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 202405L
+#endif
+
 #ifdef __cplusplus
 
 #undef __BEGIN_C_DECLS
@@ -25,17 +60,28 @@
 #define __restrict
 #endif
 
+// The C spellings map onto the C++ keywords, which only C++11 onwards has.
+// Before that the compiler extensions they were built on stand in, so a
+// header carrying one of them still compiles as C++98.
 #undef _Noreturn
-#define _Noreturn [[noreturn]]
-
 #undef _Alignas
-#define _Alignas alignas
-
 #undef _Static_assert
-#define _Static_assert static_assert
-
 #undef _Alignof
+#if __cplusplus >= 201103L
+#define _Noreturn [[noreturn]]
+#define _Alignas alignas
+#define _Static_assert static_assert
 #define _Alignof alignof
+#else
+#define _Noreturn __attribute__((noreturn))
+#define _Alignas(x) __attribute__((aligned(x)))
+#define _Alignof(x) __alignof__(x)
+#define __LLVM_LIBC_STATIC_ASSERT_JOIN(a, b) a##b
+#define __LLVM_LIBC_STATIC_ASSERT_NAME(line)                                   \
+  __LLVM_LIBC_STATIC_ASSERT_JOIN(__llvm_libc_static_assert_, line)
+#define _Static_assert(expr, msg)                                              \
+  typedef char __LLVM_LIBC_STATIC_ASSERT_NAME(__LINE__)[(expr) ? 1 : -1]
+#endif
 
 #undef __NOEXCEPT
 #if __cplusplus >= 201103L
@@ -98,5 +144,11 @@
 #define __LLVM_LIBC_CAST(cast, type, value) ((type)(value))
 
 #endif // __cplusplus
+
+// Android code finds the API level macros and the types and constants bionic
+// carries between its headers in whichever header it includes first.
+#ifdef __ANDROID__
+#include <sys/cdefs.h>
+#endif
 
 #endif // _LLVM_LIBC_COMMON_H

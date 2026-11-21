@@ -1,6 +1,41 @@
 add_libc_testsuite(libc-stdio-tests)
 
 add_libc_test(
+  setlinebuf_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    setlinebuf_test.cpp
+  DEPENDS
+    libc.include.stdio
+    libc.src.stdio.fclose
+    libc.src.stdio.fopen
+    libc.src.stdio.fread
+    libc.src.stdio.fwrite
+    libc.src.stdio.setlinebuf
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  fputc_unlocked_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    fputc_unlocked_test.cpp
+  DEPENDS
+    libc.include.stdio
+    libc.src.__support.libc_errno
+    libc.src.stdio.fclose
+    libc.src.stdio.fgets
+    libc.src.stdio.flockfile
+    libc.src.stdio.fopen
+    libc.src.stdio.fputc_unlocked
+    libc.src.stdio.fputs_unlocked
+    libc.src.stdio.funlockfile
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
   freopen_test
   SUITE
     libc-stdio-tests
@@ -122,6 +157,17 @@ add_libc_test(
 )
 
 add_libc_test(
+  ctermid_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    ctermid_test.cpp
+  DEPENDS
+    libc.hdr.stdio_macros
+    libc.src.stdio.ctermid
+)
+
+add_libc_test(
   unlocked_fileop_test
   SUITE
     libc-stdio-tests
@@ -139,6 +185,24 @@ add_libc_test(
     libc.src.stdio.funlockfile
     libc.src.stdio.fwrite_unlocked
     libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  filelock_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    filelock_test.cpp
+  DEPENDS
+    libc.include.stdio
+    libc.src.stdio.fclose
+    libc.src.stdio.fgetc
+    libc.src.stdio.flockfile
+    libc.src.stdio.fopen
+    libc.src.stdio.fread
+    libc.src.stdio.ftrylockfile
+    libc.src.stdio.funlockfile
+    libc.src.stdio.fwrite
 )
 
 add_libc_test(
@@ -171,6 +235,25 @@ add_libc_test(
     libc.test.UnitTest.ErrnoSetterMatcher
     libc.test.UnitTest.MemoryMatcher
 )
+
+add_libc_test(
+  fileno_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    fileno_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.func.free
+    libc.src.__support.libc_errno
+    libc.src.stdio.fclose
+    libc.src.stdio.fileno
+    libc.src.stdio.fmemopen
+    libc.src.stdio.fopen
+    libc.src.stdio.open_memstream
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
 
 add_libc_test(
   fopencookie_test
@@ -625,6 +708,43 @@ if(${LIBC_TARGET_OS} STREQUAL "linux")
       libc.test.UnitTest.ErrnoSetterMatcher
   )
 
+add_libc_test(
+  open_memstream_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    open_memstream_test.cpp
+  DEPENDS
+    libc.hdr.func.free
+    libc.hdr.types.FILE
+    libc.src.stdio.fclose
+    libc.src.stdio.fflush
+    libc.src.stdio.fwrite
+    libc.src.stdio.open_memstream
+    libc.src.string.memcmp
+)
+
+  add_libc_test(
+    renameat2_test
+    SUITE
+      libc-stdio-tests
+    SRCS
+      renameat2_test.cpp
+    DEPENDS
+      libc.hdr.errno_macros
+      libc.hdr.fcntl_macros
+      libc.hdr.sys_stat_macros
+      libc.hdr.unistd_macros
+      libc.src.__support.CPP.scope
+      libc.src.errno.errno
+      libc.src.fcntl.open
+      libc.src.stdio.renameat2
+      libc.src.unistd.access
+      libc.src.unistd.close
+      libc.src.unistd.unlink
+      libc.test.UnitTest.ErrnoCheckingTest
+      libc.test.UnitTest.ErrnoSetterMatcher
+  )
   add_libc_test(
     fdopen_test
     SUITE
@@ -756,6 +876,18 @@ add_libc_test(
     libc.src.__support.error_or
     libc.src.stdio.generic.getdelim_impl
     libc.src.string.memory_utils.inline_memcpy
+)
+
+add_libc_test(
+  fclose_stdstream_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    fclose_stdstream_test.cpp
+  DEPENDS
+    libc.hdr.types.FILE
+    libc.src.stdio.fclose
+    libc.src.stdio.stdin
 )
 
 add_libc_test(
@@ -953,3 +1085,49 @@ endif()
 
 add_subdirectory(scanf_core)
 add_subdirectory(testdata)
+
+add_libc_test(
+  dprintf_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    dprintf_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.__support.CPP.string_view
+    libc.src.errno.errno
+    libc.src.fcntl.open
+    libc.src.stdio.dprintf
+    libc.src.stdio.remove
+    libc.src.stdio.vdprintf
+    libc.src.unistd.close
+    libc.src.unistd.read
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  unlocked_test
+  SUITE
+    libc-stdio-tests
+  SRCS
+    unlocked_test.cpp
+  DEPENDS
+    libc.hdr.stdio_macros
+    libc.hdr.types.FILE
+    libc.include.stdio_ext
+    libc.src.stdio.__fsetlocking
+    libc.src.stdio.fclose
+    libc.src.stdio.fopen
+    libc.src.stdio.fputc_unlocked
+    libc.src.stdio.fputs_unlocked
+    libc.src.stdio.fread
+    libc.src.stdio.putc_unlocked
+    libc.src.stdio.putchar_unlocked
+    libc.src.stdio.remove
+    libc.src.stdio.setbuffer
+    libc.src.stdio.setlinebuf
+    libc.src.stdio_ext.__flbf
+    libc.src.string.memcmp
+)

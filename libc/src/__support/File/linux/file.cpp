@@ -23,11 +23,15 @@
 #include "src/__support/OSUtil/linux/syscall_wrappers/close.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/dup3.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/fcntl.h"
+#include "src/__support/OSUtil/linux/syscall_wrappers/ioctl.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/lseek.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/open.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/read.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/write.h"
 #include "src/__support/macros/config.h"
+#include "src/termios/linux/kernel_termios.h"
+
+#include <asm/ioctls.h> // Safe to include without the risk of name pollution.
 
 namespace LIBC_NAMESPACE_DECL {
 
@@ -66,11 +70,25 @@ int LinuxFile::close_fd() {
   return 0;
 }
 
+// The kernel answers TCGETS only for a terminal, which is how every library
+// asks this question.
+bool linux_file_isatty(File *f) {
+  auto *lf = reinterpret_cast<LinuxFile *>(f);
+  if (lf->get_fd() < 0)
+    return false;
+  kernel_termios unused;
+  return linux_syscalls::ioctl(lf->get_fd(), TCGETS, &unused).has_value();
+}
+
 int linux_file_close(File *f) {
   File::remove_file(f);
   auto *lf = reinterpret_cast<LinuxFile *>(f);
   int retval = lf->close_fd();
-  delete lf;
+  // The standard streams have static storage, so only a stream that was
+  // allocated may be handed back to the deallocator. fclose(stdout) is
+  // legal C and must not free a static object.
+  if (!lf->has_static_storage())
+    delete lf;
   return retval;
 }
 
@@ -176,7 +194,8 @@ ErrorOr<LinuxFile *> create_file_from_fd(int fd, const char *mode) {
   File::add_file(file);
   if (do_seek) {
     result = file->seek(0, SEEK_END);
-    if (!result.has_value()) {
+    // A pipe has no position to move, and O_APPEND is all it was asked for.
+    if (!result.has_value() && result.error() != ESPIPE) {
       File::remove_file(file);
       delete file;
       return Error(result.error());
@@ -227,7 +246,17 @@ int LinuxFile::reopen_unlocked(const char *path, const char *mode) {
 
     // Else the new file successfully opened, so we move it into the fd the old
     // file was using if the old fd exists.
-    if (old_fd >= 0) {
+    if (old_fd >= 0 && new_fd.value() == old_fd) {
+      // The old descriptor was closed behind the stream's back, so the open
+      // took its number. dup3 refuses to duplicate a descriptor onto itself.
+      if (!file_mode.is_close_on_exec()) {
+        auto flags = linux_syscalls::fcntl(old_fd, F_GETFD);
+        if (flags.has_value())
+          linux_syscalls::fcntl(
+              old_fd, F_SETFD,
+              reinterpret_cast<void *>(flags.value() & ~FD_CLOEXEC));
+      }
+    } else if (old_fd >= 0) {
       // Preserve close-on-exec atomically when replacing the old descriptor.
       int dup_flags =
           file_mode.is_close_on_exec() ? LinuxFileFlags::CLOSE_ON_EXEC : 0;
@@ -290,7 +319,7 @@ int LinuxFile::reopen_unlocked(const char *path, const char *mode) {
 
   if (do_seek) {
     auto seek_result = linux_file_seek(this, 0, SEEK_END);
-    if (!seek_result.has_value())
+    if (!seek_result.has_value() && seek_result.error() != ESPIPE)
       return seek_result.error();
   }
   return 0;

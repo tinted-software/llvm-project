@@ -18,18 +18,26 @@
 #include "src/__support/OSUtil/linux/auxv.h"
 #include "src/__support/OSUtil/linux/syscall_wrappers/exit_group.h"
 #include "src/__support/OSUtil/syscall.h"
+#include "src/__support/elf/module.h"
+#include "src/__support/elf/passive_abi.h"
 #include "src/__support/macros/config.h"
+#include "src/__support/macros/properties/architectures.h"
 #include "src/__support/threads/linux/futex_utils.h"
+#include "src/__support/threads/robust_list.h"
 #include "src/__support/threads/tcb.h"
 #include "src/__support/threads/thread.h"
-#include "src/errno/program_invocation_name.h"
-#include "src/errno/program_invocation_short_name.h"
+#include "src/android/debuggerd_hook.h"
+#include "src/compat/program_name.h"
 #include "src/link/_r_debug.h"
 #include "src/stdlib/atexit.h"
 #include "src/stdlib/exit.h"
 #include "src/unistd/environ.h"
 #include "startup/linux/gnu_property_section.h"
 #include "startup/linux/irelative.h"
+#ifdef LIBC_STARTUP_STATIC_PIE
+#include "startup/linux/relocate_static_pie.h"
+#endif
+#include <linux/prctl.h>
 #include <sys/syscall.h>
 
 extern "C" int main(int argc, char **argv, char **envp);
@@ -43,6 +51,10 @@ extern uintptr_t __init_array_start[];
 extern uintptr_t __init_array_end[];
 extern uintptr_t __fini_array_start[];
 extern uintptr_t __fini_array_end[];
+// The executable's DT_INIT and DT_FINI, from crti.o and crtn.o. Weak, since
+// an executable linked without them has neither.
+[[gnu::weak, gnu::visibility("hidden")]] void _init(void);
+[[gnu::weak, gnu::visibility("hidden")]] void _fini(void);
 // https://refspecs.linuxbase.org/elf/gabi4+/ch5.dynamic.html#dynamic_section
 // This symbol is provided by the dynamic linker. It can be undefined depending
 // on how the program is loaded exactly.
@@ -66,15 +78,56 @@ static void call_init_array_callbacks(int argc, char **argv, char **env) {
   size_t preinit_array_size = __preinit_array_end - __preinit_array_start;
   for (size_t i = 0; i < preinit_array_size; ++i)
     reinterpret_cast<InitCallback *>(__preinit_array_start[i])(argc, argv, env);
+  // Between the two arrays, where glibc runs it.
+  if (_init)
+    _init();
   size_t init_array_size = __init_array_end - __init_array_start;
   for (size_t i = 0; i < init_array_size; ++i)
     reinterpret_cast<InitCallback *>(__init_array_start[i])(argc, argv, env);
+}
+
+// Runs the finalisers of modules[first, count) in the reverse of the order
+// they were initialised in, leaving out the executable and anything closed.
+static void finalise_range(const elf::ModuleSet &set, size_t first,
+                           size_t count) {
+  constexpr size_t MAX_ORDERED = 256;
+  if (count <= first)
+    return;
+  if (count - first > MAX_ORDERED) {
+    for (size_t i = count; i > first; --i)
+      if (i - 1 != 0 && set.references[i - 1] != 0)
+        elf::run_fini_array(set.modules[i - 1]);
+    return;
+  }
+  size_t order[MAX_ORDERED];
+  bool visited[MAX_ORDERED];
+  elf::init_order(set.modules, first, count, order, visited);
+  for (size_t i = count - first; i > 0; --i) {
+    size_t index = order[i - 1];
+    if (index != 0 && set.references[index] != 0)
+      elf::run_fini_array(set.modules[index]);
+  }
+}
+
+// The finalisers of the shared objects still loaded, which run after the
+// executable's own, as glibc runs them: those opened later and never closed
+// first, then those loaded at startup, each in the reverse of the order they
+// were initialised in.
+static void call_module_finalisers() {
+  elf::ModuleSet *set = elf::process_modules();
+  if (set == nullptr || !set->linked)
+    return;
+  finalise_range(*set, set->static_count, set->count);
+  finalise_range(*set, 0, set->static_count);
 }
 
 static void call_fini_array_callbacks() {
   size_t fini_array_size = __fini_array_end - __fini_array_start;
   for (size_t i = fini_array_size; i > 0; --i)
     reinterpret_cast<FiniCallback *>(__fini_array_start[i - 1])();
+  if (_fini)
+    _fini();
+  call_module_finalisers();
 }
 
 static ThreadAttributes main_thread_attrib;
@@ -82,6 +135,9 @@ static Futex main_thread_clear_tid(1);
 static TLSDescriptor tls;
 
 [[noreturn]] void do_start() {
+#ifdef LIBC_STARTUP_STATIC_PIE
+  relocate_static_pie();
+#endif
   auto tid = syscall_impl<long>(SYS_gettid);
   if (tid <= 0)
     linux_syscalls::exit_group(1);
@@ -100,17 +156,15 @@ static TLSDescriptor tls;
   while (*env_end_marker)
     ++env_end_marker;
 
-  // Initialize the POSIX global declared in unistd.h
-  environ = reinterpret_cast<char **>(env_ptr);
+  // The POSIX global declared in unistd.h. Where there is a loader it has
+  // already set this, before running the initialisers of everything it
+  // loaded, so that they could read the environment and change it. Whatever
+  // they made of it stands.
+  if (environ == nullptr)
+    environ = reinterpret_cast<char **>(env_ptr);
 
-  if (app.args->argc > 0 && app.args->argv[0] != 0) {
-    program_invocation_name = reinterpret_cast<char *>(app.args->argv[0]);
-    program_invocation_short_name = program_invocation_name;
-    for (char *p = program_invocation_name; *p != '\0'; ++p) {
-      if (*p == '/')
-        program_invocation_short_name = p + 1;
-    }
-  }
+  if (app.args->argc > 0 && app.args->argv[0] != 0)
+    set_program_name(reinterpret_cast<char *>(app.args->argv[0]));
 
   // After the env array, is the aux-vector. The end of the aux-vector is
   // denoted by an AT_NULL entry.
@@ -172,17 +226,33 @@ static TLSDescriptor tls;
     // TODO: adjust PT_GNU_STACK
   }
 
-  main_map.l_addr = base;
-  main_map.l_name = const_cast<char *>("");
-  main_map.l_ld = const_cast<ElfW(Dyn) *>(_DYNAMIC);
-  main_map.l_next = nullptr;
-  main_map.l_prev = nullptr;
+  // A loader has already described every module it mapped.
+  if (_r_debug.r_map == nullptr) {
+    main_map.l_addr = base;
+    main_map.l_name = const_cast<char *>("");
+    main_map.l_ld = const_cast<ElfW(Dyn) *>(_DYNAMIC);
+    main_map.l_next = nullptr;
+    main_map.l_prev = nullptr;
 
-  _r_debug.r_version = 1;
-  _r_debug.r_map = &main_map;
-  _r_debug.r_brk = reinterpret_cast<uintptr_t>(&_r_debug_state);
-  _r_debug.r_state = RT_CONSISTENT;
-  _r_debug.r_ldbase = base;
+    _r_debug.r_version = 1;
+    _r_debug.r_map = &main_map;
+    _r_debug.r_brk = reinterpret_cast<uintptr_t>(&_r_debug_state);
+    _r_debug.r_state = r_debug::RT_CONSISTENT;
+    _r_debug.r_ldbase = base;
+  }
+
+#ifdef LIBC_TARGET_ARCH_IS_AARCH64
+  // Without this the kernel's default tag mask lets IRG produce only tag 0,
+  // which defeats the allocator's tag scheme and makes it reject its own
+  // chunk headers. Tag checking stays off, so no fault is raised until a
+  // process asks for it.
+  constexpr unsigned long LIBC_HWCAP2_MTE = 1UL << 18;
+  if (hwcap2 & LIBC_HWCAP2_MTE)
+    LIBC_NAMESPACE::syscall_impl<long>(
+        SYS_prctl, PR_SET_TAGGED_ADDR_CTRL,
+        PR_TAGGED_ADDR_ENABLE | PR_MTE_TCF_NONE | (0xfffeUL << PR_MTE_TAG_SHIFT),
+        0, 0, 0);
+#endif
 
   // Process IRELATIVE relocations (ifunc resolvers).
   // Skips when no ifuncs are present in the binary.
@@ -190,7 +260,10 @@ static TLSDescriptor tls;
       reinterpret_cast<uintptr_t>(__rela_iplt_end))
     apply_irelative_relocs(base, hwcap, hwcap2);
 
-  if (tls_phdr) {
+  // A dynamically linked executable often has no thread local storage of its
+  // own, because what it uses lives in libc.so instead. There is then no
+  // PT_TLS here to describe.
+  if (tls_phdr != nullptr) {
     app.tls.address = tls_phdr->p_vaddr + base;
     app.tls.size = tls_phdr->p_memsz;
     app.tls.init_size = tls_phdr->p_filesz;
@@ -199,19 +272,43 @@ static TLSDescriptor tls;
     app.tls.align = 1;
   }
 
-  // This descriptor has to be static since its cleanup function cannot
-  // capture the context.
-  init_tls(tls);
-  if (!set_thread_ptr(tls.tp))
-    linux_syscalls::exit_group(1);
+  // Thread local storage has to be sized across every loaded module, which
+  // only a loader can see. Where one linked the process it has already set
+  // the thread pointer, and setting it again here would replace a block sized
+  // for the whole process with one sized for the executable alone.
+  const elf::ModuleSet *linked = elf::process_modules();
+  if (linked == nullptr || !linked->linked) {
+    // This descriptor has to be static since its cleanup function cannot
+    // capture the context.
+    init_tls(tls);
+    if (!set_thread_ptr(tls.tp))
+      linux_syscalls::exit_group(1);
+  }
 
-  get_tcb(tls.tp)->attrib = &main_thread_attrib;
+  // Whichever set the thread pointer, the loader or the code above, the
+  // control block is reached through it. Where there is a loader, libc
+  // described this thread before the initialisers of what it loaded ran, and
+  // they may already hold the pthread_t it gave them. That description is
+  // kept, with what only this code knows added to it.
+  ThreadAttributes *attrib = get_tcb()->attrib;
+  if (attrib == nullptr) {
+    get_tcb()->attrib = &main_thread_attrib;
+    robust::register_list(&main_thread_attrib);
+  } else {
+    attrib->tid = main_thread_attrib.tid;
+    attrib->platform_data = main_thread_attrib.platform_data;
+    attrib->detach_state.store(main_thread_attrib.detach_state.load());
+    attrib->stack = main_thread_attrib.stack;
+    attrib->stacksize = main_thread_attrib.stacksize;
+  }
 
   // We want the fini array callbacks to be run after other atexit
   // callbacks are run. So, we register them before running the init
   // array callbacks as they can potentially register their own atexit
   // callbacks.
   atexit(&call_fini_array_callbacks);
+
+  debuggerd_hook::install();
 
   call_init_array_callbacks(static_cast<int>(app.args->argc),
                             reinterpret_cast<char **>(app.args->argv),

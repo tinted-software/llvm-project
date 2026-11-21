@@ -89,6 +89,15 @@ endif()
 add_subdirectory(${LIBC_TARGET_ARCHITECTURE})
 
 add_object_library(
+  app
+  SRCS
+    app.cpp
+  DEPENDS
+    libc.config.app_h
+    libc.src.__support.macros.config
+)
+
+add_object_library(
   gnu_property_section
   SRCS
     gnu_property_section.cpp
@@ -108,7 +117,9 @@ add_object_library(
   HDRS
     do_start.h
     irelative.h
+    relocate_static_pie.h
   DEPENDS
+    .app
     libc.config.app_h
     libc.hdr.elf_proxy
     libc.hdr.link_macros
@@ -122,7 +133,10 @@ add_object_library(
     libc.src.__support.OSUtil.linux.auxv
     libc.src.__support.OSUtil.linux.syscall_wrappers.exit_group
     libc.src.__support.OSUtil.osutil
+    libc.src.__support.elf.module
+    libc.src.__support.elf.passive_abi
     libc.src.__support.threads.tcb
+    libc.src.__support.threads.robust_list
     libc.src.__support.threads.thread
     libc.src.__support.threads.linux.futex_utils
     libc.src.__support.threads.linux.tls
@@ -132,37 +146,118 @@ add_object_library(
     libc.src.stdlib.exit
     libc.src.stdlib.atexit
     libc.src.unistd.environ
-    libc.src.errno.program_invocation_name
-    libc.src.errno.program_invocation_short_name
+    libc.src.compat.program_name
+    libc.src.android.debuggerd_hook
   COMPILE_OPTIONS
     -ffreestanding # To avoid compiler warnings about calling the main function.
     -fno-builtin # avoid emit unexpected calls
     -fno-stack-protector # stack protect canary is not available yet.
 )
 
+add_object_library(
+  do_start_static_pie
+  SRCS
+    do_start.cpp
+  HDRS
+    do_start.h
+    irelative.h
+    relocate_static_pie.h
+  DEPENDS
+    .app
+    libc.config.app_h
+    libc.hdr.elf_macros
+    libc.hdr.sys_auxv_macros
+    libc.hdr.elf_proxy
+    libc.hdr.link_macros
+    libc.hdr.pthread_macros
+    libc.hdr.stdint_proxy
+    libc.hdr.sys_auxv_macros
+    libc.hdr.sys_mman_macros
+    libc.hdr.types.struct_link_map
+    libc.hdr.types.struct_r_debug
+    libc.include.sys_syscall
+    libc.src.__support.OSUtil.linux.auxv
+    libc.src.__support.OSUtil.linux.syscall_wrappers.exit_group
+    libc.src.__support.OSUtil.osutil
+    libc.src.__support.elf.module
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.tcb
+    libc.src.__support.threads.robust_list
+    libc.src.__support.threads.thread
+    libc.src.__support.threads.linux.futex_utils
+    libc.src.__support.threads.linux.tls
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+    libc.startup.linux.${LIBC_TARGET_ARCHITECTURE}.irelative
+    libc.src.link._r_debug
+    libc.src.stdlib.exit
+    libc.src.stdlib.atexit
+    libc.src.unistd.environ
+    libc.src.compat.program_name
+    libc.src.android.debuggerd_hook
+  COMPILE_OPTIONS
+    -ffreestanding # To avoid compiler warnings about calling the main function.
+    -fno-builtin # avoid emit unexpected calls
+    -fno-stack-protector # stack protect canary is not available yet.
+    -DLIBC_STARTUP_STATIC_PIE
+)
+
+# A program linked against libc.so cannot reach the TLS routines there, which
+# are hidden, so a shared build carries its own copy of them in crt1.o. A
+# static link takes them from crt1.o in the same way and leaves libc.a's.
+set(crt1_tls "")
+if(LIBC_ENABLE_SHARED)
+  set(crt1_tls
+    libc.src.__support.threads.linux.${LIBC_TARGET_ARCHITECTURE}.tls)
+endif()
+
 # TODO: factor out crt1 into multiple objects
 merge_relocatable_object(
   crt1
   .${LIBC_TARGET_ARCHITECTURE}.start
+  ${crt1_tls}
   .${LIBC_TARGET_ARCHITECTURE}.irelative
   .do_start
   .gnu_property_section
 )
 
+# Static PIEs start from rcrt1.o, which relocates the program before anything
+# else. It needs position independent objects, so only a shared build has it.
+if(LIBC_ENABLE_SHARED)
+  merge_relocatable_object(
+    rcrt1
+    .${LIBC_TARGET_ARCHITECTURE}.start
+    ${crt1_tls}
+    .${LIBC_TARGET_ARCHITECTURE}.irelative
+    .do_start_static_pie
+    .gnu_property_section
+  )
+endif()
+
+# These are linked into every program. Built with LTO they would be bitcode,
+# which lld merges into the LTO unit of the program, and a program that splits
+# its unit differently then fails to link.
 add_startup_object(
   crti
   SRC
     crti.cpp
+  COMPILE_OPTIONS
+    -fno-lto
 )
 
 add_startup_object(
   crtn
   SRC
     crtn.cpp
+  COMPILE_OPTIONS
+    -fno-lto
 )
 
 add_custom_target(libc-startup)
 set(startup_components crt1 crti crtn)
+if(LIBC_ENABLE_SHARED)
+  list(APPEND startup_components rcrt1)
+endif()
 foreach(target IN LISTS startup_components)
   set(fq_target_name libc.startup.linux.${target})
   add_dependencies(libc-startup ${fq_target_name})
@@ -171,3 +266,21 @@ foreach(target IN LISTS startup_components)
     RENAME $<TARGET_PROPERTY:${fq_target_name},OUTPUT_NAME>
     COMPONENT libc)
 endforeach()
+
+add_object_library(
+  passive_abi
+  SRCS
+    passive_abi.cpp
+  DEPENDS
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.macros.config
+)
+
+# Position independent executables start from Scrt1.o. The objects of a shared
+# build are position independent already, so crt1.o serves under both names.
+if(LIBC_ENABLE_SHARED)
+  install(FILES $<TARGET_OBJECTS:libc.startup.linux.crt1>
+    DESTINATION ${LIBC_INSTALL_LIBRARY_DIR}
+    RENAME Scrt1.o
+    COMPONENT libc)
+endif()

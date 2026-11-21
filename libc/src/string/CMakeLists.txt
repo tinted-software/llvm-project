@@ -126,6 +126,18 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  basename
+  SRCS
+    basename.cpp
+  HDRS
+    basename.h
+  DEPENDS
+    .string_utils
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
   strcmp
   SRCS
     strcmp.cpp
@@ -194,6 +206,17 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  explicit_bzero
+  SRCS
+    explicit_bzero.cpp
+  HDRS
+    explicit_bzero.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.src.string.memory_utils.inline_memset
+)
+
+add_entrypoint_object(
   strdup
   SRCS
     strdup.cpp
@@ -214,6 +237,26 @@ add_entrypoint_object(
     strerror.cpp
   HDRS
     strerror.h
+  DEPENDS
+    libc.src.__support.StringUtil.error_to_string
+)
+
+add_entrypoint_object(
+  strerror_l
+  SRCS
+    strerror_l.cpp
+  HDRS
+    strerror_l.h
+  DEPENDS
+    libc.src.__support.StringUtil.error_to_string
+)
+
+add_entrypoint_object(
+  strerrorname_np
+  SRCS
+    strerrorname_np.cpp
+  HDRS
+    strerrorname_np.h
   DEPENDS
     libc.src.__support.StringUtil.error_to_string
 )
@@ -576,3 +619,14 @@ else()
   add_memset(memset_opt_host COMPILE_OPTIONS ${LIBC_COMPILE_OPTIONS_NATIVE})
   add_memset(memset)
 endif()
+
+add_entrypoint_object(
+  strverscmp
+  SRCS
+    strverscmp.cpp
+  HDRS
+    strverscmp.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.ctype_utils
+)

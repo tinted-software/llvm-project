@@ -81,8 +81,12 @@ TEST(LlvmLibcFScanfTest, WriteToFile) {
 
   // The format string starts with a space to handle the fact that the %s leaves
   // a trailing \n and %c doesn't strip leading whitespace.
+  //
+  // %c takes exactly as many characters as its width says, and there are
+  // fewer than fifty left, so the input runs out and this reports so. What
+  // was there is still written.
   read = LIBC_NAMESPACE::fscanf(file, " %50c", data);
-  ASSERT_EQ(read, 1);
+  ASSERT_EQ(read, EOF);
   ASSERT_EQ(
       LIBC_NAMESPACE::cpp::string_view(numbers_and_more),
       LIBC_NAMESPACE::cpp::string_view(data, sizeof(numbers_and_more) - 1));
@@ -229,4 +233,28 @@ TEST(LlvmLibcFScanfTest, MatchingErrors) {
   EXPECT_EQ(scanf_test::ferror(file), 0);
 
   ASSERT_EQ(scanf_test::fclose(file), 0);
+}
+
+TEST(LlvmLibcFScanfTest, NulBytesAreDataNotTheEndOfTheFile) {
+  const char *FILENAME = "fscanf_nul.test";
+  auto FILE_PATH = libc_make_test_file_path(FILENAME);
+  ::FILE *file = scanf_test::fopen(FILE_PATH, "w");
+  ASSERT_FALSE(file == nullptr);
+
+  constexpr char bytes[] = {'\0', 'A', '\0', 'B', '\x01'};
+  ASSERT_EQ(sizeof(bytes), scanf_test::fwrite(bytes, 1, sizeof(bytes), file));
+  ASSERT_EQ(0, scanf_test::fclose(file));
+
+  file = scanf_test::fopen(FILE_PATH, "r");
+  ASSERT_FALSE(file == nullptr);
+
+  for (char expected : bytes) {
+    char c = 'x';
+    ASSERT_EQ(LIBC_NAMESPACE::fscanf(file, "%c", &c), 1);
+    ASSERT_EQ(c, expected);
+  }
+  char c;
+  ASSERT_EQ(LIBC_NAMESPACE::fscanf(file, "%c", &c), EOF);
+
+  ASSERT_EQ(0, scanf_test::fclose(file));
 }

@@ -12,6 +12,9 @@
 #define LLVM_LIBC_TYPES_X86_64_UCONTEXT_T_H
 
 #include "../sigset_t.h"
+#ifdef __ANDROID__
+#include "../sigset64_t.h"
+#endif
 #include "../stack_t.h"
 #include "mcontext_t.h"
 
@@ -22,7 +25,15 @@ typedef struct ucontext_t {
   struct ucontext_t *uc_link;
   stack_t uc_stack;
   mcontext_t uc_mcontext;
+#ifdef __ANDROID__
+  // bionic names the same mask a second way.
+  union {
+    sigset_t uc_sigmask;
+    sigset64_t uc_sigmask64;
+  };
+#else
   sigset_t uc_sigmask;
+#endif
 
   // Additional fields appended by the C library. These are not part of the
   // kernel's struct ucontext, but are needed for user-space context management.
@@ -32,9 +43,9 @@ typedef struct ucontext_t {
   // On x86_64, uc_mcontext contains a pointer to the floating point state
   // rather than the state itself. To make ucontext_t self-contained, we
   // provide space here for the FP state, and the pointer in uc_mcontext
-  // can be set to point here. 64 long ints provide 512 bytes, which is
-  // the size required for FXSAVE.
-  _Alignas(16) long int __fpregs_mem[64];
+  // can be set to point here. As in glibc it is only eight byte aligned,
+  // so getcontext saves the environment into it rather than an FXSAVE.
+  struct _libc_fpstate __fpregs_mem;
 
   // Support for Shadow Stack Pointer (Intel CET).
   unsigned long long __ssp[4];

@@ -1,4 +1,10 @@
 add_header(
+  uapi_compat_macros
+  HDR
+    uapi-compat-macros.h
+)
+
+add_header(
   error_number_macros
   HDR
     error-number-macros.h
@@ -83,6 +89,12 @@ add_header(
 )
 
 add_header(
+  sys_msg_macros
+  HDR
+    sys-msg-macros.h
+)
+
+add_header(
   sys_personality_macros
   HDR
     sys-personality-macros.h
@@ -116,6 +128,8 @@ add_header(
   net_if_macros
   HDR
     net-if-macros.h
+  DEPENDS
+    .uapi_compat_macros
 )
 
 add_header(
@@ -203,3 +217,42 @@ add_header(
   HDR
     termios-macros.h
 )
+
+add_header(
+  sys_signalfd_macros
+  HDR
+    sys-signalfd-macros.h
+  DEPENDS
+    .fcntl_macros
+)
+
+add_header(
+  sys_fanotify_macros
+  HDR
+    sys-fanotify-macros.h
+)
+
+add_header(
+  sys_statvfs_macros
+  HDR
+    sys-statvfs-macros.h
+)
+
+add_header(
+  sys_reboot_macros
+  HDR
+    sys-reboot-macros.h
+)
+
+add_header(
+  sys_timex_macros
+  HDR
+    sys-timex-macros.h
+)
+
+add_header(
+  sys_quota_macros
+  HDR
+    sys-quota-macros.h
+)
+

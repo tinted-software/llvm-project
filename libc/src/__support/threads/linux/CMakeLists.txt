@@ -60,6 +60,7 @@ add_object_library(
     thread.cpp
   DEPENDS
     .futex_utils
+    .setxid_signal
     ${thread_tls_dep}
     libc.config.app_h
     libc.include.sys_syscall
@@ -67,11 +68,13 @@ add_object_library(
     libc.hdr.errno_macros
     libc.hdr.sched_macros
     libc.hdr.sys_mman_macros
+    libc.src.sys.single_threaded.__libc_single_threaded
     libc.src.__support.CPP.atomic
     libc.src.__support.CPP.optional
     libc.src.__support.CPP.stringstream
     libc.src.__support.CPP.string_view
     libc.src.__support.common
+    libc.src.__support.elf.dynamic_blocks
     libc.src.__support.error_or
     libc.src.__support.OSUtil.linux.sigmask
     libc.src.__support.OSUtil.linux.syscall_wrappers.clone
@@ -85,9 +88,12 @@ add_object_library(
     libc.src.__support.OSUtil.linux.syscall_wrappers.read
     libc.src.__support.OSUtil.linux.syscall_wrappers.sched_getparam
     libc.src.__support.OSUtil.linux.syscall_wrappers.sched_getscheduler
+    libc.src.__support.OSUtil.linux.syscall_wrappers.sched_setparam
     libc.src.__support.OSUtil.linux.syscall_wrappers.sched_setscheduler
     libc.src.__support.OSUtil.linux.syscall_wrappers.tgkill
     libc.src.__support.OSUtil.linux.syscall_wrappers.write
+    libc.src.__support.threads.raw_mutex
+    libc.src.__support.threads.robust_list
     libc.src.__support.threads.thread_common
     libc.src.__support.threads.thread_attributes
     libc.src.__support.time.linux.cpu_clock
@@ -105,6 +111,56 @@ add_header_library(
     libc.src.__support.macros.optimization
 )
 
+add_header_library(
+  setxid_signal
+  HDRS
+    setxid_signal.h
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.sigset_t
+    libc.src.__support.OSUtil.linux.sigmask
+    libc.src.__support.OSUtil.linux.syscall_wrappers.rt_sigprocmask
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_object_library(
+  setxid
+  HDRS
+    setxid.h
+  SRCS
+    setxid.cpp
+  DEPENDS
+    .callonce
+    .futex_utils
+    .setxid_signal
+    .thread
+    libc.hdr.fcntl_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.pid_t
+    libc.hdr.types.sigset_t
+    libc.hdr.types.struct_sigaction
+    libc.hdr.unistd_macros
+    libc.src.__support.CPP.atomic
+    libc.src.__support.OSUtil.linux.sigmask
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getdents64
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getpid
+    libc.src.__support.OSUtil.linux.syscall_wrappers.gettid
+    libc.src.__support.OSUtil.linux.syscall_wrappers.lseek
+    libc.src.__support.OSUtil.linux.syscall_wrappers.openat
+    libc.src.__support.OSUtil.linux.syscall_wrappers.tgkill
+    libc.src.__support.common
+    libc.src.__support.error_or
+    libc.src.__support.macros.config
+    libc.src.__support.threads.raw_mutex
+    libc.src.__support.time.abs_timeout
+    libc.src.__support.time.clock_gettime
+    libc.src.signal.linux.signal_utils
+    libc.src.stdlib.abort_utils
+    libc.src.sys.single_threaded.__libc_single_threaded
+)
+
 add_object_library(
   barrier
   HDRS
@@ -112,6 +168,9 @@ add_object_library(
   SRCS
     barrier.cpp
   DEPENDS
-    libc.src.__support.threads.CndVar
-    libc.src.__support.threads.mutex
+    .futex_utils
+    libc.hdr.errno_macros
+    libc.hdr.pthread_macros
+    libc.src.__support.threads.raw_mutex
+    libc.src.__support.threads.sleep
 )

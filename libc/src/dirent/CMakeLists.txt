@@ -50,6 +50,18 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  readdir_r
+  SRCS
+    readdir_r.cpp
+  HDRS
+    readdir_r.h
+  DEPENDS
+    libc.include.dirent
+    libc.src.__support.File.dir
+    libc.src.__support.File.platform_dir
+)
+
+add_entrypoint_object(
   fdopendir
   SRCS
     fdopendir.cpp
@@ -90,5 +102,82 @@ add_entrypoint_object(
     libc.src.__support.libc_errno
     libc.src.__support.macros.null_check
     libc.src.__support.macros.optimization
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  rewinddir
+  SRCS
+    rewinddir.cpp
+  HDRS
+    rewinddir.h
+  DEPENDS
+    libc.include.dirent
+    libc.src.__support.File.dir
+    libc.src.__support.File.platform_dir
+)
+
+add_entrypoint_object(
+  seekdir
+  SRCS
+    seekdir.cpp
+  HDRS
+    seekdir.h
+  DEPENDS
+    libc.include.dirent
+    libc.src.__support.File.dir
+    libc.src.__support.File.platform_dir
+)
+
+add_entrypoint_object(
+  telldir
+  SRCS
+    telldir.cpp
+  HDRS
+    telldir.h
+  DEPENDS
+    libc.include.dirent
+    libc.src.__support.File.dir
+    libc.src.__support.File.platform_dir
+)
+
+add_entrypoint_object(
+  versionsort
+  SRCS
+    versionsort.cpp
+  HDRS
+    versionsort.h
+  DEPENDS
+    libc.include.dirent
+    libc.hdr.types.struct_dirent
+    libc.src.string.strverscmp
+)
+
+add_entrypoint_object(
+  getdents64
+  SRCS
+    getdents64.cpp
+  HDRS
+    getdents64.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getdents64
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  getdents
+  SRCS
+    getdents.cpp
+  HDRS
+    getdents.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getdents64
+    libc.src.__support.common
+    libc.src.__support.error_or
+    libc.src.__support.macros.config
     libc.src.errno.errno
 )

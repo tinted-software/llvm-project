@@ -1,0 +1,463 @@
+add_object_library(
+  target_sdk_version
+  SRCS
+    target_sdk_version.cpp
+  HDRS
+    target_sdk_version.h
+  DEPENDS
+    libc.hdr.android_api_level_macros
+    libc.src.__support.CPP.atomic
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_get_application_target_sdk_version
+  SRCS
+    android_get_application_target_sdk_version.cpp
+  HDRS
+    android_get_application_target_sdk_version.h
+  DEPENDS
+    .target_sdk_version
+    libc.include.android_api_level
+)
+
+add_entrypoint_object(
+  android_set_application_target_sdk_version
+  SRCS
+    android_set_application_target_sdk_version.cpp
+  HDRS
+    android_set_application_target_sdk_version.h
+  DEPENDS
+    .target_sdk_version
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_set_16kb_appcompat_mode
+  SRCS
+    android_set_16kb_appcompat_mode.cpp
+  HDRS
+    android_set_16kb_appcompat_mode.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_dlwarning
+  SRCS
+    android_dlwarning.cpp
+  HDRS
+    android_dlwarning.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_getaddrinfofornet
+  SRCS
+    android_getaddrinfofornet.cpp
+  HDRS
+    android_getaddrinfofornet.h
+  DEPENDS
+    libc.hdr.types.struct_addrinfo
+    libc.include.android_resolv_netid
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.netdb.getaddrinfo
+)
+
+add_entrypoint_object(
+  android_get_device_api_level
+  SRCS
+    android_get_device_api_level.cpp
+  HDRS
+    android_get_device_api_level.h
+  DEPENDS
+    libc.hdr.system_properties_macros
+    libc.include.android_api_level
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.sys.system_properties.property_store
+)
+
+add_entrypoint_object(
+  android_set_abort_message
+  SRCS
+    android_set_abort_message.cpp
+  HDRS
+    android_set_abort_message.h
+  DEPENDS
+    libc.include.android_set_abort_message
+    libc.src.__support.abort_message
+)
+
+add_entrypoint_object(
+  __libc_abort_message
+  SRCS
+    libc_abort_message.cpp
+  HDRS
+    libc_abort_message.h
+  DEPENDS
+    libc.include.android_set_abort_message
+    libc.src.__support.abort_message
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_header_library(
+  debuggerd_hook
+  HDRS
+    debuggerd_hook.h
+  DEPENDS
+    libc.src.__support.abort_message
+    libc.src.__support.crash_detail
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  __libc_crash_detail_page
+  SRCS
+    libc_crash_detail_page.cpp
+  HDRS
+    libc_crash_detail_page.h
+  DEPENDS
+    libc.include.android_crash_detail
+    libc.src.__support.common
+    libc.src.__support.crash_detail
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_crash_detail_register
+  SRCS
+    android_crash_detail_register.cpp
+  HDRS
+    android_crash_detail_register.h
+  DEPENDS
+    libc.include.android_crash_detail
+    libc.src.__support.common
+    libc.src.__support.crash_detail
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_crash_detail_unregister
+  SRCS
+    android_crash_detail_unregister.cpp
+  HDRS
+    android_crash_detail_unregister.h
+  DEPENDS
+    libc.include.android_crash_detail
+    libc.src.__support.common
+    libc.src.__support.crash_detail
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_crash_detail_replace_data
+  SRCS
+    android_crash_detail_replace_data.cpp
+  HDRS
+    android_crash_detail_replace_data.h
+  DEPENDS
+    libc.include.android_crash_detail
+    libc.src.__support.common
+    libc.src.__support.crash_detail
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_crash_detail_replace_name
+  SRCS
+    android_crash_detail_replace_name.cpp
+  HDRS
+    android_crash_detail_replace_name.h
+  DEPENDS
+    libc.include.android_crash_detail
+    libc.src.__support.common
+    libc.src.__support.crash_detail
+    libc.src.__support.macros.config
+)
+
+add_object_library(
+  fdsan_error_level
+  SRCS
+    fdsan_error_level.cpp
+  HDRS
+    fdsan_error_level.h
+  DEPENDS
+    libc.hdr.types.enum_android_fdsan_error_level
+    libc.src.__support.CPP.atomic
+)
+
+add_entrypoint_object(
+  android_fdsan_create_owner_tag
+  SRCS
+    android_fdsan_create_owner_tag.cpp
+  HDRS
+    android_fdsan_create_owner_tag.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.enum_android_fdsan_owner_type
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_exchange_owner_tag
+  SRCS
+    android_fdsan_exchange_owner_tag.cpp
+  HDRS
+    android_fdsan_exchange_owner_tag.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_close_with_tag
+  SRCS
+    android_fdsan_close_with_tag.cpp
+  HDRS
+    android_fdsan_close_with_tag.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.include.android_fdsan
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  android_fdsan_get_owner_tag
+  SRCS
+    android_fdsan_get_owner_tag.cpp
+  HDRS
+    android_fdsan_get_owner_tag.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_get_tag_type
+  SRCS
+    android_fdsan_get_tag_type.cpp
+  HDRS
+    android_fdsan_get_tag_type.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_get_tag_value
+  SRCS
+    android_fdsan_get_tag_value.cpp
+  HDRS
+    android_fdsan_get_tag_value.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_get_error_level
+  SRCS
+    android_fdsan_get_error_level.cpp
+  HDRS
+    android_fdsan_get_error_level.h
+  DEPENDS
+    .fdsan_error_level
+    libc.hdr.types.enum_android_fdsan_error_level
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_set_error_level
+  SRCS
+    android_fdsan_set_error_level.cpp
+  HDRS
+    android_fdsan_set_error_level.h
+  DEPENDS
+    .fdsan_error_level
+    libc.hdr.types.enum_android_fdsan_error_level
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_fdsan_set_error_level_from_property
+  SRCS
+    android_fdsan_set_error_level_from_property.cpp
+  HDRS
+    android_fdsan_set_error_level_from_property.h
+  DEPENDS
+    .fdsan_error_level
+    libc.hdr.types.enum_android_fdsan_error_level
+    libc.include.android_fdsan
+)
+
+add_entrypoint_object(
+  android_create_namespace
+  SRCS
+    android_create_namespace.cpp
+  HDRS
+    android_create_namespace.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.android_dlextinfo
+    libc.src.__support.CPP.mutex
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+)
+
+add_entrypoint_object(
+  android_dlopen_ext
+  SRCS
+    android_dlopen_ext.cpp
+  HDRS
+    android_dlopen_ext.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.android_dlextinfo
+    libc.include.llvm-libc-macros.android_dlext_macros
+    libc.src.__support.CPP.mutex
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+    libc.src.dlfcn.dlopen
+
+)
+
+add_entrypoint_object(
+  android_get_exported_namespace
+  SRCS
+    android_get_exported_namespace.cpp
+  HDRS
+    android_get_exported_namespace.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.android_dlextinfo
+    libc.src.__support.CPP.mutex
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+)
+
+add_entrypoint_object(
+  android_init_anonymous_namespace
+  SRCS
+    android_init_anonymous_namespace.cpp
+  HDRS
+    android_init_anonymous_namespace.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.android_dlextinfo
+    libc.src.__support.CPP.mutex
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+)
+
+add_entrypoint_object(
+  android_link_namespaces
+  SRCS
+    android_link_namespaces.cpp
+  HDRS
+    android_link_namespaces.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.android_dlextinfo
+    libc.src.__support.CPP.mutex
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+)
+
+add_entrypoint_object(
+  android_reset_stack_guards
+  SRCS
+    android_reset_stack_guards.cpp
+  HDRS
+    android_reset_stack_guards.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getrandom
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.macros.properties.architectures
+    libc.src.__support.threads.tcb
+    libc.src.compiler.__stack_chk_fail
+)
+
+add_entrypoint_object(
+  android_mallopt
+  SRCS
+    android_mallopt.cpp
+  HDRS
+    android_mallopt.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.common
+    libc.src.__support.libc_errno
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  __errno
+  SRCS
+    __errno.cpp
+  HDRS
+    __errno.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.libc_errno
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  malloc_backtrace
+  SRCS
+    malloc_backtrace.cpp
+  HDRS
+    malloc_backtrace.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.hdr.types.ssize_t
+    libc.src.__support.common
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  android_update_LD_LIBRARY_PATH
+  SRCS
+    android_update_LD_LIBRARY_PATH.cpp
+  HDRS
+    android_update_LD_LIBRARY_PATH.h
+  DEPENDS
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.setenv
+
+)
+
+add_entrypoint_object(
+  android_get_LD_LIBRARY_PATH
+  SRCS
+    android_get_LD_LIBRARY_PATH.cpp
+  HDRS
+    android_get_LD_LIBRARY_PATH.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.stdlib.environ_internal
+)

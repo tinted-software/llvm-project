@@ -16,3 +16,31 @@ add_entrypoint_object(
   DEPENDS
     ${assert_fail_dep}
 )
+
+if(TARGET libc.src.assert.generic.__assert_perror_fail)
+  add_entrypoint_object(
+    __assert_perror_fail
+    ALIAS
+    DEPENDS
+      libc.src.assert.generic.__assert_perror_fail
+  )
+endif()
+
+if(TARGET libc.src.assert.generic.__assert2)
+  add_entrypoint_object(
+    __assert2
+    ALIAS
+    DEPENDS
+      libc.src.assert.generic.__assert2
+  )
+endif()
+
+if(TARGET libc.src.assert.generic.__assert)
+  add_entrypoint_object(
+    __assert
+    ALIAS
+    DEPENDS
+      libc.src.assert.generic.__assert
+  )
+endif()
+

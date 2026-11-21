@@ -110,6 +110,7 @@ add_entrypoint_object(
     .signal_utils
     libc.hdr.types.sigset_t
     libc.src.__support.OSUtil.linux.syscall_wrappers.rt_sigprocmask
+    libc.src.__support.threads.linux.setxid_signal
     libc.src.errno.errno
 )
 
@@ -144,6 +145,8 @@ add_entrypoint_object(
   HDRS
     ../sigtimedwait.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.hdr.types.siginfo_t
     libc.hdr.types.sigset_t
     libc.hdr.types.struct_timespec
@@ -162,6 +165,7 @@ add_entrypoint_object(
     ../sigwait.h
   DEPENDS
     libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.hdr.types.siginfo_t
     libc.hdr.types.sigset_t
     libc.src.__support.OSUtil.linux.syscall_wrappers.rt_sigtimedwait
@@ -177,6 +181,8 @@ add_entrypoint_object(
   HDRS
     ../sigwaitinfo.h
   DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.threads.cancel
     libc.hdr.types.siginfo_t
     libc.hdr.types.sigset_t
     libc.src.__support.OSUtil.linux.syscall_wrappers.rt_sigtimedwait
@@ -197,6 +203,7 @@ add_entrypoint_object(
     libc.src.__support.OSUtil.linux.syscall_wrappers.rt_sigprocmask
     libc.src.__support.common
     libc.src.__support.macros.config
+    libc.src.__support.threads.linux.setxid_signal
 )
 
 add_entrypoint_object(
@@ -285,4 +292,92 @@ add_entrypoint_object(
     libc.hdr.types.sigset_t
     libc.src.__support.OSUtil.linux.sigmask
     libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  sigisemptyset
+  SRCS
+    sigisemptyset.cpp
+  HDRS
+    ../sigisemptyset.h
+  DEPENDS
+    .signal_utils
+    libc.hdr.types.sigset_t
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  sigandset
+  SRCS
+    sigandset.cpp
+  HDRS
+    ../sigandset.h
+  DEPENDS
+    .signal_utils
+    libc.hdr.types.sigset_t
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  sigorset
+  SRCS
+    sigorset.cpp
+  HDRS
+    ../sigorset.h
+  DEPENDS
+    .signal_utils
+    libc.hdr.types.sigset_t
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  sigqueue
+  SRCS
+    sigqueue.cpp
+  HDRS
+    ../sigqueue.h
+  DEPENDS
+    libc.hdr.signal_macros
+    libc.hdr.types.pid_t
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.union_sigval
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getpid
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getuid
+    libc.src.__support.OSUtil.linux.syscall_wrappers.rt_sigqueueinfo
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  tgkill
+  SRCS
+    tgkill.cpp
+  HDRS
+    ../tgkill.h
+  DEPENDS
+    libc.hdr.types.pid_t
+    libc.src.__support.OSUtil.linux.syscall_wrappers.tgkill
+    libc.src.__support.common
+    libc.src.__support.libc_errno
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  pthread_sigqueue
+  SRCS
+    pthread_sigqueue.cpp
+  HDRS
+    ../pthread_sigqueue.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.signal_macros
+    libc.hdr.types.pthread_t
+    libc.hdr.types.siginfo_t
+    libc.hdr.types.union_sigval
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getpid
+    libc.src.__support.OSUtil.linux.syscall_wrappers.getuid
+    libc.src.__support.OSUtil.linux.syscall_wrappers.rt_tgsigqueueinfo
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.__support.macros.null_check
+    libc.src.__support.threads.thread
 )

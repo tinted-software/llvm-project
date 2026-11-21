@@ -1,16 +1,10 @@
 add_libc_testsuite(libc-spawn-integration-tests PARENT libc-integration-tests)
 
-add_executable(
+add_libc_test_helper(
   libc_posix_spawn_test_binary
-  EXCLUDE_FROM_ALL
+  SRCS
   posix_spawn_test_binary.cpp
   test_binary_properties.h
-)
-set_target_properties(
-  libc_posix_spawn_test_binary
-  PROPERTIES
-    OUTPUT_NAME libc_posix_spawn_test_binary
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 add_header_library(
@@ -28,17 +22,27 @@ add_integration_test(
   DEPENDS
     libc_posix_spawn_test_binary
     libc.test.integration.src.spawn.test_binary_properties
+    libc.hdr.errno_macros
+    libc.hdr.spawn_macros
     libc.hdr.stdint_proxy
     libc.include.fcntl
     libc.include.signal
     libc.include.spawn
     libc.include.sys_wait
+    libc.src.fcntl.open
     libc.src.signal.raise
     libc.src.spawn.posix_spawn
+    libc.src.spawn.posix_spawnp
+    libc.src.spawn.posix_spawn_file_actions_adddup2
     libc.src.spawn.posix_spawn_file_actions_addopen
     libc.src.spawn.posix_spawn_file_actions_destroy
     libc.src.spawn.posix_spawn_file_actions_init
+    libc.src.spawn.posix_spawnattr_destroy
+    libc.src.spawn.posix_spawnattr_init
+    libc.src.spawn.posix_spawnattr_setflags
     libc.src.sys.wait.waitpid
+    libc.src.unistd.close
+    libc.src.unistd.dup3
 )
 
 add_subdirectory(testdata)

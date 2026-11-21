@@ -8,6 +8,14 @@ add_libc_test(
   SRCS
     dirent_test.cpp
   DEPENDS
+    libc.hdr.fcntl_macros
+    libc.hdr.sys_stat_macros
+    libc.src.__support.libc_errno
+    libc.src.fcntl.open
+    libc.src.sys.stat.mkdir
+    libc.src.unistd.close
+    libc.src.unistd.rmdir
+    libc.src.unistd.unlink
     libc.src.__support.CPP.string_view
     libc.src.dirent.closedir
     libc.src.dirent.dirfd
@@ -71,3 +79,104 @@ add_libc_test(
     libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.ErrnoSetterMatcher
 )
+
+add_libc_test(
+  rewinddir_test
+  SUITE
+    libc-dirent-tests
+  SRCS
+    rewinddir_test.cpp
+  DEPENDS
+    libc.hdr.fcntl_macros
+    libc.src.__support.CPP.string_view
+    libc.src.__support.libc_errno
+    libc.src.dirent.closedir
+    libc.src.dirent.opendir
+    libc.src.dirent.readdir
+    libc.src.dirent.rewinddir
+    libc.src.dirent.seekdir
+    libc.src.dirent.telldir
+    libc.src.errno.errno
+    libc.src.fcntl.open
+    libc.src.sys.stat.mkdir
+    libc.src.unistd.close
+    libc.src.unistd.rmdir
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  versionsort_test
+  SUITE
+    libc-dirent-tests
+  SRCS
+    versionsort_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_dirent
+    libc.src.dirent.versionsort
+    libc.src.string.strcpy
+)
+
+add_libc_test(
+  struct_dirent_test
+  SUITE
+    libc-dirent-tests
+  SRCS
+    struct_dirent_test.cpp
+  DEPENDS
+    libc.hdr.limits_macros
+    libc.hdr.types.struct_dirent
+    libc.src.string.strlen
+)
+
+add_libc_test(
+  getdents64_test
+  SUITE
+    libc-dirent-tests
+  SRCS
+    getdents64_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.types.struct_dirent
+    libc.src.dirent.getdents64
+    libc.src.fcntl.open
+    libc.src.string.strcmp
+    libc.src.unistd.close
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  readdir_r_test
+  SUITE
+    libc-dirent-tests
+  SRCS
+    readdir_r_test.cpp
+  DEPENDS
+    libc.hdr.types.struct_dirent
+    libc.src.dirent.closedir
+    libc.src.dirent.opendir
+    libc.src.dirent.readdir_r
+    libc.src.string.strcmp
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  getdents_test
+  SUITE
+    libc-dirent-tests
+  SRCS
+    getdents_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.types.struct_dirent
+    libc.src.dirent.getdents
+    libc.src.fcntl.open
+    libc.src.string.strcmp
+    libc.src.unistd.close
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+

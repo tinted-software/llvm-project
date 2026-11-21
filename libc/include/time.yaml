@@ -180,6 +180,12 @@ functions:
     return_type: time_t
     arguments:
       - type: time_t *
+  - name: timegm
+    standards:
+      - gnu
+    return_type: time_t
+    arguments:
+      - type: struct tm *
   - name: timespec_get
     standards:
       - stdc
@@ -223,6 +229,13 @@ functions:
       - type: int
       - type: const struct itimerspec *__restrict
       - type: struct itimerspec *__restrict
+  - name: timespec_getres
+    standards:
+      - stdc
+    return_type: int
+    arguments:
+      - type: struct timespec *
+      - type: int
   - name: tzset
     standards:
       - posix

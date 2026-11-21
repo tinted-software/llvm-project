@@ -76,6 +76,18 @@ add_entrypoint_object(
 )
 
 add_entrypoint_object(
+  ftrylockfile
+  SRCS
+    ftrylockfile.cpp
+  HDRS
+    ftrylockfile.h
+  DEPENDS
+    libc.hdr.types.FILE
+    libc.src.__support.File.file
+    libc.src.__support.File.platform_file
+)
+
+add_entrypoint_object(
   funlockfile
   SRCS
     funlockfile.cpp
@@ -107,6 +119,28 @@ add_entrypoint_object(
     libc.src.__support.libc_errno
     libc.src.__support.macros.null_check
     libc.src.string.memory_utils.inline_memcpy
+)
+
+add_entrypoint_object(
+  open_memstream
+  SRCS
+    open_memstream.cpp
+  HDRS
+    open_memstream.h
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.func.free
+    libc.hdr.func.malloc
+    libc.hdr.func.realloc
+    libc.hdr.stdint_proxy
+    libc.hdr.stdio_macros
+    libc.hdr.types.FILE
+    libc.hdr.types.off_t
+    libc.hdr.types.size_t
+    libc.src.__support.CPP.new
+    libc.src.__support.alloc_checker
+    libc.src.__support.File.file
+    libc.src.errno.errno
 )
 
 add_entrypoint_object(
@@ -295,6 +329,19 @@ add_entrypoint_object(
 add_subdirectory(scanf_core)
 
 add_entrypoint_object(
+  ctermid
+  SRCS
+    ctermid.cpp
+  HDRS
+    ctermid.h
+  DEPENDS
+    libc.hdr.stdio_macros
+    libc.src.__support.common
+    libc.src.__support.macros.config
+    libc.src.string.memory_utils.inline_memcpy
+)
+
+add_entrypoint_object(
   remove
   ALIAS
   DEPENDS
@@ -313,6 +360,13 @@ add_entrypoint_object(
   ALIAS
   DEPENDS
     .${LIBC_TARGET_OS}.renameat
+)
+
+add_entrypoint_object(
+  renameat2
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.renameat2
 )
 
 add_entrypoint_object(
@@ -373,13 +427,17 @@ add_stdio_entrypoint_object(fread)
 add_stdio_entrypoint_object(perror)
 add_stdio_entrypoint_object(puts)
 add_stdio_entrypoint_object(fputs)
+add_stdio_entrypoint_object(setlinebuf)
+add_stdio_entrypoint_object(setbuffer)
+add_stdio_entrypoint_object(__fsetlocking)
+add_stdio_entrypoint_object(fflush_unlocked)
+add_stdio_entrypoint_object(fputs_unlocked)
 add_stdio_entrypoint_object(fwrite_unlocked)
 add_stdio_entrypoint_object(fwrite)
 add_stdio_entrypoint_object(fputc)
+add_stdio_entrypoint_object(fputc_unlocked)
 add_stdio_entrypoint_object(putc)
-add_stdio_entrypoint_object(putc_unlocked)
 add_stdio_entrypoint_object(putchar)
-add_stdio_entrypoint_object(putchar_unlocked)
 add_stdio_entrypoint_object(printf)
 add_stdio_entrypoint_object(fprintf)
 add_stdio_entrypoint_object(fgetc)
@@ -388,9 +446,11 @@ add_stdio_entrypoint_object(getc)
 add_stdio_entrypoint_object(getc_unlocked)
 add_stdio_entrypoint_object(getchar)
 add_stdio_entrypoint_object(getchar_unlocked)
+add_stdio_entrypoint_object(putc_unlocked)
+add_stdio_entrypoint_object(putchar_unlocked)
+add_stdio_entrypoint_object(fgets)
 add_stdio_entrypoint_object(getdelim)
 add_stdio_entrypoint_object(getline)
-add_stdio_entrypoint_object(fgets)
 add_stdio_entrypoint_object(ungetc)
 add_stdio_entrypoint_object(scanf)
 add_stdio_entrypoint_object(fscanf)
@@ -398,3 +458,17 @@ add_stdio_entrypoint_object(vprintf)
 add_stdio_entrypoint_object(vfprintf)
 add_stdio_entrypoint_object(vscanf)
 add_stdio_entrypoint_object(vfscanf)
+
+add_entrypoint_object(
+  dprintf
+  ALIAS
+  DEPENDS
+    .generic.dprintf
+)
+
+add_entrypoint_object(
+  vdprintf
+  ALIAS
+  DEPENDS
+    .generic.vdprintf
+)

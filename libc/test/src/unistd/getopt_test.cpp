@@ -107,13 +107,48 @@ TEST_F(LlvmLibcGetoptTest, NoMatch) {
   EXPECT_EQ(test_globals::optind, 2);
 }
 
+TEST_F(LlvmLibcGetoptTest, ZeroMeansStartAgain) {
+  array<char *, 4> argv{"prog"_c, "-a"_c, "operand"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(3, argv.data(), "a"), int('a'));
+  EXPECT_EQ(test_globals::optind, 2);
+
+  // Zero is not an index into anything: the first argument is the program's
+  // own name and was never an option. It asks for the scan to start again,
+  // which is how a program that parses its arguments twice does the second
+  // pass.
+  test_globals::optind = 0;
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(3, argv.data(), "a"), int('a'));
+  EXPECT_EQ(test_globals::optind, 2);
+  // And what is left is the operand, not the program's own name.
+  EXPECT_STREQ(argv[test_globals::optind], "operand");
+}
+
 TEST_F(LlvmLibcGetoptTest, WrongMatch) {
   array<char *, 3> argv{"prog"_c, "-b"_c, nullptr};
 
   EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "a"), int('?'));
   EXPECT_EQ(test_globals::optopt, (int)'b');
-  EXPECT_EQ(test_globals::optind, 1);
+  // The argument is eaten even though it named no option, so that the scan
+  // moves on rather than being handed the same one again.
+  EXPECT_EQ(test_globals::optind, 2);
   EXPECT_STREQ(get_error_msg(), "prog: illegal option -- b\n");
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "a"), -1);
+}
+
+TEST_F(LlvmLibcGetoptTest, WrongMatchInACluster) {
+  array<char *, 3> argv{"prog"_c, "-abc"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "ac"), int('a'));
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "ac"), int('?'));
+  EXPECT_EQ(test_globals::optopt, (int)'b');
+  // Only the one character is eaten; what follows it in the same argument
+  // is still to be read.
+  EXPECT_EQ(test_globals::optind, 1);
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "ac"), int('c'));
+  EXPECT_EQ(test_globals::optind, 2);
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "ac"), -1);
 }
 
 TEST_F(LlvmLibcGetoptTest, OpterrFalse) {
@@ -123,7 +158,7 @@ TEST_F(LlvmLibcGetoptTest, OpterrFalse) {
   set_state(errstream);
   EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "a"), int('?'));
   EXPECT_EQ(test_globals::optopt, (int)'b');
-  EXPECT_EQ(test_globals::optind, 1);
+  EXPECT_EQ(test_globals::optind, 2);
   EXPECT_STREQ(get_error_msg(), "");
 }
 
@@ -164,4 +199,97 @@ TEST_F(LlvmLibcGetoptTest, ParseMultiInOne) {
   ASSERT_EQ(test_globals::optind, 1);
   EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "abc"), (int)'c');
   EXPECT_EQ(test_globals::optind, 2);
+}
+
+// An option after an operand is still an option, and the operands are left
+// at the end in the order they were given. This is what lets a command be
+// written "mount tmpfs /tmp -t tmpfs", which a great deal of software does.
+TEST_F(LlvmLibcGetoptTest, OptionAfterAnOperand) {
+  array<char *, 5> argv{"prog"_c, "src"_c, "dst"_c, "-b"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(4, argv.data(), "b"), (int)'b');
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(4, argv.data(), "b"), -1);
+  EXPECT_EQ(test_globals::optind, 2);
+  EXPECT_STREQ(argv[2], "src");
+  EXPECT_STREQ(argv[3], "dst");
+}
+
+// The argument of an option moved over an operand comes with it.
+TEST_F(LlvmLibcGetoptTest, OptionWithArgumentAfterAnOperand) {
+  array<char *, 6> argv{"prog"_c, "src"_c, "-b"_c, "arg"_c, "dst"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "b:"), (int)'b');
+  EXPECT_STREQ(test_globals::optarg, "arg");
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "b:"), -1);
+  EXPECT_EQ(test_globals::optind, 3);
+  EXPECT_STREQ(argv[3], "src");
+  EXPECT_STREQ(argv[4], "dst");
+}
+
+// A leading '+' asks for the POSIX order, where the first operand ends the
+// options and everything after it is an operand whatever it looks like.
+TEST_F(LlvmLibcGetoptTest, PlusStopsAtTheFirstOperand) {
+  array<char *, 5> argv{"prog"_c, "src"_c, "-b"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(3, argv.data(), "+b"), -1);
+  EXPECT_EQ(test_globals::optind, 1);
+  EXPECT_STREQ(argv[1], "src");
+}
+
+// A lone dash is an operand, not an option, and is carried along as one.
+TEST_F(LlvmLibcGetoptTest, ALoneDashIsAnOperand) {
+  array<char *, 4> argv{"prog"_c, "-"_c, "-b"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(3, argv.data(), "b"), (int)'b');
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(3, argv.data(), "b"), -1);
+  EXPECT_EQ(test_globals::optind, 2);
+  EXPECT_STREQ(argv[2], "-");
+}
+
+
+// A leading '-' returns each operand as the value 1, with its text in optarg
+// and in the order given, which is how iptables reads its rules.
+TEST_F(LlvmLibcGetoptTest, DashFirstReturnsOperandsInOrder) {
+  array<char *, 6> argv{"prog"_c, "-b"_c, "one"_c, "-b"_c, "two"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "-b"), (int)'b');
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "-b"), 1);
+  EXPECT_STREQ(test_globals::optarg, "one");
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "-b"), (int)'b');
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "-b"), 1);
+  EXPECT_STREQ(test_globals::optarg, "two");
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(5, argv.data(), "-b"), -1);
+  EXPECT_EQ(test_globals::optind, 5);
+}
+
+// A ':' after the leading '-' still asks for ':' on a missing argument.
+TEST_F(LlvmLibcGetoptTest, DashThenColonReportsAMissingArgumentWithColon) {
+  array<char *, 3> argv{"prog"_c, "-c"_c, nullptr};
+
+  test_globals::opterr = 0;
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "-:c:"), (int)':');
+}
+
+// "w::" is the GNU form of an optional argument: it is taken from the rest of
+// the same argument and never from the next one, which stays an option.
+TEST_F(LlvmLibcGetoptTest, OptionalArgumentIsOnlyTheAttachedOne) {
+  array<char *, 5> argv{"prog"_c, "-w"_c, "-v"_c, "-w5"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(4, argv.data(), "vw::"), (int)'w');
+  EXPECT_EQ(test_globals::optarg, nullptr);
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(4, argv.data(), "vw::"), (int)'v');
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(4, argv.data(), "vw::"), (int)'w');
+  EXPECT_STREQ(test_globals::optarg, "5");
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(4, argv.data(), "vw::"), -1);
+  EXPECT_EQ(test_globals::optind, 4);
+}
+
+// A cluster ends at an optional argument as it does at a required one.
+TEST_F(LlvmLibcGetoptTest, OptionalArgumentTakesTheRestOfACluster) {
+  array<char *, 3> argv{"prog"_c, "-vw12"_c, nullptr};
+
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "vw::"), (int)'v');
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "vw::"), (int)'w');
+  EXPECT_STREQ(test_globals::optarg, "12");
+  EXPECT_EQ(LIBC_NAMESPACE::getopt(2, argv.data(), "vw::"), -1);
 }

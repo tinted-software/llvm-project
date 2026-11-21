@@ -5,15 +5,21 @@ add_libc_testsuite(libc-time-tests)
 # standard zero-initialisation without compiler warnings.
 set(time_test_copts "-Wno-missing-field-initializers")
 
+add_subdirectory(tz)
+
 add_header_library(
   time_test_utils
   HDRS
     TmHelper.h
     TmMatcher.h
+    TzFixture.h
   DEPENDS
     libc.hdr.types.struct_tm
     libc.src.__support.macros.config
+    libc.src.stdlib.setenv
     libc.src.time.time_constants
+    libc.src.time.tzset
+    libc.test.UnitTest.ErrnoCheckingTest
     libc.test.UnitTest.LibcTest
 )
 
@@ -102,6 +108,7 @@ add_libc_test(
   SRCS
     localtime_test.cpp
   DEPENDS
+    .time_test_utils
     libc.hdr.types.time_t
     libc.src.time.localtime
 )
@@ -113,6 +120,7 @@ add_libc_test(
   SRCS
     localtime_r_test.cpp
   DEPENDS
+    .time_test_utils
     libc.hdr.types.struct_tm
     libc.hdr.types.time_t
     libc.src.time.localtime_r
@@ -280,6 +288,7 @@ add_libc_test(
     libc.hdr.types.struct_tm
     libc.hdr.types.time_t
     libc.src.__support.CPP.limits
+    libc.src.time.gmtime_r
     libc.src.time.time_constants
     libc.src.time.time_utils
     libc.src.time.timegm
@@ -336,6 +345,7 @@ add_libc_test(
     strptime_test.cpp
   DEPENDS
     libc.hdr.types.struct_tm
+    libc.src.string.memset
     libc.src.time.strptime
 )
 
@@ -373,17 +383,6 @@ add_libc_test(
     libc.hdr.types.clock_t
 )
 
-add_libc_test(
-  tzset_test
-  SUITE
-    libc-time-tests
-  SRCS
-    tzset_test.cpp
-  DEPENDS
-    libc.src.time.tz_variables
-    libc.src.time.tzset
-)
-
 # Depending on the gmtime entrypoint skips this test on targets that don't
 # enable the time functions. time_utils requires a 64-bit time_t and does not
 # compile on overlay builds whose system time_t is 32-bit (e.g. armhf).
@@ -403,4 +402,17 @@ add_libc_test(
     libc.src.time.gmtime
     libc.src.time.time_constants
     libc.src.time.time_utils
+)
+
+add_libc_test(
+  timespec_getres_test
+  SUITE
+    libc-time-tests
+  SRCS
+    timespec_getres_test.cpp
+  DEPENDS
+    libc.hdr.time_macros
+    libc.hdr.types.struct_timespec
+    libc.src.time.timespec_getres
+    libc.test.UnitTest.ErrnoCheckingTest
 )

@@ -1,0 +1,117 @@
+add_header_library(
+  sequences
+  HDRS
+    sequences.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.hdr.types.char32_t
+    libc.hdr.types.size_t
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+)
+
+# The tables of the Chinese, Japanese and Korean sets are most of iconv's size.
+if(NOT LIBC_CONF_ICONV_DISABLE_CJK)
+  add_object_library(
+    cjk_tables
+    HDRS
+      cjk_tables.h
+      code_table.h
+    SRCS
+      cjk_tables.cpp
+    DEPENDS
+      .sequences
+      libc.hdr.stdint_proxy
+      libc.hdr.types.char32_t
+      libc.hdr.types.size_t
+      libc.src.__support.macros.attributes
+      libc.src.__support.macros.config
+  )
+  set(cjk_tables .cjk_tables)
+endif()
+
+add_header_library(
+  charsets
+  HDRS
+    charsets.h
+    combining.h
+    single_byte_tables.h
+  DEPENDS
+    .sequences
+    ${cjk_tables}
+    libc.hdr.stdint_proxy
+    libc.hdr.types.char32_t
+    libc.src.__support.common
+    libc.hdr.types.size_t
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+)
+
+add_header_library(
+  conversion
+  HDRS
+    chinese.h
+    conversion.h
+    iso2022.h
+    japanese.h
+    korean.h
+    status.h
+    traditional_chinese.h
+    translit.h
+    translit_table.h
+  DEPENDS
+    .charsets
+    ${cjk_tables}
+    libc.hdr.errno_macros
+    libc.hdr.stdint_proxy
+    libc.hdr.types.char32_t
+    libc.hdr.types.size_t
+    libc.src.__support.common
+    libc.src.__support.ctype_utils
+    libc.src.__support.macros.attributes
+    libc.src.__support.macros.config
+)
+
+add_entrypoint_object(
+  iconv_open
+  SRCS
+    iconv_open.cpp
+  HDRS
+    iconv_open.h
+  DEPENDS
+    .conversion
+    libc.hdr.errno_macros
+    libc.hdr.func.malloc
+    libc.hdr.types.iconv_t
+    libc.src.errno.errno
+    libc.src.locale.locale
+)
+
+add_entrypoint_object(
+  iconv
+  SRCS
+    iconv.cpp
+  HDRS
+    iconv.h
+  DEPENDS
+    .conversion
+    libc.hdr.errno_macros
+    libc.hdr.types.char32_t
+    libc.hdr.types.iconv_t
+    libc.hdr.types.size_t
+    libc.src.errno.errno
+)
+
+add_entrypoint_object(
+  iconv_close
+  SRCS
+    iconv_close.cpp
+  HDRS
+    iconv_close.h
+  DEPENDS
+    .conversion
+    libc.hdr.errno_macros
+    libc.hdr.func.free
+    libc.hdr.types.iconv_t
+    libc.src.errno.errno
+)

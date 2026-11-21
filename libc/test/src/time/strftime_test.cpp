@@ -898,8 +898,8 @@ TEST(LlvmLibcStrftimeTest, MinuteOfHour) {
 
 TEST(LlvmLibcStrftimeTest, SecondsSinceEpoch) {
   // this tests %s, which reads: [tm_year, tm_mon, tm_mday, tm_hour, tm_min,
-  // tm_sec, tm_isdst]
-  struct tm time;
+  // tm_sec, tm_isdst], less tm_gmtoff
+  struct tm time = {};
   char buffer[100];
   size_t written = 0;
 
@@ -2393,4 +2393,27 @@ TEST(LlvmLibcStrftimeTest, BufferTooSmall) {
   written =
       LIBC_NAMESPACE::strftime(small_buffer, sizeof(small_buffer), "%F", &time);
   EXPECT_EQ(written, size_t{0});
+}
+
+TEST(LlvmLibcStrftimeTest, SpacePaddedHoursAndLowercaseAMPM) {
+  // this tests %k, %l and %P, which read: [tm_hour]
+  struct tm time;
+  char buffer[100];
+  size_t written = 0;
+
+  time.tm_hour = 0;
+  written = LIBC_NAMESPACE::strftime(buffer, sizeof(buffer), "%k|%l|%P", &time);
+  EXPECT_STREQ_LEN(written, buffer, " 0|12|am");
+
+  time.tm_hour = 9;
+  written = LIBC_NAMESPACE::strftime(buffer, sizeof(buffer), "%k|%l|%P", &time);
+  EXPECT_STREQ_LEN(written, buffer, " 9| 9|am");
+
+  time.tm_hour = 12;
+  written = LIBC_NAMESPACE::strftime(buffer, sizeof(buffer), "%k|%l|%P", &time);
+  EXPECT_STREQ_LEN(written, buffer, "12|12|pm");
+
+  time.tm_hour = 23;
+  written = LIBC_NAMESPACE::strftime(buffer, sizeof(buffer), "%k|%l|%P", &time);
+  EXPECT_STREQ_LEN(written, buffer, "23|11|pm");
 }

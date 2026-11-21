@@ -5,6 +5,7 @@ add_entrypoint_object(
   HDRS
     ../freeifaddrs.h
   DEPENDS
+    libc.hdr.func.free
     libc.hdr.types.struct_ifaddrs
     libc.src.__support.common
     libc.src.__support.macros.config
@@ -18,9 +19,27 @@ add_entrypoint_object(
     ../getifaddrs.h
   DEPENDS
     libc.hdr.errno_macros
+    libc.hdr.func.free
+    libc.hdr.func.malloc
+    libc.hdr.net_if_macros
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.socklen_t
+    libc.hdr.types.ssize_t
     libc.hdr.types.struct_ifaddrs
+    libc.hdr.types.struct_sockaddr
+    libc.hdr.types.struct_sockaddr_in
+    libc.hdr.types.struct_sockaddr_in6
+    libc.include.llvm-libc-types.struct_sockaddr_ll
+    libc.src.__support.CPP.scope
+    libc.src.__support.OSUtil.linux.syscall_wrappers.close
+    libc.src.__support.OSUtil.linux.syscall_wrappers.recvfrom
+    libc.src.__support.OSUtil.linux.syscall_wrappers.sendto
+    libc.src.__support.OSUtil.linux.syscall_wrappers.socket
     libc.src.__support.common
     libc.src.__support.libc_errno
     libc.src.__support.macros.config
     libc.src.errno.errno
+    libc.src.string.memory_utils.inline_memcpy
+    libc.src.string.memory_utils.inline_memset
+    libc.src.string.string_utils
 )

@@ -2,6 +2,7 @@ header: pwd.h
 standards:
   - posix
 types:
+  - type_name: FILE
   - type_name: struct_passwd
   - type_name: gid_t
   - type_name: uid_t
@@ -23,6 +24,13 @@ functions:
       - type: char *
       - type: size_t
       - type: struct passwd **
+  - name: putpwent
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: const struct passwd *
+      - type: FILE *
   - name: setpwent
     standards:
       - posix
@@ -55,6 +63,22 @@ functions:
     return_type: struct passwd *
     arguments:
       - type: uid_t
+  - name: fgetpwent
+    standards:
+      - gnu
+    return_type: struct passwd *
+    arguments:
+      - type: FILE *
+  - name: fgetpwent_r
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: FILE *
+      - type: struct passwd *
+      - type: char *
+      - type: size_t
+      - type: struct passwd **
   - name: getpwuid_r
     standards:
       - posix

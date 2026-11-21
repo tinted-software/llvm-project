@@ -2,6 +2,16 @@ header: stdio.h
 standards:
   - stdc
 macros:
+  - macro_name: fopen64
+    macro_header: lfs64-macros.h
+  - macro_name: freopen64
+    macro_header: lfs64-macros.h
+  - macro_name: fseeko64
+    macro_header: lfs64-macros.h
+  - macro_name: ftello64
+    macro_header: lfs64-macros.h
+  - macro_name: tmpfile64
+    macro_header: lfs64-macros.h
   - macro_name: "NULL"
     macro_header: null-macro.h
   - macro_name: stdout
@@ -35,6 +45,8 @@ macros:
   - macro_name: FOPEN_MAX
     macro_header: stdio-macros.h
 types:
+  - type_name: fpos_t
+  - type_name: fpos64_t
   - type_name: rsize_t
   - type_name: size_t
   - type_name: ssize_t
@@ -42,7 +54,6 @@ types:
   - type_name: cookie_io_functions_t
   - type_name: FILE
   - type_name: errno_t
-  - type_name: fpos_t
 enums: []
 objects:
   - object_name: stdin
@@ -137,6 +148,23 @@ functions:
       - type: char *__restrict
       - type: int
       - type: FILE *__restrict
+  - name: getdelim
+    standards:
+      - posix
+    return_type: ssize_t
+    arguments:
+      - type: char **__restrict
+      - type: size_t *__restrict
+      - type: int
+      - type: FILE *__restrict
+  - name: getline
+    standards:
+      - posix
+    return_type: ssize_t
+    arguments:
+      - type: char **__restrict
+      - type: size_t *__restrict
+      - type: FILE *__restrict
   - name: fileno
     standards:
       - posix
@@ -172,6 +200,13 @@ functions:
       - type: const char *__restrict
       - type: const char *__restrict
       - type: FILE *__restrict
+  - name: open_memstream
+    standards:
+      - posix
+    return_type: FILE *
+    arguments:
+      - type: char **
+      - type: size_t *
   - name: fopencookie
     standards:
       - gnu
@@ -195,9 +230,29 @@ functions:
     arguments:
       - type: int
       - type: FILE *
+  - name: fputc_unlocked
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: int
+      - type: FILE *
   - name: fputs
     standards:
       - stdc
+    return_type: int
+    arguments:
+      - type: const char *__restrict
+      - type: FILE *__restrict
+  - name: fflush_unlocked
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: FILE *
+  - name: fputs_unlocked
+    standards:
+      - gnu
     return_type: int
     arguments:
       - type: const char *__restrict
@@ -272,6 +327,22 @@ functions:
       - type: FILE *
       - type: off_t
       - type: int
+  - name: dprintf
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *__restrict
+      - type: ...
+  - name: vdprintf
+    standards:
+      - posix
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *__restrict
+      - type: va_list
   - name: ftell
     standards:
       - stdc
@@ -282,6 +353,12 @@ functions:
     standards:
       - posix
     return_type: off_t
+    arguments:
+      - type: FILE *
+  - name: ftrylockfile
+    standards:
+      - posix
+    return_type: int
     arguments:
       - type: FILE *
   - name: funlockfile
@@ -407,6 +484,12 @@ functions:
     return_type: int
     arguments:
       - type: const char *
+  - name: ctermid
+    standards:
+      - posix
+    return_type: char *
+    arguments:
+      - type: char *
   - name: remove
     standards:
       - stdc
@@ -429,6 +512,16 @@ functions:
       - type: const char *
       - type: int
       - type: const char *
+  - name: renameat2
+    standards:
+      - linux
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: int
+      - type: const char *
+      - type: unsigned int
   - name: scanf
     standards:
       - stdc
@@ -450,6 +543,20 @@ functions:
     arguments:
       - type: FILE *__restrict
       - type: char *__restrict
+  - name: setbuffer
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: FILE *
+      - type: char *
+      - type: size_t
+  - name: setlinebuf
+    standards:
+      - bsd
+    return_type: void
+    arguments:
+      - type: FILE *
   - name: setvbuf
     standards:
       - stdc

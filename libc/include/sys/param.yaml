@@ -1,4 +1,6 @@
 header: sys/param.h
+public_includes:
+  - sys/types.h
 standards:
   - bsd
 macros:
@@ -15,6 +17,32 @@ macros:
   - macro_name: powerof2
     macro_header: sys-param-macros.h
   - macro_name: MAXPATHLEN
+    macro_header: sys-param-macros.h
+  - macro_name: MAXSYMLINKS
+    macro_header: sys-param-macros.h
+  - macro_name: MAXHOSTNAMELEN
+    macro_header: sys-param-macros.h
+  - macro_name: NGROUPS
+    macro_header: sys-param-macros.h
+  - macro_name: NOFILE
+    macro_header: sys-param-macros.h
+  - macro_name: NCARGS
+    macro_header: sys-param-macros.h
+  - macro_name: CANBSIZ
+    macro_header: sys-param-macros.h
+  - macro_name: NOGROUP
+    macro_header: sys-param-macros.h
+  - macro_name: NODEV
+    macro_header: sys-param-macros.h
+  - macro_name: DEV_BSIZE
+    macro_header: sys-param-macros.h
+  - macro_name: setbit
+    macro_header: sys-param-macros.h
+  - macro_name: clrbit
+    macro_header: sys-param-macros.h
+  - macro_name: isset
+    macro_header: sys-param-macros.h
+  - macro_name: isclr
     macro_header: sys-param-macros.h
 types: []
 enums: []

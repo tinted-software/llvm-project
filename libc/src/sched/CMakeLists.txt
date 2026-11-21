@@ -176,3 +176,10 @@ add_entrypoint_object(
   DEPENDS
     .${LIBC_TARGET_OS}.__sched_xorcpuset
 )
+
+add_entrypoint_object(
+  setns
+  ALIAS
+  DEPENDS
+    .${LIBC_TARGET_OS}.setns
+)

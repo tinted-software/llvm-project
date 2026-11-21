@@ -1,9 +1,92 @@
+add_object_library(
+  dl_internal
+  SRCS
+    dl_internal.cpp
+  HDRS
+    dl_internal.h
+  DEPENDS
+    libc.hdr.types.size_t
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.mutex
+)
+
+add_object_library(
+  dl_namespace
+  SRCS
+    dl_namespace.cpp
+  HDRS
+    dl_namespace.h
+  DEPENDS
+    libc.hdr.func.malloc
+    libc.hdr.limits_macros
+    libc.hdr.stdint_proxy
+    libc.hdr.types.size_t
+    libc.include.llvm-libc-macros.android_dlext_macros
+    libc.src.__support.OSUtil.linux.realpath
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+)
+
+add_object_library(
+  dl_lookup
+  SRCS
+    dl_lookup.cpp
+  HDRS
+    dl_lookup.h
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.CPP.mutex
+    libc.src.__support.elf.bind
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.elf.scope
+    libc.src.__support.macros.config
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+)
+
+add_object_library(
+  lazy_bind
+  SRCS
+    lazy_bind.cpp
+  HDRS
+    lazy_bind.h
+  DEPENDS
+    libc.hdr.elf_macros
+    libc.hdr.elf_proxy
+    libc.hdr.link_macros
+    libc.hdr.stdint_proxy
+    libc.hdr.types.size_t
+    libc.src.__support.CPP.mutex
+    libc.src.__support.CPP.string_view
+    libc.src.__support.OSUtil.osutil
+    libc.src.__support.elf.bind
+    libc.src.__support.elf.dynamic_blocks
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.elf.scope
+    libc.src.__support.elf.thread_pointer
+    libc.src.__support.macros.properties.architectures
+    libc.src.__support.threads.mutex
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+    libc.src.unistd.environ
+)
+
 add_entrypoint_object(
   dlclose
   SRCS
     dlclose.cpp
   HDRS
     dlclose.h
+  DEPENDS
+    libc.include.dlfcn
+    libc.src.stdlib.atexit
+    libc.src.__support.CPP.mutex
+    libc.src.__support.elf.map_segments
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.mutex
+    libc.src.dlfcn.dl_internal
+    libc.src.link.link_maps
 )
 
 add_entrypoint_object(
@@ -13,6 +96,15 @@ add_entrypoint_object(
   HDRS
     dlerror.h
   DEPENDS
+    libc.src.__support.CPP.mutex
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.mutex
+    libc.src.dlfcn.dl_internal
+    libc.src.__support.CPP.mutex
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.mutex
+    libc.src.dlfcn.dl_internal
+    libc.src.__support.elf.map_segments
     libc.include.dlfcn
 )
 
@@ -23,6 +115,22 @@ add_entrypoint_object(
   HDRS
     dlopen.h
   DEPENDS
+    libc.hdr.types.struct_stat
+    libc.hdr.fcntl_macros
+    libc.src.dlfcn.lazy_bind
+    libc.src.__support.OSUtil.linux.syscall_wrappers.newfstatat
+    libc.src.__support.elf.search
+    libc.src.unistd.environ
+    libc.src.__support.CPP.mutex
+    libc.src.__support.CPP.optional
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.mutex
+    libc.src.dlfcn.dl_internal
+    libc.src.dlfcn.dl_namespace
+    libc.src.__support.elf.bind
+    libc.src.__support.elf.load_module
+    libc.src.__support.elf.scope
+    libc.src.link.link_maps
     libc.include.dlfcn
 )
 
@@ -33,6 +141,8 @@ add_entrypoint_object(
   HDRS
     dlsym.h
   DEPENDS
+    libc.src.__support.elf.passive_abi
+    libc.src.dlfcn.dl_lookup
     libc.include.dlfcn
 )
 
@@ -43,7 +153,28 @@ add_entrypoint_object(
   HDRS
     dlinfo.h
   DEPENDS
+    libc.hdr.types.lmid_t
+    .dl_address
+    libc.src.__support.CPP.mutex
+    libc.src.__support.elf.passive_abi
+    libc.src.__support.threads.mutex
+    libc.src.dlfcn.dl_internal
     libc.include.dlfcn
+)
+
+add_object_library(
+  dl_address
+  SRCS
+    dl_address.cpp
+  HDRS
+    dl_address.h
+  DEPENDS
+    .dl_internal
+    libc.hdr.types.dl_info
+    libc.hdr.types.struct_link_map
+    libc.src.__support.CPP.mutex
+    libc.src.__support.elf.passive_abi
+    libc.src.link._r_debug
 )
 
 add_entrypoint_object(
@@ -53,6 +184,33 @@ add_entrypoint_object(
   HDRS
     dladdr.h
   DEPENDS
+    .dl_address
     libc.include.dlfcn
     libc.hdr.types.dl_info
+    libc.src.__support.elf.passive_abi
+)
+
+add_entrypoint_object(
+  dladdr1
+  SRCS
+    dladdr1.cpp
+  HDRS
+    dladdr1.h
+  DEPENDS
+    .dl_address
+    libc.include.dlfcn
+    libc.hdr.types.dl_info
+    libc.src.__support.elf.passive_abi
+)
+
+add_entrypoint_object(
+  dlvsym
+  SRCS
+    dlvsym.cpp
+  HDRS
+    dlvsym.h
+  DEPENDS
+    libc.src.__support.elf.passive_abi
+    libc.src.dlfcn.dl_lookup
+    libc.include.dlfcn
 )

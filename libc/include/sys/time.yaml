@@ -13,6 +13,8 @@ macros:
   - macro_name: timeradd
     macro_header: sys-time-macros.h
 types:
+  - type_name: struct_timezone
+  - type_name: struct_timespec
   - type_name: struct_itimerval
   - type_name: suseconds_t
   - type_name: time_t
@@ -20,6 +22,24 @@ enums: []
 objects: []
 functions:
   - name: utimes
+    return_type: int
+    arguments:
+      - type: const char*
+      - type: const struct timeval*
+  - name: futimes
+    return_type: int
+    arguments:
+      - type: int
+      - type: const struct timeval*
+  - name: futimesat
+    standards:
+      - gnu
+    return_type: int
+    arguments:
+      - type: int
+      - type: const char *
+      - type: const struct timeval *
+  - name: lutimes
     return_type: int
     arguments:
       - type: const char*
@@ -35,6 +55,13 @@ functions:
     arguments:
       - type: int
       - type: struct itimerval *
+  - name: settimeofday
+    standards:
+      - bsd
+    return_type: int
+    arguments:
+      - type: const struct timeval *
+      - type: const struct timezone *
   - name: gettimeofday
     return_type: int
     arguments:

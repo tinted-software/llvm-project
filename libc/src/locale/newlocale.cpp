@@ -28,15 +28,21 @@ LLVM_LIBC_FUNCTION(locale_t, newlocale,
     return nullptr;
   }
 
+  // There is one locale, so any name it can honour is answered with it.
+  // Refusing the names the environment states would leave callers with
+  // nothing where they ask for the locale the machine is set to.
   cpp::string_view name(locale_name);
+  if (!internal::locale_name_is_supported(name)) {
+    libc_errno = ENOENT;
+    return nullptr;
+  }
+
   if (name.empty())
     return DEFAULT_LOCALE_IS_UTF8 ? &utf8_locale : &c_locale;
 
-  if (is_c_locale_name(name))
-    return &c_locale;
-
-  libc_errno = ENOENT;
-  return nullptr;
+  if (internal::name_states_utf8(name))
+    return &utf8_locale;
+  return &c_locale;
 }
 
 } // namespace LIBC_NAMESPACE_DECL

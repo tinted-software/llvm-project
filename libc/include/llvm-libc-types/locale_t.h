@@ -9,6 +9,8 @@
 #ifndef LLVM_LIBC_TYPES_LOCALE_T_H
 #define LLVM_LIBC_TYPES_LOCALE_T_H
 
+#define NUM_LOCALE_CATEGORIES 6
+
 typedef struct __locale_t *locale_t;
 
 #endif // LLVM_LIBC_TYPES_LOCALE_T_H

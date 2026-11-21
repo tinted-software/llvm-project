@@ -7,13 +7,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "src/unistd/fork.h"
-#include "hdr/signal_macros.h" // For SIGCHLD
+#include "hdr/signal_macros.h"            // For SIGCHLD
 #include "src/__support/OSUtil/linux/syscall_wrappers/gettid.h"
 #include "src/__support/OSUtil/syscall.h" // For internal syscall function.
 #include "src/__support/common.h"
+#include "src/__support/error_or.h"
 #include "src/__support/macros/config.h"
 #include "src/__support/threads/fork_callbacks.h"
 #include "src/__support/threads/identifier.h"
+#include "src/__support/threads/robust_list.h"
+#include "src/__support/threads/tcb.h"
 #include "src/__support/threads/thread.h" // For thread self object
 
 #include "src/__support/libc_errno.h"
@@ -24,7 +27,9 @@ namespace LIBC_NAMESPACE_DECL {
 // The implementation of fork here is very minimal. We will add more
 // functionality and standard compliance in future.
 
-LLVM_LIBC_FUNCTION(pid_t, fork, (void)) {
+namespace internal {
+
+ErrorOr<pid_t> fork_impl() {
   invoke_prepare_callbacks();
   pid_t parent_tid = internal::gettid();
   // Invalidate parent's tid cache before forking. We cannot do this in child
@@ -44,20 +49,36 @@ LLVM_LIBC_FUNCTION(pid_t, fork, (void)) {
     // The child is created with a single thread whose self object will be a
     // copy of parent process' thread which called fork. So, we have to fix up
     // the child process' self object with the new process' tid.
-    internal::force_set_tid(linux_syscalls::gettid());
+    pid_t child_tid = linux_syscalls::gettid();
+    internal::force_set_tid(child_tid);
+    if (ThreadAttributes *attrib = get_current_thread_attrib())
+      robust::reset_after_fork(attrib, static_cast<uint32_t>(parent_tid),
+                               static_cast<uint32_t>(child_tid));
     invoke_child_callbacks();
     return 0;
   }
 
   if (ret < 0) {
     // Error case, a child process was not created.
-    libc_errno = static_cast<int>(-ret);
-    return -1;
+    internal::force_set_tid(parent_tid);
+    release_atfork_lock();
+    return Error(static_cast<int>(-ret));
   }
   // recover parent's tid.
   internal::force_set_tid(parent_tid);
   invoke_parent_callbacks();
   return ret;
+}
+
+} // namespace internal
+
+LLVM_LIBC_FUNCTION(pid_t, fork, (void)) {
+  ErrorOr<pid_t> ret = internal::fork_impl();
+  if (!ret) {
+    libc_errno = ret.error();
+    return -1;
+  }
+  return *ret;
 }
 
 } // namespace LIBC_NAMESPACE_DECL

@@ -1,9 +1,11 @@
 header: netinet/in.h
+header_template: in.h.def
 standards:
   - posix
 merge_yaml_files:
   - ../htons-family.yaml
 public_includes:
+  - endian.h
   # This is permitted (but not required) by POSIX and many applications depend
   # on it. If we have a "pedantic" mode in the future, we might want to exclude
   # it there.
@@ -21,6 +23,8 @@ macros:
     macro_header: netinet-in-macros.h
   - macro_name: IPPROTO_RAW
     macro_header: netinet-in-macros.h
+  - macro_name: IPPROTO_MAX
+    macro_header: netinet-in-macros.h
   - macro_name: IN6ADDR_ANY_INIT
     macro_header: netinet-in-macros.h
   - macro_name: IN6ADDR_LOOPBACK_INIT
@@ -34,72 +38,6 @@ macros:
     macro_value: 0
 
   # IP level socket options
-  - macro_name: IP_TOS
-    macro_value: 1 # int
-  - macro_name: IP_TTL
-    macro_value: 2 # int
-  - macro_name: IP_HDRINCL
-    macro_value: 3 # int
-  - macro_name: IP_OPTIONS
-    macro_value: 4 # struct ip_opts
-  - macro_name: IP_ROUTER_ALERT
-    macro_value: 5 # int
-  - macro_name: IP_RECVOPTS
-    macro_value: 6 # int
-  - macro_name: IP_RETOPTS
-    macro_value: 7 # int
-  - macro_name: IP_PKTINFO
-    macro_value: 8 # int
-  - macro_name: IP_MTU_DISCOVER
-    macro_value: 10 # int
-  - macro_name: IP_PMTUDISC_DONT
-    macro_value: 0
-  - macro_name: IP_PMTUDISC_WANT
-    macro_value: 1
-  - macro_name: IP_PMTUDISC_DO
-    macro_value: 2
-  - macro_name: IP_PMTUDISC_PROBE
-    macro_value: 3
-  - macro_name: IP_RECVERR
-    macro_value: 11 # int
-  - macro_name: IP_RECVTTL
-    macro_value: 12 # int
-  - macro_name: IP_RECVTOS
-    macro_value: 13 # int
-  - macro_name: IP_MTU
-    macro_value: 14 # int
-  - macro_name: IP_FREEBIND
-    macro_value: 15 # int
-  - macro_name: IP_PASSSEC
-    macro_value: 18 # int
-  - macro_name: IP_TRANSPARENT
-    macro_value: 19 # int
-  - macro_name: IP_RECVORIGDSTADDR
-    macro_value: 20 # int
-  - macro_name: IP_NODEFRAG
-    macro_value: 22 # int
-  - macro_name: IP_BIND_ADDRESS_NO_PORT
-    macro_value: 24 # int
-  - macro_name: IP_MULTICAST_IF
-    macro_value: 32 # struct in_addr or ip_mreq or ip_mreqn
-  - macro_name: IP_MULTICAST_TTL
-    macro_value: 33 # int
-  - macro_name: IP_MULTICAST_LOOP
-    macro_value: 34 # int
-  - macro_name: IP_ADD_MEMBERSHIP
-    macro_value: 35 # struct ip_mreq or ip_mreqn
-  - macro_name: IP_DROP_MEMBERSHIP
-    macro_value: 36 # struct ip_mreq or ip_mreqn
-  - macro_name: IP_UNBLOCK_SOURCE
-    macro_value: 37 # struct ip_mreq_source
-  - macro_name: IP_BLOCK_SOURCE
-    macro_value: 38 # struct ip_mreq_source
-  - macro_name: IP_ADD_SOURCE_MEMBERSHIP
-    macro_value: 39 # struct ip_mreq_source
-  - macro_name: IP_DROP_SOURCE_MEMBERSHIP
-    macro_value: 40 # struct ip_mreq_source
-  - macro_name: IP_MSFILTER
-    macro_value: 41 # struct ip_msfilter
   - macro_name: MCAST_JOIN_GROUP
     macro_value: 42 # struct group_req
   - macro_name: MCAST_BLOCK_SOURCE
@@ -112,14 +50,16 @@ macros:
     macro_value: 46 # struct group_source_req
   - macro_name: MCAST_LEAVE_SOURCE_GROUP
     macro_value: 47 # struct group_source_req
-  - macro_name: IP_MULTICAST_ALL
-    macro_value: 49 # int
-  - macro_name: IP_LOCAL_PORT_RANGE
-    macro_value: 51 # uint32_t
+  - macro_name: MCAST_MSFILTER
+    macro_value: 48 # struct group_filter
+  # Whether the sources a filter lists are the ones to accept or the ones to
+  # refuse.
+  - macro_name: MCAST_EXCLUDE
+    macro_value: 0
+  - macro_name: MCAST_INCLUDE
+    macro_value: 1
 
   # IPv6 level socket options
-  - macro_name: IPV6_ADDRFORM
-    macro_value: 1 # int
   - macro_name: IPV6_AUTHHDR
     macro_value: 10 # int
   - macro_name: IPV6_FLOWINFO
@@ -169,6 +109,8 @@ macros:
   - macro_name: IPV6_TCLASS
     macro_value: 67 # int
 types:
+  - type_name: struct_in_pktinfo
+  - type_name: struct_ip6_mtuinfo
   - type_name: in_port_t
   - type_name: in_addr_t
   - type_name: struct_sockaddr_in
@@ -187,7 +129,63 @@ types:
   # Type also defined by sys/socket.h, but listing it explicitly as it is
   # required by POSIX.
   - type_name: sa_family_t
-enums: []
+# The ports the well known services were given, and the two boundaries
+# that say who may bind what: below IPPORT_RESERVED is for privileged
+# processes, and above IPPORT_USERRESERVED is left to servers nobody
+# privileged runs.
+enums:
+  - name: IPPORT_ECHO
+    value: 7
+  - name: IPPORT_DISCARD
+    value: 9
+  - name: IPPORT_SYSTAT
+    value: 11
+  - name: IPPORT_DAYTIME
+    value: 13
+  - name: IPPORT_NETSTAT
+    value: 15
+  - name: IPPORT_FTP
+    value: 21
+  - name: IPPORT_TELNET
+    value: 23
+  - name: IPPORT_SMTP
+    value: 25
+  - name: IPPORT_TIMESERVER
+    value: 37
+  - name: IPPORT_NAMESERVER
+    value: 42
+  - name: IPPORT_WHOIS
+    value: 43
+  - name: IPPORT_MTP
+    value: 57
+  - name: IPPORT_TFTP
+    value: 69
+  - name: IPPORT_RJE
+    value: 77
+  - name: IPPORT_FINGER
+    value: 79
+  - name: IPPORT_TTYLINK
+    value: 87
+  - name: IPPORT_SUPDUP
+    value: 95
+  - name: IPPORT_EXECSERVER
+    value: 512
+  - name: IPPORT_LOGINSERVER
+    value: 513
+  - name: IPPORT_CMDSERVER
+    value: 514
+  - name: IPPORT_EFSSERVER
+    value: 520
+  - name: IPPORT_BIFFUDP
+    value: 512
+  - name: IPPORT_WHOSERVER
+    value: 513
+  - name: IPPORT_ROUTESERVER
+    value: 520
+  - name: IPPORT_RESERVED
+    value: 1024
+  - name: IPPORT_USERRESERVED
+    value: 5000
 objects:
   - object_name: in6addr_any
     object_type: const struct in6_addr

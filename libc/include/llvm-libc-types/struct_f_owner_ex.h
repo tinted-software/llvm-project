@@ -11,15 +11,20 @@
 
 #include "pid_t.h"
 
-enum pid_type {
+// <linux/fcntl.h> defines the same struct f_owner_ex and the F_OWNER_* macros.
+// A program that includes it first, as Mesa and others do, would see a
+// redefinition, so libc defers to it then.
+#ifndef _ASM_GENERIC_FCNTL_H
+enum __pid_type {
   F_OWNER_TID = 0,
   F_OWNER_PID,
   F_OWNER_PGRP,
 };
 
 struct f_owner_ex {
-  enum pid_type type;
+  enum __pid_type type;
   pid_t pid;
 };
+#endif // _ASM_GENERIC_FCNTL_H
 
 #endif // LLVM_LIBC_TYPES_STRUCT_F_OWNER_EX_H

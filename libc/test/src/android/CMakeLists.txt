@@ -1,0 +1,177 @@
+add_libc_testsuite(libc-android-tests)
+
+add_libc_test(
+  android_get_application_target_sdk_version_test
+  SUITE
+    libc-android-tests
+  SRCS
+    android_get_application_target_sdk_version_test.cpp
+  DEPENDS
+    libc.hdr.android_api_level_macros
+    libc.include.android_api_level
+    libc.src.android.android_get_application_target_sdk_version
+    libc.src.android.android_set_application_target_sdk_version
+)
+
+add_libc_test(
+  android_getaddrinfofornet_test
+  SUITE
+    libc-android-tests
+  SRCS
+    android_getaddrinfofornet_test.cpp
+  DEPENDS
+    libc.hdr.sys_socket_macros
+    libc.hdr.types.struct_addrinfo
+    libc.hdr.types.struct_sockaddr_in
+    libc.src.android.android_getaddrinfofornet
+    libc.src.netdb.freeaddrinfo
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  android_get_device_api_level_test
+  SUITE
+    libc-android-tests
+  SRCS
+    android_get_device_api_level_test.cpp
+  DEPENDS
+    libc.src.android.android_get_device_api_level
+    libc.src.string.strlen
+    libc.src.sys.system_properties.__system_property_add
+    libc.src.sys.system_properties.__system_property_area_init
+    libc.src.sys.system_properties.__system_property_find
+    libc.src.sys.system_properties.__system_property_set_filename
+    libc.src.sys.system_properties.__system_property_update
+    libc.src.unistd.unlink
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  fdsan_test
+  SUITE
+    libc-android-tests
+  SRCS
+    fdsan_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.hdr.fcntl_macros
+    libc.hdr.types.enum_android_fdsan_error_level
+    libc.hdr.types.enum_android_fdsan_owner_type
+    libc.include.android_fdsan
+    libc.src.android.android_fdsan_close_with_tag
+    libc.src.android.android_fdsan_create_owner_tag
+    libc.src.android.android_fdsan_exchange_owner_tag
+    libc.src.android.android_fdsan_get_error_level
+    libc.src.android.android_fdsan_get_owner_tag
+    libc.src.android.android_fdsan_get_tag_type
+    libc.src.android.android_fdsan_get_tag_value
+    libc.src.android.android_fdsan_set_error_level
+    libc.src.android.android_fdsan_set_error_level_from_property
+    libc.src.fcntl.open
+    libc.src.string.strcmp
+    libc.src.unistd.close
+    libc.test.UnitTest.ErrnoCheckingTest
+    libc.test.UnitTest.ErrnoSetterMatcher
+)
+
+add_libc_test(
+  crash_detail_test
+  SUITE
+    libc-android-tests
+  SRCS
+    crash_detail_test.cpp
+  DEPENDS
+    libc.src.__support.crash_detail
+    libc.src.android.__libc_crash_detail_page
+    libc.src.android.android_crash_detail_register
+    libc.src.android.android_crash_detail_replace_data
+    libc.src.android.android_crash_detail_replace_name
+    libc.src.android.android_crash_detail_unregister
+)
+
+add_libc_test(
+  set_abort_message_test
+  SUITE
+    libc-android-tests
+  SRCS
+    set_abort_message_test.cpp
+  DEPENDS
+    libc.include.android_set_abort_message
+    libc.src.__support.abort_message
+    libc.src.android.android_set_abort_message
+    libc.src.string.strcmp
+    libc.src.string.strlen
+)
+
+add_libc_test(
+  android_dlext_test
+  SUITE
+    libc-android-tests
+  SRCS
+    android_dlext_test.cpp
+  DEPENDS
+    libc.hdr.types.android_dlextinfo
+    libc.include.android_dlext
+    libc.src.android.android_create_namespace
+    libc.src.android.android_dlopen_ext
+    libc.src.android.android_dlwarning
+    libc.src.android.android_get_LD_LIBRARY_PATH
+    libc.src.android.android_get_exported_namespace
+    libc.src.android.android_init_anonymous_namespace
+    libc.src.android.android_link_namespaces
+    libc.src.android.android_set_16kb_appcompat_mode
+    libc.src.android.android_update_LD_LIBRARY_PATH
+    libc.src.dlfcn.dlerror
+    libc.src.stdlib.getenv
+)
+
+add_libc_test(
+  android_mallopt_test
+  SUITE
+    libc-android-tests
+  SRCS
+    android_mallopt_test.cpp
+  DEPENDS
+    libc.hdr.errno_macros
+    libc.src.__support.libc_errno
+    libc.src.android.android_mallopt
+    libc.test.UnitTest.ErrnoCheckingTest
+)
+
+add_libc_test(
+  errno_accessor_test
+  SUITE
+    libc-android-tests
+  SRCS
+    errno_accessor_test.cpp
+  DEPENDS
+    libc.src.__support.libc_errno
+    libc.src.android.__errno
+    libc.src.pthread.pthread_create
+    libc.src.pthread.pthread_join
+)
+
+add_libc_test(
+  malloc_backtrace_test
+  SUITE
+    libc-android-tests
+  SRCS
+    malloc_backtrace_test.cpp
+  DEPENDS
+    libc.src.android.malloc_backtrace
+)
+
+add_libc_test(
+  android_reset_stack_guards_test
+  SUITE
+    libc-android-tests
+  SRCS
+    android_reset_stack_guards_test.cpp
+  DEPENDS
+    libc.hdr.stdint_proxy
+    libc.src.__support.macros.properties.architectures
+    libc.src.__support.threads.tcb
+    libc.src.android.android_reset_stack_guards
+    libc.src.compiler.__stack_chk_fail
+    libc.src.stdlib.exit
+)

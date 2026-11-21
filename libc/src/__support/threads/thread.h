@@ -63,9 +63,20 @@ bool set_tss_value(unsigned int key, void *value);
 void *get_tss_value(unsigned int key);
 
 struct Thread {
-  // NB: Default stacksize of 64kb is exceedingly small compared to the 2mb norm
-  // and will break many programs expecting the full 2mb.
-  static constexpr size_t DEFAULT_STACKSIZE = 1 << 16;
+  // How much stack a thread is given when the caller does not say. This
+  // follows the limit set on the process, as glibc does, and falls back to
+  // eight megabytes where no limit is set, which is what that limit usually
+  // is. Sixty four kilobytes, which this used to be, is far under what a
+  // thread doing real work needs: a linker or a compiler running in one
+  // overruns it and the process is killed.
+  static constexpr size_t FALLBACK_STACKSIZE = size_t(8) << 20;
+  static constexpr size_t MINIMUM_STACKSIZE = size_t(16) << 10;
+  static size_t default_stacksize();
+  // The soft limit on the stack, which is RLIM_INFINITY where there is none.
+  // It is read once and kept, since a sandbox that forbids reading limits
+  // kills the process at any later read, and startup asks for it before one
+  // is in place. Returns zero, or the error number the read failed with.
+  static int stack_limit(unsigned long *soft);
   static constexpr size_t DEFAULT_GUARDSIZE = EXEC_PAGESIZE;
   static constexpr bool DEFAULT_DETACHED = false;
 
@@ -75,8 +86,7 @@ struct Thread {
   constexpr Thread(ThreadAttributes *attr) : attrib(attr) {}
 
   int run(ThreadRunnerPosix *func, void *arg, void *stack = nullptr,
-          size_t stacksize = DEFAULT_STACKSIZE,
-          size_t guardsize = DEFAULT_GUARDSIZE,
+          size_t stacksize = 0, size_t guardsize = DEFAULT_GUARDSIZE,
           bool detached = DEFAULT_DETACHED,
           cpp::optional<SchedParameters> sched_params = cpp::nullopt) {
     ThreadRunner runner;
@@ -86,8 +96,7 @@ struct Thread {
   }
 
   int run(ThreadRunnerStdc *func, void *arg, void *stack = nullptr,
-          size_t stacksize = DEFAULT_STACKSIZE,
-          size_t guardsize = DEFAULT_GUARDSIZE,
+          size_t stacksize = 0, size_t guardsize = DEFAULT_GUARDSIZE,
           bool detached = DEFAULT_DETACHED) {
     ThreadRunner runner;
     runner.stdc_runner = func;
@@ -115,6 +124,16 @@ struct Thread {
     return 0;
   }
 
+  int try_join(void **val) {
+    ThreadReturnValue retval;
+    int status = try_join(retval);
+    if (status != 0)
+      return status;
+    if (val != nullptr)
+      *val = retval.posix_retval;
+    return 0;
+  }
+
   // Platform should implement the functions below.
 
   // Return 0 on success or an error value on failure.
@@ -124,6 +143,10 @@ struct Thread {
 
   // Return 0 on success or an error value on failure.
   int join(ThreadReturnValue &retval);
+
+  // Join a thread that has already finished. Return EBUSY without waiting if
+  // it is still running, leaving it joinable.
+  int try_join(ThreadReturnValue &retval);
 
   // Detach a joinable thread.
   //
@@ -144,6 +167,10 @@ struct Thread {
   // which requires exposing it via a public API.
   void wait();
 
+  // One turn of the wait, for a caller which has something to do between
+  // them. Returns false once the thread has gone.
+  bool wait_once();
+
   // Return true if this thread is equal to the other thread.
   constexpr bool operator==(const Thread &other) const {
     return attrib == other.attrib;
@@ -158,6 +185,10 @@ struct Thread {
   // Set the scheduling policy and parameters of the thread.
   // Return 0 on success, or an error number on failure.
   int setschedparam(SchedParameters params);
+
+  // Set the scheduling priority of the thread, leaving its policy as it is.
+  // Return 0 on success, or an error number on failure.
+  int setschedprio(int prio);
 
   // Get the scheduling policy and parameters of the thread.
   // Return SchedParameters on success, or an error number on failure.
@@ -177,8 +208,19 @@ namespace internal {
 // Internal namespace containing utilities which are to be used by platform
 // implementations of threads.
 
-// Call the currently registered thread specific atexit callbacks. Useful for
-// implementing the thread_exit function.
+// Call the destructors registered for this thread's thread local objects.
+// These belong to the thread rather than to the process, but the main thread's
+// run when the process exits, so this is separate from the rest of the
+// teardown below.
+void call_thread_local_dtors();
+
+// Call the currently registered thread specific atexit callbacks: the cleanup
+// handlers, the thread local destructors above, and then the destructors of
+// the values set with pthread_setspecific. Useful for implementing the
+// thread_exit function.
+//
+// Not for the exit path: a process exiting is not a thread exiting, and POSIX
+// has neither the cleanup handlers nor the key destructors run there.
 void call_atexit_callbacks();
 
 } // namespace internal

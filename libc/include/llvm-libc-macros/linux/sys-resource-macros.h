@@ -28,7 +28,21 @@
 #define RLIMIT_RTPRIO 14
 #define RLIMIT_RTTIME 15
 
+// One past the last limit, which is how many there are.
+#define RLIMIT_NLIMITS 16
+#define RLIM_NLIMITS RLIMIT_NLIMITS
+
+// The range setpriority takes. A lower number is a higher priority.
+#define PRIO_MIN (-20)
+#define PRIO_MAX 20
+
 #define RLIM_INFINITY ((rlim_t) - 1)
+
+// A limit which could not be represented in the older, narrower rlim_t.
+// Linux has no such limit, so these are the same as no limit at all, which
+// is what POSIX allows when the distinction does not arise.
+#define RLIM_SAVED_CUR RLIM_INFINITY
+#define RLIM_SAVED_MAX RLIM_INFINITY
 
 #define RUSAGE_SELF 0
 #define RUSAGE_CHILDREN (-1)
